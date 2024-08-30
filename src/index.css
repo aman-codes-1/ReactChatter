@@ -4,7 +4,7 @@ body {
   overflow: auto;
   --webkit-overflow-scrolling: touch;
   ::-webkit-scrollbar {
-    width: 17px;
+    width: 15px;
   }
   ::-webkit-scrollbar-track {
     background-color: #efefef;
@@ -29,12 +29,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none; /* iOS Safari */
-  /* -webkit-user-select: none; */ /* Safari */
-  /* -khtml-user-select: none; */ /* Konqueror HTML */
-  /* -moz-user-select: none; */ /* Firefox */
-  /* -ms-user-select: none; */ /* Internet Explorer/Edge */
-  /* user-select: none; */ /* Non-prefixed version, currently supported by Chrome and Opera */
+  -webkit-touch-callout: none;
 }
 
 code {

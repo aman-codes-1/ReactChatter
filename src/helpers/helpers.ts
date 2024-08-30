@@ -52,6 +52,56 @@ export const handleKeyPress = (event: KeyboardEvent, handler: any) => {
   }
 };
 
+export const checkScrollbar = (ref: any, setHasScrollbar: any) => {
+  const listElement = ref?.current;
+  if (listElement) {
+    const { scrollHeight, clientHeight } = listElement;
+    setHasScrollbar(scrollHeight > clientHeight);
+  }
+};
+
+export const setFocus = (ref: any) => {
+  const listElement = ref?.current;
+  if (listElement) {
+    listElement?.focus();
+  }
+};
+
+export const updateHeight = (ref: any, setHeight: any) => {
+  const listElement = ref?.current;
+  if (listElement) {
+    setHeight(listElement?.clientHeight);
+  }
+};
+
+export const scrollIntoView = (ref: any) => {
+  const listElement = ref?.current;
+  if (listElement) {
+    listElement?.scrollIntoView();
+  }
+};
+
+export const scrollToSelected = (
+  listItems: any[],
+  ref: any,
+  itemsRef: any,
+  selectedListItem: any,
+) => {
+  const selectedItemIndex = listItems?.indexOf(selectedListItem);
+  const listElement = ref?.current;
+  const itemElement = itemsRef?.current?.[selectedItemIndex];
+  if (selectedItemIndex !== -1 && listElement && itemElement) {
+    const itemRect = itemElement?.getBoundingClientRect();
+    const listRect = listElement?.getBoundingClientRect();
+    const { scrollTop } = listElement || {};
+    const topPos = itemRect.top - listRect.top + scrollTop;
+    const itemHeight = itemRect.height;
+    const listHeight = listRect.height;
+    const scrollPos = topPos - listHeight / 2 + itemHeight / 2;
+    listElement?.scrollTo({ top: scrollPos, behavior: 'smooth' });
+  }
+};
+
 export const regex = {
   validateEmail:
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,

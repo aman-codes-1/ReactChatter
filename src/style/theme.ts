@@ -4,7 +4,7 @@ export const theme = createTheme({
   palette: {
     primary: {
       main: '#0196DA',
-      light: '#e6f7ff',
+      light: 'rgba(1, 150, 218, 0.08)',
       dark: '#017ab2',
     },
     secondary: {
@@ -44,7 +44,7 @@ export const theme = createTheme({
     grey: {
       50: '#F9FAFB',
       100: '#f5f5f5',
-      200: '#efefef',
+      200: 'rgba(0, 0, 0, 0.12)',
       300: '#e8eaf6',
       400: '#e0e0e0',
       500: '#667781',

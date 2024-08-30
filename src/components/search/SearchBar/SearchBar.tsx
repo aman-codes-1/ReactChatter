@@ -10,8 +10,14 @@ const SearchBar = ({ className }: any) => (
       size="small"
       fullWidth
       className="search-input"
-      InputLabelProps={{ className: 'search-input-props' }}
-      inputProps={{ className: 'search-input-props' }}
+      slotProps={{
+        input: {
+          className: 'search-input-props',
+        },
+        inputLabel: {
+          className: 'search-input-props',
+        },
+      }}
     />
   </SearchBarStyled>
 );

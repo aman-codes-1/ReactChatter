@@ -1,57 +1,39 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { Divider, List } from '@mui/material';
+import { checkScrollbar, scrollToSelected } from '../../../helpers';
 import { useAuth } from '../../../hooks';
 import { ListItem } from '..';
 
 const DataList = ({
-  data,
-  dense = true,
+  dense = false,
+  disableGutters = false,
   dividerVariant = 'middle',
+  data,
   selectedItem,
   handleClickListItem,
   className,
   scrollDependencies = [],
   WebkitLineClamp = 0,
+  sxScrollPaddingRight,
+  hasScrollbar,
+  setHasScrollbar,
 }: any) => {
   const { auth: { _id = '' } = {} } = useAuth();
-  const [hasScrollbar, setHasScrollbar] = useState(false);
   const listRef = useRef<any>(null);
   const listItemsRef = useRef<any>([]);
 
-  const checkScrollBar = (ref: any) => {
-    const listElement = ref?.current;
-    if (listElement) {
-      setHasScrollbar(listElement?.scrollHeight > listElement?.clientHeight);
-    }
-  };
-
-  const scrollToSelected = (
-    listItems: any[],
-    ref: any,
-    itemsRef: any,
-    selectedListItem: any,
-  ) => {
-    const selectedItemIndex = listItems?.indexOf(selectedListItem);
-    const listElement = ref?.current;
-    const itemElement = itemsRef?.current?.[selectedItemIndex];
-    if (selectedItemIndex !== -1 && listElement && itemElement) {
-      const itemRect = itemElement?.getBoundingClientRect();
-      const listRect = listElement?.getBoundingClientRect();
-      const { scrollTop } = listElement || {};
-      const topPos = itemRect.top - listRect.top + scrollTop;
-      const itemHeight = itemRect.height;
-      const listHeight = listRect.height;
-      const scrollPos = topPos - listHeight / 2 + itemHeight / 2;
-      listElement?.scrollTo({ top: scrollPos, behavior: 'smooth' });
-    }
-  };
-
   useLayoutEffect(() => {
     if (data?.length) {
-      checkScrollBar(listRef);
+      checkScrollbar(listRef, setHasScrollbar);
       scrollToSelected(data, listRef, listItemsRef, selectedItem);
+      window.addEventListener('resize', () =>
+        checkScrollbar(listRef, setHasScrollbar),
+      );
     }
-    const listRefObserver = new MutationObserver(() => checkScrollBar(listRef));
+
+    const listRefObserver = new MutationObserver(() =>
+      checkScrollbar(listRef, setHasScrollbar),
+    );
     const listElement = listRef?.current;
     if (listElement) {
       listRefObserver?.observe(listElement, {
@@ -60,10 +42,16 @@ const DataList = ({
         attributes: true,
       });
     }
+
     return () => {
+      window.removeEventListener('resize', () =>
+        checkScrollbar(listRef, setHasScrollbar),
+      );
       listRefObserver?.disconnect();
     };
   }, [data, selectedItem, ...scrollDependencies]);
+
+  useLayoutEffect(() => {}, []);
 
   const renderList = (
     obj: any,
@@ -79,9 +67,8 @@ const DataList = ({
       return (
         <>
           <ListItem
-            disableGutters
+            disableGutters={disableGutters}
             ref={itemsRef ? (el) => (itemsRef.current[idx] = el) : null}
-            sx={hasScrollbar ? { mr: '1.5rem' } : {}}
             btnProps={{
               alignItems: 'flex-start',
               textProps: {
@@ -89,6 +76,9 @@ const DataList = ({
                 secondary: member?.memberDetails?.email,
                 primaryTypographyProps: {
                   fontSize: '1.08rem',
+                  style: {
+                    WebkitLineClamp: 1,
+                  },
                 },
                 secondaryTypographyProps: {
                   fontSize: '0.85rem',
@@ -104,10 +94,7 @@ const DataList = ({
               selected,
             }}
           />
-          <Divider
-            variant={dividerVariant}
-            sx={hasScrollbar ? { mr: '2.5rem' } : {}}
-          />
+          <Divider variant={dividerVariant} />
         </>
       );
     }
@@ -115,7 +102,22 @@ const DataList = ({
   };
 
   return (
-    <List dense={dense} disablePadding className={className} ref={listRef}>
+    <List
+      dense={dense}
+      disablePadding
+      className={className}
+      ref={listRef}
+      sx={(theme) =>
+        hasScrollbar
+          ? {
+              pr: disableGutters ? '1.5rem' : '0.3rem',
+              [theme.breakpoints.down('sm')]: {
+                pr: sxScrollPaddingRight || '0.8rem',
+              },
+            }
+          : {}
+      }
+    >
       {data
         ?.slice(0, undefined)
         ?.map((obj: any, idx: number) =>

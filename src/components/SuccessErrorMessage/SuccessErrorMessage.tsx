@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { updateHeight } from '../../helpers';
 import { SuccessErrorMessageProps } from './ISuccessErrorMessage';
 import { SuccessErrorMessageStyled } from './SuccessErrorMessage.styled';
 
@@ -10,7 +11,12 @@ const SuccessErrorMessage = ({ message, type }: SuccessErrorMessageProps) => {
   const ref = useRef<any>(null);
 
   useLayoutEffect(() => {
-    setHeight(ref?.current?.clientHeight);
+    updateHeight(ref, setHeight);
+    window.addEventListener('resize', () => updateHeight(ref, setHeight));
+
+    return () => {
+      window.removeEventListener('resize', () => updateHeight(ref, setHeight));
+    };
   }, []);
 
   return (

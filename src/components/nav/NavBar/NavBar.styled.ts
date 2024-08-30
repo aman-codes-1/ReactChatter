@@ -4,10 +4,9 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  marginRight: '0.6rem',
-  gap: '1rem',
+  gap: '1.4rem',
   [theme.breakpoints.between('sm', 'md')]: {
-    marginRight: '0.15rem',
+    gap: '1.2rem',
   },
   [theme.breakpoints.down('sm')]: {
     margin: 0,

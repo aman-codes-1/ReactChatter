@@ -20,11 +20,14 @@ export const ChatsAndFriendsContext = createContext<any>({});
 
 export const ChatsAndFriendsProvider = ({ children }: any) => {
   const [searchParams] = useSearchParams();
-  const chatId = searchParams.get('id');
+  const chatId =
+    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
+  const friendId =
+    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const { pathname } = useLocation();
   const [selectedChat, setSelectedChat] = useState();
   const [selectedFriend, setSelectedFriend] = useState();
-  const [activeMember, setActiveMember] = useState();
+  const [selectedMember, setSelectedMember] = useState();
   const { auth: { _id = '' } = {} } = useAuth();
   const { isLoading: isSocketLoading } = useSocket();
 
@@ -47,6 +50,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     data: chat,
     loading: chatLoading,
     error: chatError,
+    client: chatClient,
     called: chatCalled,
   } = useQuery(CHAT_QUERY, {
     variables: {
@@ -55,6 +59,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     fetchPolicy: 'network-only',
     skip:
       isSocketLoading ||
+      friendId ||
       !chatId ||
       (chatsCalled &&
         !chatsLoading &&
@@ -286,29 +291,52 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
   });
 
   useLayoutEffect(() => {
-    if (pathname !== '/chat' || (pathname?.includes('/chat') && chatId)) {
+    if (
+      !pathname?.includes('/chat') ||
+      (pathname?.includes('/chat') && (chatId || friendId))
+    ) {
       setSelectedChat(undefined);
       setSelectedFriend(undefined);
-      setActiveMember(undefined);
+      setSelectedMember(undefined);
     }
-  }, [pathname, chatId]);
+  }, [pathname, chatId, friendId]);
 
   useLayoutEffect(() => {
     if (chats?.length && chatId) {
-      setSelectedChat(chats?.find((el: any) => el?._id === chatId));
+      const selectedChat = chats?.find((el: any) => el?._id === chatId);
+      setSelectedChat(selectedChat);
+      const selectedMember = selectedChat?.members?.find(
+        (chatMember: any) => chatMember?._id !== _id,
+      );
+      setSelectedMember(selectedMember);
     }
   }, [chats, chatId]);
+
+  useLayoutEffect(() => {
+    if (otherFriends?.length && friendId) {
+      const selectedFriend = otherFriends?.find(
+        (el: any) => el?._id === friendId,
+      );
+      setSelectedFriend(selectedFriend);
+      const selectedMember = selectedFriend?.members?.find(
+        (friendMember: any) => friendMember?._id !== _id,
+      );
+      setSelectedMember(selectedMember);
+    }
+  }, [otherFriends, friendId]);
 
   return (
     <ChatsAndFriendsContext.Provider
       value={{
-        // chats
+        //chat
         chat,
-        chats,
         chatLoading,
-        chatCalled,
-        chatsLoading,
         chatError,
+        chatClient,
+        chatCalled,
+        // chats
+        chats,
+        chatsLoading,
         chatsError,
         chatsClient,
         chatsCalled,
@@ -367,9 +395,9 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         // selectedFriend
         selectedFriend,
         setSelectedFriend,
-        // activeMember
-        activeMember,
-        setActiveMember,
+        // selectedMember
+        selectedMember,
+        setSelectedMember,
       }}
     >
       {children}

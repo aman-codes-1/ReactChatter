@@ -1,14 +1,22 @@
-import { ChangeEvent, useContext, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { TextField, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { SuccessErrorMessage } from '../../../components';
-import { MainLayout } from '..';
-import { handleKeyPress, regex } from '../../../helpers';
+import { handleKeyPress, regex, setFocus } from '../../../helpers';
 import { useAuth, useTimeout } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
+import { MainLayout } from '..';
 import { AddFriendStyled } from './AddFriend.styled';
 
 const AddFriend = () => {
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [disabled, setDisabled] = useState(false);
   const [validation, setValidation] = useState({
@@ -118,8 +126,11 @@ const AddFriend = () => {
   const { isRequired, isNotValid } = validation;
   const { message, type } = state;
 
-  const setFocus = () => inputRef?.current && inputRef?.current?.focus();
-  setFocus();
+  setFocus(inputRef);
+
+  useLayoutEffect(() => {
+    resetStates();
+  }, [location?.state?.isListItemClicked]);
 
   return (
     <AddFriendStyled>
@@ -131,7 +142,11 @@ const AddFriend = () => {
           <div className="add-friend-text-field-wrapper">
             <TextField
               autoFocus
-              inputProps={{ className: 'add-friend-email-input-props' }}
+              slotProps={{
+                input: {
+                  className: 'add-friend-email-input-props',
+                },
+              }}
               className="add-friend-email-input"
               size="small"
               placeholder="you@example.com"

@@ -1,17 +1,12 @@
 import { useContext, useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Badge } from '@mui/material';
+import { Badge, List } from '@mui/material';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import Face4OutlinedIcon from '@mui/icons-material/Face4Outlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import {
-  Button,
-  DataList,
-  ListItem,
-  ListItemButton,
-} from '../../../../../../components';
+import { Button, DataList, ListItem } from '../../../../../../components';
 import {
   CHAT_ADDED_SUBSCRIPTION,
   ChatsAndFriendsContext,
@@ -36,11 +31,13 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     setSelectedChat,
     selectedFriend,
     setSelectedFriend,
-    setActiveMember,
+    setSelectedMember,
   } = useContext(ChatsAndFriendsContext);
   const [toggleChats, setToggleChats] = useState(!!chats?.length);
   const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
   const [isListItemClicked, setIsListItemClicked] = useState(false);
+  const [hasChatsScrollbar, setHasChatsScrollbar] = useState(false);
+  const [hasFriendsScrollbar, setHasFriendsScrollbar] = useState(false);
 
   const navLinks = [
     {
@@ -49,7 +46,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
       link: '/addFriend',
     },
     {
-      icon: <PersonOutlineOutlinedIcon className="list-item-icon" />,
+      icon: <Face4OutlinedIcon className="list-item-icon" />,
       title: 'Friend Requests',
       link: '/friendRequests',
       count: pendingRequestsCount,
@@ -131,67 +128,73 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     };
   }, [_id, otherFriends, otherFriendsClient, subscribeChatsToMore]);
 
-  const handleClickOverviewItem = (
-    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    link: string,
-  ) => {
-    toggleDrawer?.();
-    navigate(link);
-  };
-
   const handleToggle = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     setToggle: any,
   ) => {
-    e?.preventDefault();
-    e?.stopPropagation();
     setToggle((prev: boolean) => !prev);
   };
 
   const handleClickChat = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     chat: any,
+    selectedMember: any,
   ) => {
-    e?.preventDefault();
-    e?.stopPropagation();
     setIsListItemClicked((prev) => !prev);
     toggleDrawer?.();
     if (chat?._id) {
       setSelectedFriend(undefined);
-      setActiveMember(undefined);
       setSelectedChat(chat);
-      navigate(`/chat?id=${chat?._id}`, { state: { isListItemClicked } });
+      setSelectedMember(selectedMember);
+      navigate(`/chat?id=${chat?._id}&type=chat`, {
+        state: { isListItemClicked },
+      });
     }
   };
 
   const handleClickFriend = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     friend: any,
-    activeMember: any,
+    selectedMember: any,
   ) => {
-    e?.preventDefault();
-    e?.stopPropagation();
     toggleDrawer?.();
     setIsListItemClicked((prev) => !prev);
     if (friend?._id) {
       setSelectedChat(undefined);
       setSelectedFriend(friend);
-      setActiveMember(activeMember);
-      navigate('/chat', { state: { isListItemClicked } });
+      setSelectedMember(selectedMember);
+      navigate(`/chat?id=${friend?._id}&type=friend`, {
+        state: { isListItemClicked },
+      });
     }
+  };
+
+  const handleClickOverviewItem = (
+    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    link: string,
+  ) => {
+    setIsListItemClicked((prev) => !prev);
+    toggleDrawer?.();
+    navigate(link, {
+      state: { isListItemClicked },
+    });
   };
 
   return (
     <SideBarListStyled
+      chats={chats}
+      otherFriends={otherFriends}
       toggleChats={toggleChats}
       toggleFriends={toggleFriends}
       className={`flex-item ${className}`}
+      hasChatsScrollbar={hasChatsScrollbar}
+      hasFriendsScrollbar={hasFriendsScrollbar}
     >
       {chats?.length ? (
         <>
           <ListItem
             dense
-            disablePadding
+            sx={{ pt: 0, pb: 0 }}
             btnProps={{
               textProps: {
                 primary: 'Chats',
@@ -212,12 +215,15 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
           />
           {toggleChats ? (
             <DataList
+              dense
               data={chats}
               selectedItem={selectedChat}
               handleClickListItem={handleClickChat}
-              className="chats-wrapper"
+              className={toggleChats ? 'chats-wrapper margin-bottom' : ''}
               scrollDependencies={[toggleChats, toggleFriends]}
-              WebkitLineClamp={2}
+              WebkitLineClamp={1}
+              hasScrollbar={hasChatsScrollbar}
+              setHasScrollbar={setHasChatsScrollbar}
             />
           ) : null}
         </>
@@ -226,10 +232,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
         <>
           <ListItem
             dense
-            disablePadding
-            className={
-              toggleChats && chats?.length ? 'margin-top' : 'margin-top-2'
-            }
+            sx={{ pt: 0, pb: 0 }}
             btnProps={{
               textProps: {
                 primary: chats?.length ? 'New Chat' : 'Your Friends',
@@ -251,6 +254,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
           {toggleFriends ? (
             <>
               <DataList
+                dense
                 data={otherFriends}
                 sliceDataBy={
                   toggleChats && chats?.length > 2 && otherFriends?.length > 2
@@ -259,9 +263,11 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
                 }
                 selectedItem={selectedFriend}
                 handleClickListItem={handleClickFriend}
-                className="friends-wrapper"
+                className={toggleFriends ? 'friends-wrapper margin-bottom' : ''}
                 scrollDependencies={[toggleChats, toggleFriends]}
                 WebkitLineClamp={1}
+                hasScrollbar={hasFriendsScrollbar}
+                setHasScrollbar={setHasFriendsScrollbar}
               />
               {toggleChats && chats?.length > 2 && otherFriends?.length > 2 ? (
                 <Button
@@ -281,15 +287,8 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
         <>
           <ListItem
             dense
-            disablePadding
+            sx={{ pt: 0, pb: 0 }}
             disableHover
-            className={
-              (toggleChats && !otherFriends?.length) ||
-              (!toggleChats && toggleFriends) ||
-              (toggleChats && toggleFriends)
-                ? 'margin-top'
-                : 'margin-top-2'
-            }
             btnProps={{
               textProps: {
                 primary: 'Overview',
@@ -302,13 +301,10 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
               },
             }}
           />
-          <div className="overview-wrapper">
+          <List dense disablePadding>
             {navLinks.map((navLink, idx) => (
               <ListItem
                 key={navLink?.title}
-                dense
-                disablePadding
-                className="margin-bottom"
                 btnProps={{
                   textProps: {
                     primary: navLink?.title || '',
@@ -337,7 +333,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
                 }}
               />
             ))}
-          </div>
+          </List>
         </>
       ) : null}
     </SideBarListStyled>

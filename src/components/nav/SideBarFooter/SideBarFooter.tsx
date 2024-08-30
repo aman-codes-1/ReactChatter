@@ -18,7 +18,7 @@ const SideBarFooter = ({ className }: any) => {
 
   return (
     <SideBarFooterStyled className={className}>
-      <List dense disablePadding>
+      <List>
         <ListItem
           disablePadding
           disableHover
@@ -58,9 +58,8 @@ const SideBarFooter = ({ className }: any) => {
                 className="text-hidden"
                 sx={{
                   minHeight: '3.6rem',
-                  minWidth: '3.45rem',
+                  minWidth: '3.6rem',
                   ml: '1.7rem',
-                  mb: '0.6rem',
                 }}
                 disabled={isLoading}
               />

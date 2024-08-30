@@ -5,6 +5,7 @@ import { SideBarList } from './components';
 import { Dashboard } from './pages';
 import { ChatsAndFriendsProvider } from '../../../../contexts';
 import { BaseProtectedStyled } from './BaseProtected.styled';
+import { updateHeight } from '../../../../helpers';
 
 const BaseProtected = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -20,7 +21,16 @@ const BaseProtected = () => {
   };
 
   useLayoutEffect(() => {
-    setNavbarHeight(navbarRef?.current?.clientHeight);
+    updateHeight(navbarRef, setNavbarHeight);
+    window.addEventListener('resize', () =>
+      updateHeight(navbarRef, setNavbarHeight),
+    );
+
+    return () => {
+      window.removeEventListener('resize', () =>
+        updateHeight(navbarRef, setNavbarHeight),
+      );
+    };
   }, []);
 
   return (

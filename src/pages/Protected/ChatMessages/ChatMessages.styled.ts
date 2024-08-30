@@ -2,21 +2,31 @@ import { styled } from '@mui/system';
 
 export const ChatMessagesStyled = styled('div')<{
   navbarHeight: number;
+  appBarHeight: number;
   textFieldHeight: number;
-}>(({ theme, navbarHeight, textFieldHeight }) => ({
-  paddingTop: '1rem',
+  IsNoMessages: boolean;
+}>(({ theme, navbarHeight, appBarHeight, textFieldHeight, IsNoMessages }) => ({
+  '.app-bar-wrapper': {
+    position: 'fixed',
+    width: 'stretch',
+    top: 0,
+  },
+  '.app-bar': {
+    backgroundColor: theme.palette.primary.light,
+  },
   '.chat-container': {
     display: 'flex',
     width: '100%',
+    marginTop: `${appBarHeight}px`,
     overflow: 'auto',
     padding: '0rem 2.5rem',
-    height: `calc(100svh - ${textFieldHeight || 0}px - 2rem)`,
+    height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${IsNoMessages ? '0rem' : '1.45rem'})`,
     [theme.breakpoints.down('md')]: {
       padding: '0rem 1.5rem',
     },
     [theme.breakpoints.down('sm')]: {
       padding: '0rem 1rem',
-      height: `calc(100svh - ${textFieldHeight || 0}px - ${navbarHeight || 0}px - 2rem)`,
+      height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navbarHeight || 0}px - ${IsNoMessages ? '0rem' : '1.15rem'})`,
     },
   },
   '.chat-wrapper': {
@@ -70,18 +80,29 @@ export const ChatMessagesStyled = styled('div')<{
     width: 'stretch',
     top: 'auto',
     bottom: 0,
+    zIndex: 1000,
+    [theme.breakpoints.down('sm')]: {
+      bottom: navbarHeight,
+    },
+  },
+  '.text-field-app-bar': {
+    padding: '1.28rem 2.5rem',
+    [theme.breakpoints.down('md')]: {
+      padding: '1.28rem 1.5rem',
+    },
+    [theme.breakpoints.down('sm')]: {
+      padding: '1rem',
+    },
+  },
+  '.text-field-input-wrapper': {
     display: 'flex',
     gap: '0.7rem',
     alignItems: 'center',
-    padding: '1rem 2.5rem',
-    zIndex: 1000,
-    backgroundColor: theme.palette.primary.light,
-    [theme.breakpoints.down('md')]: {
-      padding: '1rem 1.5rem',
-    },
-    [theme.breakpoints.down('sm')]: {
-      bottom: navbarHeight,
-      padding: '1rem',
-    },
+    width: '100%',
+  },
+  '.text-field-input': {
+    borderRadius: '10px',
+    backgroundColor: theme.palette.common.white,
+    height: 44,
   },
 }));

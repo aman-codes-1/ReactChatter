@@ -1,9 +1,10 @@
-import { List, Typography } from '@mui/material';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { List } from '@mui/material';
+import { checkScrollbar } from '../../../../helpers';
 import { useAuth } from '../../../../hooks';
 import { Button, ListItem } from '../../../../components';
-import { FriendRequestStyled } from './FriendRequest.styled';
-import { useLayoutEffect, useRef, useState } from 'react';
 import { MainLayout } from '../MainLayout';
+import { FriendRequestStyled } from './FriendRequest.styled';
 
 const FriendRequest = ({
   data,
@@ -22,18 +23,17 @@ const FriendRequest = ({
   const isConfirmBtn = !!Object.keys(confirmBtnProps || {})?.length;
   const isDeleteBtn = !!Object.keys(deleteBtnProps || {})?.length;
 
-  const checkScrollBar = (ref: any) => {
-    const listElement = ref?.current;
-    if (listElement) {
-      setHasScrollbar(listElement?.scrollHeight > listElement?.clientHeight);
-    }
-  };
-
   useLayoutEffect(() => {
     if (data?.length) {
-      checkScrollBar(listRef);
+      checkScrollbar(listRef, setHasScrollbar);
+      window.addEventListener('resize', () =>
+        checkScrollbar(listRef, setHasScrollbar),
+      );
     }
-    const listRefObserver = new MutationObserver(() => checkScrollBar(listRef));
+
+    const listRefObserver = new MutationObserver(() =>
+      checkScrollbar(listRef, setHasScrollbar),
+    );
     const listElement = listRef?.current;
     if (listElement) {
       listRefObserver?.observe(listElement, {
@@ -42,7 +42,11 @@ const FriendRequest = ({
         attributes: true,
       });
     }
+
     return () => {
+      window.removeEventListener('resize', () =>
+        checkScrollbar(listRef, setHasScrollbar),
+      );
       listRefObserver?.disconnect();
     };
   }, [data]);

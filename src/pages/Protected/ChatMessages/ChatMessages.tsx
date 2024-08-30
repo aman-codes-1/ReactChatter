@@ -11,12 +11,20 @@ import {
   useOutletContext,
   useSearchParams,
 } from 'react-router-dom';
-import { Grid, IconButton, TextField, Typography } from '@mui/material';
+import {
+  AppBar,
+  Grid,
+  IconButton,
+  List,
+  TextField,
+  Toolbar,
+  Typography,
+} from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import DoneIcon from '@mui/icons-material/Done';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
-import { Avatar } from '../../../components';
+import { Avatar, ListItem } from '../../../components';
 import {
   MESSAGES_QUERY,
   useAuth,
@@ -24,7 +32,13 @@ import {
   useResize,
 } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
-import { getTime, handleKeyPress } from '../../../helpers';
+import {
+  getTime,
+  handleKeyPress,
+  scrollIntoView,
+  setFocus,
+  updateHeight,
+} from '../../../helpers';
 import { ChatMessagesStyled } from './ChatMessages.styled';
 
 const ChatMessages = () => {
@@ -32,25 +46,31 @@ const ChatMessages = () => {
   const location = useLocation();
   const [navbarHeight] = useOutletContext<any>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const chatId = searchParams.get('id');
+  const chatId =
+    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
+  const friendId =
+    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const [message, setMessage] = useState('');
   const [messagesQueue, setMessagesQueue] = useState<any[]>([]);
   const [heights, setHeights] = useState<any[]>([]);
   const [heights2, setHeights2] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [appBarHeight, setAppBarHeight] = useState(0);
+  console.log(appBarHeight);
   const [textFieldHeight, setTextFieldHeight] = useState(0);
   const { height, width } = useResize();
   const { auth: { _id = '' } = {} } = useAuth();
   const {
     chats = [],
     chatsLoading,
-    chatsCalled,
     chatError,
+    chatsCalled,
+    otherFriends = [],
+    otherFriendsLoading,
+    otherFriendsCalled,
     createChat,
-    selectedFriend,
-    activeMember,
+    selectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const { _id: friendId = '' } = selectedFriend || {};
   const {
     createMessage,
     client,
@@ -62,12 +82,10 @@ const ChatMessages = () => {
     setMessageGroups,
     messagesWithQueue,
   } = useMessages(chatId, setMessagesQueue);
-  const scrollRef = useRef<any>(null);
   const inputRef = useRef<any>(null);
+  const scrollRef = useRef<any>(null);
+  const appBarRef = useRef<any>(null);
   const textFieldRef = useRef<any>(null);
-
-  const setFocus = () => inputRef?.current && inputRef?.current?.focus();
-  setFocus();
 
   const useArrayRef = () => {
     const refs: any[] = [];
@@ -87,26 +105,77 @@ const ChatMessages = () => {
     setLoading(false);
   };
 
-  if (chatError) {
-    navigate('/');
-  }
+  setFocus(inputRef);
 
   useLayoutEffect(() => {
-    setTextFieldHeight(textFieldRef?.current?.clientHeight);
-  }, []);
+    scrollIntoView(scrollRef);
+    window.addEventListener('resize', () => scrollIntoView(scrollRef));
+
+    return () => {
+      window.removeEventListener('resize', () => scrollIntoView(scrollRef));
+    };
+  }, [
+    heights,
+    heights2,
+    messageGroups,
+    messagesQueue,
+    width,
+    height,
+    location?.state?.isListItemClicked,
+  ]);
 
   useLayoutEffect(() => {
-    if (chatsLoading || !chatsCalled) return;
-    if ((chatId && !chats?.length) || (!selectedFriend && !chatId)) {
+    updateHeight(textFieldRef, setTextFieldHeight);
+    window.addEventListener('resize', () =>
+      updateHeight(textFieldRef, setTextFieldHeight),
+    );
+
+    return () => {
+      window.removeEventListener('resize', () =>
+        updateHeight(textFieldRef, setTextFieldHeight),
+      );
+    };
+  }, [selectedMember]);
+
+  useLayoutEffect(() => {
+    updateHeight(appBarRef, setAppBarHeight);
+    window.addEventListener('resize', () =>
+      updateHeight(appBarRef, setAppBarHeight),
+    );
+
+    return () => {
+      window.removeEventListener('resize', () =>
+        updateHeight(appBarRef, setAppBarHeight),
+      );
+    };
+  }, [selectedMember]);
+
+  useLayoutEffect(() => {
+    if (
+      chatsLoading ||
+      !chatsCalled ||
+      otherFriendsLoading ||
+      !otherFriendsCalled
+    )
+      return;
+    if ((chatId && !chats?.length) || (friendId && !otherFriends?.length)) {
       navigate('/');
     }
-  }, [chatsLoading, chatsCalled, chatId, chats, selectedFriend, navigate]);
+  }, [
+    chatsLoading,
+    chatsCalled,
+    chatId,
+    friendId,
+    chats,
+    otherFriends,
+    navigate,
+  ]);
 
   useLayoutEffect(() => {
-    if ((selectedFriend && !chatId) || chatId) {
+    if (chatId || friendId) {
       resetAllStates();
     }
-  }, [selectedFriend, chatId]);
+  }, [chatId, friendId]);
 
   useLayoutEffect(() => {
     const getCachedData = async () => {
@@ -169,20 +238,16 @@ const ChatMessages = () => {
     }
   }, [messagesQueue, width, height]);
 
-  useLayoutEffect(() => {
-    const scrollElement = scrollRef?.current;
-    if (scrollElement) {
-      scrollElement?.scrollIntoView();
-    }
-  }, [
-    heights,
-    heights2,
-    messageGroups,
-    messagesQueue,
-    width,
-    height,
-    location?.state?.isListItemClicked,
-  ]);
+  if (chatError) {
+    navigate('/');
+  }
+
+  if (
+    (chatId && (chatsLoading || !chatsCalled)) ||
+    (friendId && (otherFriendsLoading || !otherFriendsCalled))
+  ) {
+    return null;
+  }
 
   const handleChangeMessage = (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
@@ -207,7 +272,7 @@ const ChatMessages = () => {
           userId: _id,
           friendId,
           type: 'private',
-          friendUserId: activeMember?._id,
+          friendUserId: selectedMember?._id,
         },
       });
       const newChatId = res?.data?.createChat?._id;
@@ -222,6 +287,7 @@ const ChatMessages = () => {
         });
         setSearchParams((params) => {
           params.set('id', newChatId);
+          params.set('type', 'chat');
           return params;
         });
       }
@@ -298,16 +364,56 @@ const ChatMessages = () => {
     );
   };
 
+  const IsNoMessages =
+    !loadingMessages &&
+    !loading &&
+    !(messageGroups?.length || messagesQueue?.length)
+      ? true
+      : false;
+
   return (
     <ChatMessagesStyled
       navbarHeight={navbarHeight}
+      appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
+      IsNoMessages={IsNoMessages}
     >
+      <div className="app-bar-wrapper">
+        <AppBar position="static" className="app-bar" ref={appBarRef}>
+          <Toolbar>
+            <List dense disablePadding>
+              <ListItem
+                disableHover
+                disableGutters
+                disablePadding
+                btnProps={{
+                  disableGutters: true,
+                  alignItems: 'flex-start',
+                  textProps: {
+                    primary: selectedMember?.memberDetails?.name,
+                    secondary: selectedMember?.memberDetails?.email,
+                    primaryTypographyProps: {
+                      fontSize: '1.08rem',
+                    },
+                    secondaryTypographyProps: {
+                      fontSize: '0.85rem',
+                      style: {
+                        WebkitLineClamp: 1,
+                      },
+                    },
+                  },
+                  avatarProps: {
+                    src: selectedMember?.memberDetails?.picture,
+                  },
+                }}
+              ></ListItem>
+            </List>
+          </Toolbar>
+        </AppBar>
+      </div>
       <div className="chat-container">
         {(loadingMessages || loading) && null}
-        {!loadingMessages &&
-        !loading &&
-        !(messageGroups?.length || messagesQueue?.length) ? (
+        {IsNoMessages ? (
           <div className="no-messages-wrapper">No Messages</div>
         ) : null}
         {!loadingMessages &&
@@ -401,28 +507,31 @@ const ChatMessages = () => {
         ) : null}
       </div>
       <div className="text-field-wrapper" ref={textFieldRef}>
-        <TextField
-          autoFocus
-          fullWidth
-          value={message}
-          onKeyUp={(_: any) => handleKeyPress(_, handleSendMessage)}
-          onChange={handleChangeMessage}
-          InputProps={{
-            style: {
-              borderRadius: '10px',
-              backgroundColor: '#FFFFFF',
-              height: 44,
-            },
-          }}
-          placeholder=" Type a message"
-          inputRef={inputRef}
-          size="medium"
-        />
-        {message ? (
-          <IconButton onClick={handleSendMessage}>
-            <SendIcon color="info" />
-          </IconButton>
-        ) : null}
+        <AppBar position="static" className="app-bar text-field-app-bar">
+          <Toolbar disableGutters variant="dense">
+            <div className="text-field-input-wrapper">
+              <TextField
+                autoFocus
+                fullWidth
+                value={message}
+                onKeyUp={(_: any) => handleKeyPress(_, handleSendMessage)}
+                onChange={handleChangeMessage}
+                slotProps={{
+                  input: {
+                    className: 'text-field-input',
+                  },
+                }}
+                placeholder=" Type a message"
+                inputRef={inputRef}
+              />
+              {message ? (
+                <IconButton onClick={handleSendMessage}>
+                  <SendIcon color="info" />
+                </IconButton>
+              ) : null}
+            </div>
+          </Toolbar>
+        </AppBar>
       </div>
     </ChatMessagesStyled>
   );

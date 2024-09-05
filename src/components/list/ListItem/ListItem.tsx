@@ -11,6 +11,7 @@ const ListItem = forwardRef((props: ListItemProps, ref: any) => {
     wrapperClassName,
     btnProps,
     children,
+    sx,
     ...rest
   } = props;
 
@@ -20,7 +21,7 @@ const ListItem = forwardRef((props: ListItemProps, ref: any) => {
       disableHover={disableHover}
       className={wrapperClassName}
     >
-      <MuiListItem {...rest}>
+      <MuiListItem {...rest} sx={{ ...sx, cursor: 'default' }}>
         <ListItemButton disableHover={disableHover} ref={ref} {...btnProps}>
           {btnProps?.children || null}
         </ListItemButton>

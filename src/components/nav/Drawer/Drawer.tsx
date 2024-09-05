@@ -25,7 +25,7 @@ const Drawer = ({
           : {}
       }
       PaperProps={{
-        sx: { width: '87vw', height: `calc(100% - ${navbarHeight || 0}px)` },
+        sx: { width: '90vw', height: `calc(100% - ${navbarHeight || 0}px)` },
       }}
     >
       {children}

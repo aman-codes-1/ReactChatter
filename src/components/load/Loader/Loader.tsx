@@ -1,4 +1,5 @@
-import { Box, CircularProgress, Grid, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { circularProgressClasses } from '@mui/material/CircularProgress';
 import { ILoaderProps } from './ILoaderProps';
 

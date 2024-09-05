@@ -1,5 +1,5 @@
 import { MouseEventHandler, useContext } from 'react';
-import { FriendRequest, MainLayout } from '..';
+import { FriendRequest } from '..';
 import { useSnackbar } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
 

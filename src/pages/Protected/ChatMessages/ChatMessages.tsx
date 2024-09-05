@@ -13,26 +13,22 @@ import {
 } from 'react-router-dom';
 import {
   AppBar,
-  Grid,
   IconButton,
   List,
   TextField,
   Toolbar,
   Typography,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import SendIcon from '@mui/icons-material/Send';
 import DoneIcon from '@mui/icons-material/Done';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import { Avatar, ListItem } from '../../../components';
-import {
-  MESSAGES_QUERY,
-  useAuth,
-  useMessages,
-  useResize,
-} from '../../../hooks';
+import { MESSAGES_QUERY, useAuth, useMessages } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
 import {
+  checkWrapping,
   getTime,
   handleKeyPress,
   scrollIntoView,
@@ -52,13 +48,9 @@ const ChatMessages = () => {
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const [message, setMessage] = useState('');
   const [messagesQueue, setMessagesQueue] = useState<any[]>([]);
-  const [heights, setHeights] = useState<any[]>([]);
-  const [heights2, setHeights2] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [appBarHeight, setAppBarHeight] = useState(0);
-  console.log(appBarHeight);
   const [textFieldHeight, setTextFieldHeight] = useState(0);
-  const { height, width } = useResize();
   const { auth: { _id = '' } = {} } = useAuth();
   const {
     chats = [],
@@ -76,7 +68,6 @@ const ChatMessages = () => {
     client,
     messagesData,
     loadingMessages,
-    messages,
     setMessages,
     messageGroups,
     setMessageGroups,
@@ -86,22 +77,14 @@ const ChatMessages = () => {
   const scrollRef = useRef<any>(null);
   const appBarRef = useRef<any>(null);
   const textFieldRef = useRef<any>(null);
-
-  const useArrayRef = () => {
-    const refs: any[] = [];
-    return [refs, (el: any) => el && refs.push(el)];
-  };
-
-  const [elements, ref]: any = useArrayRef();
-  const [elements2, ref2]: any = useArrayRef();
+  const msgRefs = useRef<any>([]);
+  const msgQueueRefs = useRef<any>([]);
 
   const resetAllStates = () => {
     setMessages([]);
     setMessageGroups([]);
     setMessage('');
     setMessagesQueue([]);
-    setHeights([]);
-    setHeights2([]);
     setLoading(false);
   };
 
@@ -115,27 +98,42 @@ const ChatMessages = () => {
       window.removeEventListener('resize', () => scrollIntoView(scrollRef));
     };
   }, [
-    heights,
-    heights2,
+    chatsLoading,
+    otherFriendsLoading,
     messageGroups,
     messagesQueue,
-    width,
-    height,
     location?.state?.isListItemClicked,
   ]);
 
   useLayoutEffect(() => {
-    updateHeight(textFieldRef, setTextFieldHeight);
-    window.addEventListener('resize', () =>
-      updateHeight(textFieldRef, setTextFieldHeight),
-    );
+    const checkColumns = () => {
+      if (messageGroups?.length) {
+        messageGroups?.map((messageGroup) => {
+          if (messageGroup?.data?.length) {
+            messageGroup?.data?.map((_: any, index: number) => {
+              const result = checkWrapping(msgRefs, index);
+              console.log(result);
+              if (result?.timeStampDiv) {
+                if (result?.isColumn) {
+                  result?.timeStampDiv?.classList?.add?.('msg-column');
+                } else {
+                  result?.timeStampDiv?.classList?.add?.('msg-row');
+                }
+              }
+            });
+          }
+        });
+      }
+    };
+
+    checkColumns();
+
+    window.addEventListener('resize', checkColumns);
 
     return () => {
-      window.removeEventListener('resize', () =>
-        updateHeight(textFieldRef, setTextFieldHeight),
-      );
+      window.removeEventListener('resize', checkColumns);
     };
-  }, [selectedMember]);
+  }, [messagesWithQueue]);
 
   useLayoutEffect(() => {
     updateHeight(appBarRef, setAppBarHeight);
@@ -148,7 +146,20 @@ const ChatMessages = () => {
         updateHeight(appBarRef, setAppBarHeight),
       );
     };
-  }, [selectedMember]);
+  }, [messagesWithQueue, selectedMember]);
+
+  useLayoutEffect(() => {
+    updateHeight(textFieldRef, setTextFieldHeight);
+    window.addEventListener('resize', () =>
+      updateHeight(textFieldRef, setTextFieldHeight),
+    );
+
+    return () => {
+      window.removeEventListener('resize', () =>
+        updateHeight(textFieldRef, setTextFieldHeight),
+      );
+    };
+  }, [messagesWithQueue, selectedMember]);
 
   useLayoutEffect(() => {
     if (
@@ -162,12 +173,14 @@ const ChatMessages = () => {
       navigate('/');
     }
   }, [
+    chatId,
+    chats?.length,
     chatsLoading,
     chatsCalled,
-    chatId,
     friendId,
-    chats,
-    otherFriends,
+    otherFriends?.length,
+    otherFriendsLoading,
+    otherFriendsCalled,
     navigate,
   ]);
 
@@ -199,50 +212,13 @@ const ChatMessages = () => {
     }
   }, [messagesData, chatId]);
 
-  useLayoutEffect(() => {
-    const checkDimensions = () => {
-      setHeights([]);
-      setHeights(
-        elements.map((element: any, idx: number) => ({
-          msgId: messages?.[idx]?._id,
-          height: element?.clientHeight,
-        })),
-      );
-    };
-    if (messages?.length) {
-      checkDimensions();
-    }
-    const listRefObserver = new MutationObserver(checkDimensions);
-    const listElement = ref?.current;
-    if (listElement) {
-      listRefObserver?.observe(listElement, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-      });
-    }
-    return () => {
-      listRefObserver?.disconnect();
-    };
-  }, [messages, width, height]);
-
-  useLayoutEffect(() => {
-    if (messagesQueue?.length) {
-      setHeights2([]);
-      setHeights2(
-        elements2.map((element: any, idx: number) => ({
-          msgTimestamp: messagesQueue?.[idx]?.timestamp,
-          height: element?.clientHeight,
-        })),
-      );
-    }
-  }, [messagesQueue, width, height]);
-
   if (chatError) {
     navigate('/');
   }
 
   if (
+    loading ||
+    loadingMessages ||
     (chatId && (chatsLoading || !chatsCalled)) ||
     (friendId && (otherFriendsLoading || !otherFriendsCalled))
   ) {
@@ -315,34 +291,15 @@ const ChatMessages = () => {
   };
 
   const renderChat = (msg: any, index: number, data: any, side: string) => {
-    const msgHeight = heights?.length
-      ? heights?.find((el: any) => el?.msgId === msg?._id)?.height || 0
-      : 0;
     return (
-      <div className={`${side}Row`} key={msg?._id} ref={ref}>
+      <div className={`${side}Row`} key={msg?._id}>
         <Typography
           align="left"
           className={`msg ${side} ${attachClass(data, index, side)}`}
-          // sx={{
-          //   gap: msgHeight > 50 ? '' : '1.2rem',
-          //   alignItems: msgHeight > 50 ? 'flex-start' : 'center',
-          //   flexDirection: msgHeight > 50 ? 'column' : 'row',
-          // }}
-          sx={{
-            gap: '1.2rem',
-            alignItems: 'center',
-          }}
+          ref={(el) => (msgRefs.current[index] = el)}
         >
-          {msg?.message}
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.2rem',
-              marginTop: '0.875rem',
-              alignItems: 'center',
-              alignSelf: 'flex-end',
-            }}
-          >
+          <span>{msg?.message}</span>
+          <div className="msg-timestamp">
             {msg?.sender?.sentStatus?.timestamp ? (
               <Typography variant="caption">
                 {getTime(msg?.sender?.sentStatus?.timestamp)}
@@ -364,12 +321,7 @@ const ChatMessages = () => {
     );
   };
 
-  const IsNoMessages =
-    !loadingMessages &&
-    !loading &&
-    !(messageGroups?.length || messagesQueue?.length)
-      ? true
-      : false;
+  const IsNoMessages = !(messageGroups?.length || messagesQueue?.length);
 
   return (
     <ChatMessagesStyled
@@ -412,7 +364,6 @@ const ChatMessages = () => {
         </AppBar>
       </div>
       <div className="chat-container">
-        {(loadingMessages || loading) && null}
         {IsNoMessages ? (
           <div className="no-messages-wrapper">No Messages</div>
         ) : null}
@@ -431,11 +382,11 @@ const ChatMessages = () => {
                 key={`${JSON.stringify(messageGroup)} ${idx}`}
               >
                 {messageGroup?.side === 'left' && (
-                  <Grid item>
+                  <Grid>
                     <Avatar src="" width={32} height={32} />
                   </Grid>
                 )}
-                <Grid item xs={8}>
+                <Grid size={8}>
                   {messageGroup?.data?.length
                     ? messageGroup?.data?.map((msg: any, index: number) =>
                         renderChat(
@@ -450,11 +401,6 @@ const ChatMessages = () => {
               </Grid>
             ))}
             {messagesQueue?.map((messageQueue: any, idx: number) => {
-              const msgHeight2 = heights2?.length
-                ? heights2?.find(
-                    (el: any) => el?.msgTimestamp === messageQueue?.timestamp,
-                  )?.height || 0
-                : 0;
               return (
                 <Grid
                   container
@@ -462,31 +408,15 @@ const ChatMessages = () => {
                   justifyContent="flex-end"
                   key={`${JSON.stringify(messageQueue)} ${idx}`}
                 >
-                  <Grid item xs={8}>
-                    <div className="rightRow" ref={ref2}>
+                  <Grid size={8}>
+                    <div className="rightRow">
                       <Typography
                         align="left"
                         className="msg right"
-                        // sx={{
-                        //   gap: msgHeight2 > 50 ? '' : '1.2rem',
-                        //   alignItems: msgHeight2 > 50 ? 'flex-start' : 'center',
-                        //   flexDirection: msgHeight2 > 50 ? 'column' : 'row',
-                        // }}
-                        sx={{
-                          gap: '1.2rem',
-                          alignItems: 'center',
-                        }}
+                        ref={(el) => (msgQueueRefs.current[idx] = el)}
                       >
                         {messageQueue?.message}
-                        <div
-                          style={{
-                            display: 'flex',
-                            gap: '0.25rem',
-                            marginTop: '0.875rem',
-                            alignItems: 'center',
-                            alignSelf: 'flex-end',
-                          }}
-                        >
+                        <div className="msg-timestamp">
                           {messageQueue?.timestamp ? (
                             <Typography variant="caption">
                               {getTime(messageQueue?.timestamp)}

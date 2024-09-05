@@ -77,7 +77,7 @@ export const updateHeight = (ref: any, setHeight: any) => {
 export const scrollIntoView = (ref: any) => {
   const listElement = ref?.current;
   if (listElement) {
-    listElement?.scrollIntoView();
+    listElement?.scrollIntoView({ block: 'end', inline: 'nearest' });
   }
 };
 
@@ -99,6 +99,28 @@ export const scrollToSelected = (
     const listHeight = listRect.height;
     const scrollPos = topPos - listHeight / 2 + itemHeight / 2;
     listElement?.scrollTo({ top: scrollPos, behavior: 'smooth' });
+  }
+};
+
+export const checkWrapping = (refs: any, index: number) => {
+  const listElement = refs?.current?.[index];
+  if (listElement) {
+    const { clientHeight, children, firstChild } = listElement || {};
+    const items: any = Array.from(children);
+    if (items?.length > 1) {
+      const firstItemTop = items[0].getBoundingClientRect().top;
+      const lastItemTop = items[items.length - 1].getBoundingClientRect().top;
+
+      const wrapped = items.some((item: any, index: number) => {
+        if (index === 0) return false; // Skip the first item
+        return item.getBoundingClientRect().top !== firstItemTop;
+      });
+
+      return {
+        isColumn: wrapped,
+        timeStampDiv: items?.[1] || null,
+      };
+    }
   }
 };
 

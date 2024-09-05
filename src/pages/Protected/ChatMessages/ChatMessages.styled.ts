@@ -20,13 +20,13 @@ export const ChatMessagesStyled = styled('div')<{
     marginTop: `${appBarHeight}px`,
     overflow: 'auto',
     padding: '0rem 2.5rem',
-    height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${IsNoMessages ? '0rem' : '1.45rem'})`,
+    height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${IsNoMessages ? '0rem' : '0.95rem'})`,
     [theme.breakpoints.down('md')]: {
       padding: '0rem 1.5rem',
     },
     [theme.breakpoints.down('sm')]: {
       padding: '0rem 1rem',
-      height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navbarHeight || 0}px - ${IsNoMessages ? '0rem' : '1.15rem'})`,
+      height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navbarHeight || 0}px - ${IsNoMessages ? '0rem' : '0.8rem'})`,
     },
   },
   '.chat-wrapper': {
@@ -43,8 +43,23 @@ export const ChatMessagesStyled = styled('div')<{
     display: 'inline-flex',
     padding: '6px 14px',
     borderRadius: 4,
-    marginTop: 5,
-    wordBreak: 'break-word',
+    marginTop: 5.5,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '1.2rem',
+  },
+  '.msg-timestamp': {
+    display: 'flex',
+    gap: '0.25rem',
+    alignItems: 'center',
+    flex: '0 0 auto',
+  },
+  '.msg-row': {
+    marginTop: '0.8rem',
+  },
+  '.msg-column': {
+    marginLeft: 'auto',
+    marginTop: '-0.9rem',
   },
   '.leftRow': {
     textAlign: 'left',
@@ -80,7 +95,6 @@ export const ChatMessagesStyled = styled('div')<{
     width: 'stretch',
     top: 'auto',
     bottom: 0,
-    zIndex: 1000,
     [theme.breakpoints.down('sm')]: {
       bottom: navbarHeight,
     },

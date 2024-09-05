@@ -6,6 +6,7 @@ import { DataList } from '../../../components';
 
 const RecentChats = () => {
   const navigate = useNavigate();
+  const [isListItemClicked, setIsListItemClicked] = useState(false);
   const [hasScrollbar, setHasScrollbar] = useState(false);
   const {
     chats = [],
@@ -18,17 +19,18 @@ const RecentChats = () => {
   } = useContext(ChatsAndFriendsContext);
 
   const handleClickChat = async (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     chat: any,
     selectedMember: any,
   ) => {
-    e?.preventDefault();
-    e?.stopPropagation();
+    setIsListItemClicked((prev) => !prev);
     if (chat?._id) {
       setSelectedFriend(undefined);
       setSelectedChat(chat);
       setSelectedMember(selectedMember);
-      navigate(`/chat?id=${chat?._id}`);
+      navigate(`/chat?id=${chat?._id}&type=chat`, {
+        state: { isListItemClicked },
+      });
     }
   };
 
@@ -40,7 +42,7 @@ const RecentChats = () => {
       data={chats}
     >
       <DataList
-        dense={chats?.length > 5}
+        dense={hasScrollbar}
         disableGutters
         data={chats}
         selectedItem={selectedChat}

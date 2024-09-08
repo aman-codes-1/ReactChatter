@@ -303,32 +303,30 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
 
   useLayoutEffect(() => {
     if (chats?.length && chatId) {
-      const selectedChat = chats?.find((el: any) => el?._id === chatId);
-      setSelectedChat(selectedChat);
-      const selectedMember = selectedChat?.members?.find(
+      const selChat = chats?.find((el: any) => el?._id === chatId);
+      setSelectedChat(selChat);
+      const selMember = selChat?.members?.find(
         (chatMember: any) => chatMember?._id !== _id,
       );
-      setSelectedMember(selectedMember);
+      setSelectedMember(selMember);
     }
   }, [chats, chatId]);
 
   useLayoutEffect(() => {
     if (otherFriends?.length && friendId) {
-      const selectedFriend = otherFriends?.find(
-        (el: any) => el?._id === friendId,
-      );
-      setSelectedFriend(selectedFriend);
-      const selectedMember = selectedFriend?.members?.find(
+      const selFriend = otherFriends?.find((el: any) => el?._id === friendId);
+      setSelectedFriend(selFriend);
+      const selMember = selFriend?.members?.find(
         (friendMember: any) => friendMember?._id !== _id,
       );
-      setSelectedMember(selectedMember);
+      setSelectedMember(selMember);
     }
   }, [otherFriends, friendId]);
 
   return (
     <ChatsAndFriendsContext.Provider
       value={{
-        //chat
+        // chat
         chat,
         chatLoading,
         chatError,

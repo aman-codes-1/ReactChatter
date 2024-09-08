@@ -9,6 +9,7 @@ import {
   RecentChats,
   SentRequests,
 } from '../pages';
+import { MessagesProvider } from '../contexts';
 
 export const routesConfig = () => [
   {
@@ -45,11 +46,13 @@ export const routesConfig = () => [
     type: 'private',
     path: '/chat',
     Element: () => (
-      <SuspenseWrapper
-        path="pages"
-        compName="ChatMessages"
-        fallback={<ChatMessages />}
-      />
+      <MessagesProvider>
+        <SuspenseWrapper
+          path="pages"
+          compName="ChatMessages"
+          fallback={<ChatMessages />}
+        />
+      </MessagesProvider>
     ),
   },
   {

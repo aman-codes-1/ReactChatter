@@ -15,6 +15,15 @@ export {
   UPDATE_REQUEST_MUTATION,
   REQUEST_ADDED_SUBSCRIPTION,
 } from './ChatsAndFriends';
+export {
+  MessagesContext,
+  MessagesProvider,
+  CREATE_MESSAGE_MUTATION,
+  MESSAGES_QUERY,
+  MESSAGE_ADDED_SUBSCRIPTION,
+  MESSAGE_UPDATED_SUBSCRIPTION,
+  UPDATE_MESSAGE_MUTATION,
+} from './Messages';
 export { ConnectionContext, ConnectionProvider } from './Connection';
 export { SnackbarContext, SnackbarProvider } from './Snackbar';
 export { WebSocketContext, WebSocketProvider } from './WebSocket';

@@ -51,8 +51,6 @@ const DataList = ({
     };
   }, [data, selectedItem, ...scrollDependencies]);
 
-  useLayoutEffect(() => {}, []);
-
   const renderList = (
     obj: any,
     idx: number,

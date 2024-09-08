@@ -1,11 +1,11 @@
 import { styled } from '@mui/system';
 
 export const ChatMessagesStyled = styled('div')<{
-  navbarHeight: number;
-  appBarHeight: number;
-  textFieldHeight: number;
-  IsNoMessages: boolean;
-}>(({ theme, navbarHeight, appBarHeight, textFieldHeight, IsNoMessages }) => ({
+  navbarHeight?: number;
+  textFieldHeight?: number;
+  appBarHeight?: number;
+  messageQueue?: any;
+}>(({ theme, navbarHeight, appBarHeight, textFieldHeight, messageQueue }) => ({
   '.app-bar-wrapper': {
     position: 'fixed',
     width: 'stretch',
@@ -20,13 +20,13 @@ export const ChatMessagesStyled = styled('div')<{
     marginTop: `${appBarHeight}px`,
     overflow: 'auto',
     padding: '0rem 2.5rem',
-    height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${IsNoMessages ? '0rem' : '0.95rem'})`,
+    height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px)`,
     [theme.breakpoints.down('md')]: {
       padding: '0rem 1.5rem',
     },
     [theme.breakpoints.down('sm')]: {
       padding: '0rem 1rem',
-      height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navbarHeight || 0}px - ${IsNoMessages ? '0rem' : '0.8rem'})`,
+      height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navbarHeight || 0}px)`,
     },
   },
   '.chat-wrapper': {
@@ -39,56 +39,76 @@ export const ChatMessagesStyled = styled('div')<{
     justifyContent: 'center',
     alignItems: 'center',
   },
+  '.msg-grid': {
+    margin: '8px 0px 13px 0px',
+    [theme.breakpoints.down('sm')]: {
+      margin: '8px 0px 11px 0px',
+    },
+  },
+  '.msg-left-row': {
+    textAlign: 'left',
+    margin: '3.5px 0px',
+  },
+  '.msg-right-row': {
+    textAlign: 'right',
+    margin: '3.5px 0px',
+  },
+  '.msg-left-row:nth-child(1)': {
+    marginTop: 0,
+  },
+  '.msg-right-row:nth-child(1)': {
+    marginTop: 0,
+  },
   '.msg': {
     display: 'inline-flex',
-    padding: '6px 14px',
+    position: 'relative',
+    padding: '8px 14px 11px 14px',
     borderRadius: 4,
-    marginTop: 5.5,
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: '1.2rem',
   },
-  '.msg-timestamp': {
-    display: 'flex',
-    gap: '0.25rem',
-    alignItems: 'center',
-    flex: '0 0 auto',
-  },
-  '.msg-row': {
-    marginTop: '0.8rem',
-  },
-  '.msg-column': {
-    marginLeft: 'auto',
-    marginTop: '-0.9rem',
-  },
-  '.leftRow': {
-    textAlign: 'left',
-  },
-  '.rightRow': {
-    textAlign: 'right',
-  },
-  '.left': {
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
+  '.msg-left': {
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
     backgroundColor: theme.palette.grey[100],
   },
-  '.right': {
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
+  '.msg-right': {
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.common.white,
   },
-  '.leftFirst': {
-    borderTopLeftRadius: 20,
+  '.msg-left-first': {
+    borderTopLeftRadius: 16,
   },
-  '.rightFirst': {
-    borderTopRightRadius: 20,
+  '.msg-right-first': {
+    borderTopRightRadius: 16,
   },
-  '.leftLast': {
-    borderBottomLeftRadius: 20,
+  '.msg-left-last': {
+    borderBottomLeftRadius: 16,
   },
-  '.rightLast': {
-    borderBottomRightRadius: 20,
+  '.msg-right-last': {
+    borderBottomRightRadius: 16,
+  },
+  '.msg-content': {
+    position: 'relative',
+    display: 'inline-block',
+    fontWeight: 470,
+    color: theme.palette.common.white,
+  },
+  '.msg-content::after': {
+    content: '""',
+    display: 'inline-block',
+    width: '85px',
+  },
+  '.msg-timestamp': {
+    position: 'absolute',
+    right: '10px',
+    bottom: '5px',
+    display: 'flex',
+    gap: '0.25rem',
+    alignItems: 'center',
+  },
+  '.msg-timestamp-text': {
+    color: theme.palette.primary.contrastText,
   },
   '.text-field-wrapper': {
     position: 'fixed',

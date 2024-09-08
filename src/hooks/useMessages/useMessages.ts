@@ -214,7 +214,7 @@ export const useMessages = (
   chatId: string | null,
   setMessagesQueue: Dispatch<SetStateAction<string[]>>,
 ) => {
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messagesData, setMessagesData] = useState<any[]>([]);
   const [messageGroups, setMessageGroups] = useState<any[]>([]);
   const { auth: { _id = '' } = {} } = useAuth();
 
@@ -232,15 +232,15 @@ export const useMessages = (
       }
       return prev;
     });
-    setMessages(msgs);
+    setMessagesData(msgs);
     const messageGroupsData = groupMessages(msgs, _id);
     setMessageGroups(messageGroupsData);
   };
 
   const {
-    client,
+    client: messagesClient,
     refetch: refetchMessages,
-    data: messagesData,
+    data: messages,
     loading: loadingMessages,
     error: errorMessages,
   } = useQuery(MESSAGES_QUERY, {
@@ -300,24 +300,28 @@ export const useMessages = (
   //   });
 
   return {
-    createMessage,
-    updateMessage,
-    client,
-    messagesData,
-    loadingMessages,
-    loadingCreateMessage,
-    loadingUpdateMessage,
-    loadingOnMessageAdded,
-    errorMessages,
-    errorCreateMessage,
-    errorUpdateMessage,
-    errorOnMessageAdded,
+    // messages
     messages,
-    setMessages,
+    loadingMessages,
+    errorMessages,
+    refetchMessages,
+    messagesClient,
+    // createMessage
+    createMessage,
+    loadingCreateMessage,
+    errorCreateMessage,
+    // updateMessage
+    updateMessage,
+    loadingUpdateMessage,
+    errorUpdateMessage,
+    // OnMessageAdded
+    loadingOnMessageAdded,
+    errorOnMessageAdded,
+    // state
+    messagesData,
+    setMessagesData,
     messageGroups,
     setMessageGroups,
-    groupMessages,
     messagesWithQueue,
-    refetchMessages,
   };
 };

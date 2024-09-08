@@ -63,6 +63,7 @@ export const ListItemButtonStyled = styled('div')<{
       },
     },
     '.MuiButtonBase-root.MuiListItemButton-root.Mui-selected': {
+      backgroundColor: theme.palette.primary.light,
       '.MuiTypography-root': {
         color: theme.palette.secondary.main,
       },

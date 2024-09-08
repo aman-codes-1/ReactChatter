@@ -102,26 +102,28 @@ export const scrollToSelected = (
   }
 };
 
-export const checkWrapping = (refs: any, index: number) => {
-  const listElement = refs?.current?.[index];
-  if (listElement) {
-    const { clientHeight, children, firstChild } = listElement || {};
-    const items: any = Array.from(children);
-    if (items?.length > 1) {
-      const firstItemTop = items[0].getBoundingClientRect().top;
-      const lastItemTop = items[items.length - 1].getBoundingClientRect().top;
+export const groupMessages = (msgs: any, _id: string) => {
+  if (!msgs && !msgs?.length) return [];
 
-      const wrapped = items.some((item: any, index: number) => {
-        if (index === 0) return false; // Skip the first item
-        return item.getBoundingClientRect().top !== firstItemTop;
-      });
+  const groupedMessages = msgs
+    ?.reduce((acc: any, message: any) => {
+      const lastGroup = acc && acc?.length ? acc?.[acc.length - 1] : null;
+      const isSameSender = lastGroup
+        ? lastGroup?.[0]?.sender?._id === message?.sender?._id
+        : false;
+      if (isSameSender) {
+        lastGroup.push(message);
+      } else {
+        acc.push([message]);
+      }
+      return acc;
+    }, [])
+    .map((msgGroups: any) => ({
+      side: msgGroups?.[0]?.sender?._id === _id ? 'right' : 'left',
+      data: msgGroups,
+    }));
 
-      return {
-        isColumn: wrapped,
-        timeStampDiv: items?.[1] || null,
-      };
-    }
-  }
+  return groupedMessages;
 };
 
 export const regex = {

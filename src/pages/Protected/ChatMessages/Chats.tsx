@@ -1,34 +1,27 @@
-import { useContext, useLayoutEffect, useRef, useState } from 'react';
+import { useContext, useLayoutEffect, useRef } from 'react';
 import {
   useLocation,
   useOutletContext,
   useSearchParams,
 } from 'react-router-dom';
-import { AppBar, List, Toolbar, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { Avatar, ListItem } from '../../../components';
-import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
+import { Avatar } from '../../../components';
+import { MessagesContext } from '../../../contexts';
 import { MESSAGES_QUERY, useAuth } from '../../../hooks';
-import {
-  getTime,
-  groupMessages,
-  scrollIntoView,
-  updateHeight,
-} from '../../../helpers';
+import { getTime, groupMessages, scrollIntoView } from '../../../helpers';
 import { ChatMessagesStyled } from './ChatMessages.styled';
 
-const Chats = ({ textFieldHeight }: any) => {
+const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   const location = useLocation();
   const [navbarHeight] = useOutletContext<any>();
   const [searchParams] = useSearchParams();
   const chatId =
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
-  const [appBarHeight, setAppBarHeight] = useState(0);
   const { auth: { _id = '' } = {} } = useAuth();
-  const { selectedMember } = useContext(ChatsAndFriendsContext);
   const {
     messages = [],
     messagesClient,
@@ -39,10 +32,7 @@ const Chats = ({ textFieldHeight }: any) => {
     messageQueue = [],
     setMessageQueue,
   } = useContext(MessagesContext);
-  const appBarRef = useRef<any>(null);
   const scrollRef = useRef<any>(null);
-  const msgRefs = useRef<any>([]);
-  const msgQueueRefs = useRef<any>([]);
 
   const messagesWithQueue = (msgs: any) => {
     setMessageQueue((prev: any[]) => {
@@ -86,19 +76,6 @@ const Chats = ({ textFieldHeight }: any) => {
       getCachedData();
     }
   }, [messages, chatId]);
-
-  useLayoutEffect(() => {
-    updateHeight(appBarRef, setAppBarHeight);
-    window.addEventListener('resize', () =>
-      updateHeight(appBarRef, setAppBarHeight),
-    );
-
-    return () => {
-      window.removeEventListener('resize', () =>
-        updateHeight(appBarRef, setAppBarHeight),
-      );
-    };
-  }, []);
 
   useLayoutEffect(() => {
     scrollIntoView(scrollRef);
@@ -159,7 +136,6 @@ const Chats = ({ textFieldHeight }: any) => {
         <Typography
           align="left"
           className={`msg msg-${side} ${attachClass(data, index, side)}`}
-          ref={(el) => (msgRefs.current[index] = el)}
         >
           <div className="msg-content">{msg?.message}</div>
           <div className="msg-timestamp">
@@ -194,43 +170,9 @@ const Chats = ({ textFieldHeight }: any) => {
   return (
     <ChatMessagesStyled
       navbarHeight={navbarHeight}
-      textFieldHeight={textFieldHeight}
       appBarHeight={appBarHeight}
-      messageQueue={messageQueue}
+      textFieldHeight={textFieldHeight}
     >
-      <div className="app-bar-wrapper">
-        <AppBar position="static" className="app-bar" ref={appBarRef}>
-          <Toolbar>
-            <List dense disablePadding>
-              <ListItem
-                disableHover
-                disableGutters
-                disablePadding
-                btnProps={{
-                  disableGutters: true,
-                  alignItems: 'flex-start',
-                  textProps: {
-                    primary: selectedMember?.memberDetails?.name,
-                    secondary: selectedMember?.memberDetails?.email,
-                    primaryTypographyProps: {
-                      fontSize: '1.08rem',
-                    },
-                    secondaryTypographyProps: {
-                      fontSize: '0.85rem',
-                      style: {
-                        WebkitLineClamp: 1,
-                      },
-                    },
-                  },
-                  avatarProps: {
-                    src: selectedMember?.memberDetails?.picture,
-                  },
-                }}
-              ></ListItem>
-            </List>
-          </Toolbar>
-        </AppBar>
-      </div>
       <div className="chat-container">
         {IsNoMessages ? (
           <div className="no-messages-wrapper">No Messages</div>
@@ -277,11 +219,7 @@ const Chats = ({ textFieldHeight }: any) => {
                   >
                     <Grid size={8}>
                       <div className="msg-right-row">
-                        <Typography
-                          align="left"
-                          className="msg msg-right"
-                          ref={(el) => (msgQueueRefs.current[idx] = el)}
-                        >
+                        <Typography align="left" className="msg msg-right">
                           <div className="msg-content">{msgQueue?.message}</div>
                           <div className="msg-timestamp">
                             {msgQueue?.timestamp ? (

@@ -40,6 +40,7 @@ export const MainLayoutStyled = styled('div')<{ navbarHeight: number }>(
 );
 
 export const MainLayoutLoaderStyled = styled('div')(() => ({
+  width: '100%',
   '.primary-skeleton': {
     maxWidth: '130px',
   },

@@ -291,15 +291,12 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
   });
 
   useLayoutEffect(() => {
-    if (
-      !pathname?.includes('/chat') ||
-      (pathname?.includes('/chat') && (chatId || friendId))
-    ) {
+    if (!pathname?.includes('/chat')) {
       setSelectedChat(undefined);
       setSelectedFriend(undefined);
       setSelectedMember(undefined);
     }
-  }, [pathname, chatId, friendId]);
+  }, [pathname]);
 
   useLayoutEffect(() => {
     if (chats?.length && chatId) {
@@ -319,7 +316,12 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       const selMember = selFriend?.members?.find(
         (friendMember: any) => friendMember?._id !== _id,
       );
-      setSelectedMember(selMember);
+      setSelectedMember((prev) => {
+        if (prev && !selMember) {
+          return prev;
+        }
+        return selMember;
+      });
     }
   }, [otherFriends, friendId]);
 

@@ -126,6 +126,20 @@ export const groupMessages = (msgs: any, _id: string) => {
   return groupedMessages;
 };
 
+export const compareObjects = (first: any, second: any) => {
+  if (first === second) return true;
+  if (first === null || second === null) return false;
+  if (typeof first !== 'object' || typeof second !== 'object') return false;
+  const first_keys = Object.getOwnPropertyNames(first);
+  const second_keys = Object.getOwnPropertyNames(second);
+  if (first_keys.length !== second_keys.length) return false;
+  for (const key of first_keys) {
+    if (!Object.hasOwn(second, key)) return false;
+    if (compareObjects(first[key], second[key]) === false) return false;
+  }
+  return true;
+};
+
 export const regex = {
   validateEmail:
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,

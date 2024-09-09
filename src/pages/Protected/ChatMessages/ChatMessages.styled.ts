@@ -2,10 +2,9 @@ import { styled } from '@mui/system';
 
 export const ChatMessagesStyled = styled('div')<{
   navbarHeight?: number;
-  textFieldHeight?: number;
   appBarHeight?: number;
-  messageQueue?: any;
-}>(({ theme, navbarHeight, appBarHeight, textFieldHeight, messageQueue }) => ({
+  textFieldHeight?: number;
+}>(({ theme, navbarHeight, appBarHeight, textFieldHeight }) => ({
   '.app-bar-wrapper': {
     position: 'fixed',
     width: 'stretch',

@@ -62,7 +62,7 @@ const ListItemButton = forwardRef((props: ListItemButtonProps, ref: any) => {
         {...rest}
       >
         {isAvatar ? (
-          <ListItemAvatar>
+          <ListItemAvatar sx={{ cursor: disableHover ? 'default' : 'pointer' }}>
             {avatarProps?.children || renderAvatar()}
           </ListItemAvatar>
         ) : null}
@@ -79,6 +79,10 @@ const ListItemButton = forwardRef((props: ListItemButtonProps, ref: any) => {
               fontSize: '0.75rem',
               fontWeight: 500,
               ...textProps?.secondaryTypographyProps,
+            }}
+            sx={{
+              ...textProps?.sx,
+              cursor: disableHover ? 'default' : 'pointer',
             }}
           />
         ) : null}

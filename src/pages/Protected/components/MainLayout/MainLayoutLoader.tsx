@@ -3,13 +3,15 @@ import { ListItem } from '../../../../components';
 import { MainLayoutLoaderStyled } from './MainLayout.styled';
 
 const MainLayoutLoader = ({
+  dense = false,
+  disablePadding = false,
+  disableGutters = false,
+  sx,
   avatarClassName,
   disablePrimary,
   disableSecondary,
   primaryFontSize,
   secondaryFontSize,
-  sx,
-  dense = false,
   btnAlignItems,
   btnClassName,
   listClassName,
@@ -18,10 +20,12 @@ const MainLayoutLoader = ({
   <MainLayoutLoaderStyled>
     <List dense={dense} disablePadding className={listClassName}>
       <ListItem
-        disableGutters
         disableHover
+        disableGutters
+        disablePadding={disablePadding}
         sx={sx}
         btnProps={{
+          disableGutters,
           className: btnClassName,
           alignItems: btnAlignItems,
           textProps: {

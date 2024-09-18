@@ -114,14 +114,11 @@ const ChatMessages = () => {
 
   const resetAllStates = () => {
     setMessage('');
-    // setMessageGroups([]);
   };
 
   useLayoutEffect(() => {
-    if (friendId) {
-      resetAllStates();
-    }
-  }, [friendId]);
+    resetAllStates();
+  }, [chatId, friendId]);
 
   if (chatError) {
     navigate('/');

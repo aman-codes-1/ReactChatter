@@ -16,7 +16,6 @@ import { MainLayout } from '..';
 import { AddFriendStyled } from './AddFriend.styled';
 
 const AddFriend = () => {
-  const location = useLocation();
   const [email, setEmail] = useState('');
   const [disabled, setDisabled] = useState(false);
   const [validation, setValidation] = useState({
@@ -31,9 +30,11 @@ const AddFriend = () => {
   const [isTimeoutRunning, setIsTimeoutRunning] = useTimeout(() => {
     setIsTimeoutRunning(false);
   }, 4000);
-  const { createRequest, createRequestLoading: loading } = useContext(
-    ChatsAndFriendsContext,
-  );
+  const {
+    createRequest,
+    createRequestLoading: loading,
+    isListItemClicked,
+  } = useContext(ChatsAndFriendsContext);
   const inputRef = useRef<any>(null);
 
   const resetStates = () => {
@@ -130,7 +131,7 @@ const AddFriend = () => {
 
   useLayoutEffect(() => {
     resetStates();
-  }, [location?.state?.isListItemClicked]);
+  }, [isListItemClicked]);
 
   return (
     <AddFriendStyled>

@@ -1,4 +1,26 @@
-import { styled } from '@mui/system';
+import { styled, keyframes } from '@mui/system';
+
+const fadeIn = keyframes`
+  0% {
+    // opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    // opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const fadeOut = keyframes`
+  0% {
+    // opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    // opacity: 0;
+    transform: scale(1.05);
+  }
+`;
 
 export const ChatMessagesStyled = styled('div')<{
   navbarHeight?: number;
@@ -28,17 +50,17 @@ export const ChatMessagesStyled = styled('div')<{
       height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navbarHeight || 0}px)`,
     },
   },
-  '.chat-wrapper': {
-    width: '100%',
-    marginTop: 'auto',
-  },
   '.no-messages-wrapper': {
     display: 'flex',
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  '.msg-grid': {
+  '.chat-wrapper': {
+    width: '100%',
+    marginTop: 'auto',
+  },
+  '.chat-grid': {
     margin: '8px 0px 13px 0px',
     [theme.breakpoints.down('sm')]: {
       margin: '8px 0px 11px 0px',
@@ -63,6 +85,13 @@ export const ChatMessagesStyled = styled('div')<{
     position: 'relative',
     padding: '8px 14px 11px 14px',
     borderRadius: 4,
+  },
+  '.msg-animation': {
+    transition: 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out',
+    animation: `${fadeIn} 0.5s ease-in-out`,
+    '&.fade-out': {
+      animation: `${fadeOut} 0.5s ease-in-out`,
+    },
   },
   '.msg-left': {
     borderTopRightRadius: 16,

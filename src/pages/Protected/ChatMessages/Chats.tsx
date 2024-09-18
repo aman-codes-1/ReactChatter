@@ -10,8 +10,12 @@ import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Avatar } from '../../../components';
-import { MessagesContext } from '../../../contexts';
-import { MESSAGES_QUERY, useAuth } from '../../../hooks';
+import {
+  ChatsAndFriendsContext,
+  MESSAGES_QUERY,
+  MessagesContext,
+} from '../../../contexts';
+import { useAuth } from '../../../hooks';
 import { getTime, groupMessages, scrollIntoView } from '../../../helpers';
 import { ChatMessagesStyled } from './ChatMessages.styled';
 
@@ -21,61 +25,43 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   const [searchParams] = useSearchParams();
   const chatId =
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
+  const friendId =
+    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const { auth: { _id = '' } = {} } = useAuth();
+  const { isListItemClicked } = useContext(ChatsAndFriendsContext);
   const {
-    messages = [],
-    messagesClient,
     loadingCached,
     setLoadingCached,
+    loadingQueue,
+    setLoadingQueue,
     messageGroups = [],
-    setMessageGroups,
     messageQueue = [],
-    setMessageQueue,
+    getCachedMessages,
+    getQueuedMessages,
   } = useContext(MessagesContext);
   const scrollRef = useRef<any>(null);
 
-  const messagesWithQueue = (msgs: any) => {
-    setMessageQueue((prev: any[]) => {
-      if (prev?.length && msgs?.length) {
-        const queue = prev?.filter(
-          (el: any) =>
-            !msgs?.some(
-              (el2: any) =>
-                el?.timestamp === el2?.sender?.sentStatus?.timestamp,
-            ),
-        );
-        return queue;
-      }
-      return prev;
-    });
-    const messageGroupsData = groupMessages(msgs, _id);
-    setMessageGroups(messageGroupsData);
-  };
-
   useLayoutEffect(() => {
-    const getCachedData = async () => {
-      try {
-        setLoadingCached(true);
-        const cachedData = await messagesClient?.readQuery({
-          query: MESSAGES_QUERY,
-          variables: { chatId },
-        });
-        if (!cachedData) {
-          messagesWithQueue(messages);
-        } else {
-          messagesWithQueue(cachedData?.messages);
-        }
-      } catch (error) {
-        console.error('Error reading cached data:', error);
-      } finally {
-        setLoadingCached(false);
-      }
-    };
-
     if (chatId) {
-      getCachedData();
+      (async () => {
+        try {
+          await getCachedMessages(chatId, setLoadingCached);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      })();
     }
-  }, [messages, chatId]);
+
+    if (friendId) {
+      (async () => {
+        try {
+          await getQueuedMessages(friendId, true, setLoadingQueue);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      })();
+    }
+  }, []);
 
   useLayoutEffect(() => {
     scrollIntoView(scrollRef);
@@ -104,19 +90,9 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
     return () => {
       window.removeEventListener('resize', checkScroll);
     };
-  }, [messageGroups, messageQueue, location?.state?.isListItemClicked]);
+  }, [messageGroups, messageQueue, isListItemClicked]);
 
-  const resetAllStates = () => {
-    setMessageGroups([]);
-  };
-
-  useLayoutEffect(() => {
-    if (chatId) {
-      resetAllStates();
-    }
-  }, [chatId]);
-
-  if (loadingCached) {
+  if (loadingCached || loadingQueue) {
     return null;
   }
 
@@ -165,7 +141,7 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
     );
   };
 
-  const IsNoMessages = !(messageGroups?.length || messageQueue?.length);
+  const IsNoMessages = !messageGroups?.length && !messageQueue?.length;
 
   return (
     <ChatMessagesStyled
@@ -179,7 +155,7 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
         ) : null}
         {messageGroups?.length || messageQueue?.length ? (
           <div className="chat-wrapper">
-            <div className="msg-grid">
+            <div className="chat-grid">
               {messageGroups?.map((messageGroup: any, idx: number) => (
                 <Grid
                   container
@@ -209,37 +185,38 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
                   </Grid>
                 </Grid>
               ))}
-              {messageQueue?.map((msgQueue: any, idx: number) => {
-                return (
-                  <Grid
-                    container
-                    spacing={2}
-                    justifyContent="flex-end"
-                    key={`${JSON.stringify(msgQueue)} ${idx}`}
-                  >
-                    <Grid size={8}>
-                      <div className="msg-right-row">
-                        <Typography align="left" className="msg msg-right">
-                          <div className="msg-content">{msgQueue?.message}</div>
-                          <div className="msg-timestamp">
-                            {msgQueue?.timestamp ? (
-                              <Typography
-                                variant="caption"
-                                whiteSpace="nowrap"
-                                fontWeight={600}
-                                className="msg-timestamp-text"
-                              >
-                                {getTime(msgQueue.timestamp)}
-                              </Typography>
-                            ) : null}
-                            <AccessTimeIcon fontSize="inherit" />
-                          </div>
-                        </Typography>
-                      </div>
-                    </Grid>
+              {messageQueue?.map((msgQueue: any, idx: number) => (
+                <Grid
+                  container
+                  spacing={2}
+                  justifyContent="flex-end"
+                  key={`${JSON.stringify(msgQueue)} ${idx}`}
+                >
+                  <Grid size={8}>
+                    <div className="msg-right-row">
+                      <Typography
+                        align="left"
+                        className="msg msg-right msg-animation"
+                      >
+                        <div className="msg-content">{msgQueue?.message}</div>
+                        <div className="msg-timestamp">
+                          {msgQueue?.timestamp ? (
+                            <Typography
+                              variant="caption"
+                              whiteSpace="nowrap"
+                              fontWeight={600}
+                              className="msg-timestamp-text"
+                            >
+                              {getTime(msgQueue.timestamp)}
+                            </Typography>
+                          ) : null}
+                          <AccessTimeIcon fontSize="inherit" />
+                        </div>
+                      </Typography>
+                    </div>
                   </Grid>
-                );
-              })}
+                </Grid>
+              ))}
             </div>
             <div ref={scrollRef} />
           </div>

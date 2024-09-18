@@ -6,12 +6,12 @@ import { DataList } from '../../../components';
 
 const RecentChats = () => {
   const navigate = useNavigate();
-  const [isListItemClicked, setIsListItemClicked] = useState(false);
   const [hasScrollbar, setHasScrollbar] = useState(false);
   const {
     chats = [],
     chatsLoading,
     chatsCalled,
+    setIsListItemClicked,
     selectedChat,
     setSelectedChat,
     setSelectedFriend,
@@ -23,14 +23,12 @@ const RecentChats = () => {
     chat: any,
     selectedMember: any,
   ) => {
-    setIsListItemClicked((prev) => !prev);
+    setIsListItemClicked((prev: boolean) => !prev);
     if (chat?._id) {
       setSelectedFriend(undefined);
       setSelectedChat(chat);
       setSelectedMember(selectedMember);
-      navigate(`/chat?id=${chat?._id}&type=chat`, {
-        state: { isListItemClicked },
-      });
+      navigate(`/chat?id=${chat?._id}&type=chat`);
     }
   };
 

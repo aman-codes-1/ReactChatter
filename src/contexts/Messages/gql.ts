@@ -32,19 +32,22 @@ const MESSAGES_QUERY = gql(/* GraphQL */ `
 const CREATE_MESSAGE_MUTATION = gql(/* GraphQL */ `
   mutation createMessage(
     $chatId: String!
-    $message: String!
     $senderId: String!
+    $localId: Float
+    $message: String!
     $timestamp: Float!
   ) {
     createMessage(
       input: {
         chatId: $chatId
-        message: $message
         senderId: $senderId
+        localId: $localId
+        message: $message
         timestamp: $timestamp
       }
     ) {
       _id
+      localId
     }
   }
 `) as DocumentNode;

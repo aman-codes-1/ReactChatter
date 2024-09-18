@@ -3,7 +3,10 @@ import { AppBar } from '@mui/material';
 import { Drawer, NavBar, SideBar } from '../../../../components';
 import { SideBarList } from './components';
 import { Dashboard } from './pages';
-import { ChatsAndFriendsProvider } from '../../../../contexts';
+import {
+  ChatsAndFriendsProvider,
+  MessagesProvider,
+} from '../../../../contexts';
 import { BaseProtectedStyled } from './BaseProtected.styled';
 import { updateHeight } from '../../../../helpers';
 
@@ -35,34 +38,36 @@ const BaseProtected = () => {
 
   return (
     <ChatsAndFriendsProvider>
-      <BaseProtectedStyled>
-        <SideBar className="hidden-from-mobile">
-          <SideBarList />
-        </SideBar>
-        <Drawer
-          isOpen={isDrawerOpen}
-          anchor="right"
-          onClose={toggleDrawer(false)}
-          isMobile
-          navbarHeight={navbarHeight}
-        >
-          <SideBar className="mobile-sidebar">
-            <SideBarList toggleDrawer={toggleDrawer(false)} />
+      <MessagesProvider>
+        <BaseProtectedStyled>
+          <SideBar className="hidden-from-mobile">
+            <SideBarList />
           </SideBar>
-        </Drawer>
-        <Dashboard navbarHeight={navbarHeight} />
-        <AppBar
-          position="fixed"
-          elevation={0}
-          className="hidden-from-web mobile-navbar"
-          ref={navbarRef}
-        >
-          <NavBar
-            onMenuClick={toggleDrawer(false, true)}
-            toggleDrawer={toggleDrawer(false)}
-          />
-        </AppBar>
-      </BaseProtectedStyled>
+          <Drawer
+            isOpen={isDrawerOpen}
+            anchor="right"
+            onClose={toggleDrawer(false)}
+            isMobile
+            navbarHeight={navbarHeight}
+          >
+            <SideBar className="mobile-sidebar">
+              <SideBarList toggleDrawer={toggleDrawer(false)} />
+            </SideBar>
+          </Drawer>
+          <Dashboard navbarHeight={navbarHeight} />
+          <AppBar
+            position="fixed"
+            elevation={0}
+            className="hidden-from-web mobile-navbar"
+            ref={navbarRef}
+          >
+            <NavBar
+              onMenuClick={toggleDrawer(false, true)}
+              toggleDrawer={toggleDrawer(false)}
+            />
+          </AppBar>
+        </BaseProtectedStyled>
+      </MessagesProvider>
     </ChatsAndFriendsProvider>
   );
 };

@@ -10,6 +10,7 @@ import { Button, DataList, ListItem } from '../../../../../../components';
 import {
   CHAT_ADDED_SUBSCRIPTION,
   ChatsAndFriendsContext,
+  MessagesContext,
   OTHER_FRIENDS_QUERY,
 } from '../../../../../../contexts';
 import { useAuth } from '../../../../../../hooks';
@@ -27,15 +28,16 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     sentRequestsCount = 0,
     otherFriendsClient,
     subscribeChatsToMore,
+    setIsListItemClicked,
     selectedChat,
     setSelectedChat,
     selectedFriend,
     setSelectedFriend,
     setSelectedMember,
   } = useContext(ChatsAndFriendsContext);
+  const { getCachedMessages, getQueuedMessages } = useContext(MessagesContext);
   const [toggleChats, setToggleChats] = useState(!!chats?.length);
   const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
-  const [isListItemClicked, setIsListItemClicked] = useState(false);
   const [hasChatsScrollbar, setHasChatsScrollbar] = useState(false);
   const [hasFriendsScrollbar, setHasFriendsScrollbar] = useState(false);
 
@@ -135,37 +137,45 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     setToggle((prev: boolean) => !prev);
   };
 
-  const handleClickChat = (
+  const handleClickChat = async (
     _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     chat: any,
     selectedMember: any,
   ) => {
-    setIsListItemClicked((prev) => !prev);
-    toggleDrawer?.();
+    setIsListItemClicked((prev: boolean) => !prev);
+
     if (chat?._id) {
-      setSelectedFriend(undefined);
-      setSelectedChat(chat);
-      setSelectedMember(selectedMember);
-      navigate(`/chat?id=${chat?._id}&type=chat`, {
-        state: { isListItemClicked },
-      });
+      try {
+        await getCachedMessages(chat?._id);
+        toggleDrawer?.();
+        setSelectedFriend(undefined);
+        setSelectedChat(chat);
+        setSelectedMember(selectedMember);
+        navigate(`/chat?id=${chat?._id}&type=chat`);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     }
   };
 
-  const handleClickFriend = (
+  const handleClickFriend = async (
     _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     friend: any,
     selectedMember: any,
   ) => {
-    toggleDrawer?.();
-    setIsListItemClicked((prev) => !prev);
+    setIsListItemClicked((prev: boolean) => !prev);
+
     if (friend?._id) {
-      setSelectedChat(undefined);
-      setSelectedFriend(friend);
-      setSelectedMember(selectedMember);
-      navigate(`/chat?id=${friend?._id}&type=friend`, {
-        state: { isListItemClicked },
-      });
+      try {
+        await getQueuedMessages(friend?._id, true);
+        toggleDrawer?.();
+        setSelectedChat(undefined);
+        setSelectedFriend(friend);
+        setSelectedMember(selectedMember);
+        navigate(`/chat?id=${friend?._id}&type=friend`);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     }
   };
 
@@ -173,11 +183,9 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     link: string,
   ) => {
-    setIsListItemClicked((prev) => !prev);
+    setIsListItemClicked((prev: boolean) => !prev);
     toggleDrawer?.();
-    navigate(link, {
-      state: { isListItemClicked },
-    });
+    navigate(link);
   };
 
   return (

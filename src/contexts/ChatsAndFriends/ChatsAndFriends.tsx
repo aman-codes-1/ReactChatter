@@ -25,6 +25,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
   const friendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const { pathname } = useLocation();
+  const [isListItemClicked, setIsListItemClicked] = useState(false);
   const [selectedChat, setSelectedChat] = useState();
   const [selectedFriend, setSelectedFriend] = useState();
   const [selectedMember, setSelectedMember] = useState();
@@ -389,6 +390,9 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         OnRequestUpdatedData,
         OnRequestUpdatedLoading,
         OnRequestUpdatedError,
+        // isListItemClicked
+        isListItemClicked,
+        setIsListItemClicked,
         // selectedChat
         selectedChat,
         setSelectedChat,

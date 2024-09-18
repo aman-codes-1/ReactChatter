@@ -45,8 +45,16 @@ const ChatMessages = () => {
     createChat,
     selectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const { loadingMessages, createMessage, setMessageGroups, setMessageQueue } =
-    useContext(MessagesContext);
+  const {
+    loadingMessages,
+    createMessage,
+    setMessageGroups,
+    setMessageQueue,
+    addMessageToQueue,
+    updateMessageToQueue,
+    deleteMessageFromQueue,
+    getQueuedMessageById,
+  } = useContext(MessagesContext);
   const inputRef = useRef<any>(null);
   const appBarRef = useRef<any>(null);
   const textFieldRef = useRef<any>(null);
@@ -106,7 +114,7 @@ const ChatMessages = () => {
 
   const resetAllStates = () => {
     setMessage('');
-    setMessageGroups([]);
+    // setMessageGroups([]);
   };
 
   useLayoutEffect(() => {
@@ -127,18 +135,26 @@ const ChatMessages = () => {
 
   const handleSendMessage = async () => {
     if (!message) return;
-    const timestamp = Date.now();
-    setMessageQueue((prev: any) => [
-      ...prev,
-      {
-        timestamp,
-        message,
-      },
-    ]);
     setMessage('');
+    const timestamp = Date.now();
+    const id = await addMessageToQueue({
+      chatId: chatId || friendId,
+      message,
+      timestamp,
+    });
+    let queuedMessage: any;
+    if (id) {
+      queuedMessage = await getQueuedMessageById(id);
+      if (
+        queuedMessage?.chatId === chatId ||
+        queuedMessage?.chatId === friendId
+      ) {
+        setMessageQueue((prev: any) => [...prev, queuedMessage]);
+      }
+    }
     if (friendId) {
       setLoadingCreateChat(true);
-      const res = await createChat({
+      const chatResult = await createChat({
         variables: {
           userId: _id,
           friendId,
@@ -146,21 +162,31 @@ const ChatMessages = () => {
           friendUserId: selectedMember?._id,
         },
       });
-      const newChatId = res?.data?.createChat?._id;
+      const newChatId = chatResult?.data?.createChat?._id;
       if (newChatId) {
-        await createMessage({
+        await updateMessageToQueue(queuedMessage?.id, newChatId);
+        const msgResult = await createMessage({
           variables: {
             chatId: newChatId,
-            message,
             senderId: _id,
+            localId: queuedMessage?.id,
+            message,
             timestamp,
           },
         });
-        setSearchParams((params) => {
-          params.set('id', newChatId);
-          params.set('type', 'chat');
-          return params;
-        });
+        if (
+          msgResult?.data?.createMessage?.localId &&
+          msgResult?.data?.createMessage?.localId === queuedMessage?.id
+        ) {
+          await deleteMessageFromQueue(queuedMessage?.id);
+        }
+        if (msgResult?.data?.createMessage?._id) {
+          setSearchParams((params) => {
+            params.set('id', newChatId);
+            params.set('type', 'chat');
+            return params;
+          });
+        }
         setLoadingCreateChat(false);
       }
       setLoadingCreateChat(false);
@@ -228,7 +254,7 @@ const ChatMessages = () => {
           </Toolbar>
         </AppBar>
       </div>
-      {loadingMessages || loading ? null : (
+      {loading ? null : (
         <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
       )}
       <div className="text-field-wrapper" ref={textFieldRef}>

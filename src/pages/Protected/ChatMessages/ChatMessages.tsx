@@ -37,7 +37,6 @@ const ChatMessages = () => {
   const {
     chats = [],
     chatsLoading,
-    chatError,
     chatsCalled,
     otherFriends = [],
     otherFriendsLoading,
@@ -117,10 +116,6 @@ const ChatMessages = () => {
   useLayoutEffect(() => {
     resetAllStates();
   }, [chatId, friendId]);
-
-  if (chatError) {
-    navigate('/');
-  }
 
   const handleChangeMessage = (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
@@ -212,43 +207,45 @@ const ChatMessages = () => {
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
     >
-      <div className="app-bar-wrapper">
-        <AppBar position="static" className="app-bar" ref={appBarRef}>
-          <Toolbar>
-            {loading ? (
-              <MainLayoutLoader dense disablePadding disableGutters />
-            ) : (
-              <List dense disablePadding>
-                <ListItem
-                  disableHover
-                  disableGutters
-                  disablePadding
-                  btnProps={{
-                    disableGutters: true,
-                    alignItems: 'flex-start',
-                    textProps: {
-                      primary: selectedMember?.memberDetails?.name,
-                      secondary: selectedMember?.memberDetails?.email,
-                      primaryTypographyProps: {
-                        fontSize: '1.08rem',
-                      },
-                      secondaryTypographyProps: {
-                        fontSize: '0.85rem',
-                        style: {
-                          WebkitLineClamp: 1,
+      {loading || selectedMember ? (
+        <div className="app-bar-wrapper">
+          <AppBar position="static" className="app-bar" ref={appBarRef}>
+            <Toolbar>
+              {loading ? (
+                <MainLayoutLoader dense disablePadding disableGutters />
+              ) : (
+                <List dense disablePadding>
+                  <ListItem
+                    disableHover
+                    disableGutters
+                    disablePadding
+                    btnProps={{
+                      disableGutters: true,
+                      alignItems: 'flex-start',
+                      textProps: {
+                        primary: selectedMember?.memberDetails?.name,
+                        secondary: selectedMember?.memberDetails?.email,
+                        primaryTypographyProps: {
+                          fontSize: '1.08rem',
+                        },
+                        secondaryTypographyProps: {
+                          fontSize: '0.85rem',
+                          style: {
+                            WebkitLineClamp: 1,
+                          },
                         },
                       },
-                    },
-                    avatarProps: {
-                      src: selectedMember?.memberDetails?.picture,
-                    },
-                  }}
-                />
-              </List>
-            )}
-          </Toolbar>
-        </AppBar>
-      </div>
+                      avatarProps: {
+                        src: selectedMember?.memberDetails?.picture,
+                      },
+                    }}
+                  />
+                </List>
+              )}
+            </Toolbar>
+          </AppBar>
+        </div>
+      ) : null}
       <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
       <div className="text-field-wrapper" ref={textFieldRef}>
         <AppBar position="static" className="app-bar text-field-app-bar">

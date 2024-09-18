@@ -1,6 +1,6 @@
 import { useContext, useLayoutEffect, useRef } from 'react';
 import {
-  useLocation,
+  useNavigate,
   useOutletContext,
   useSearchParams,
 } from 'react-router-dom';
@@ -10,25 +10,19 @@ import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Avatar } from '../../../components';
-import {
-  ChatsAndFriendsContext,
-  MESSAGES_QUERY,
-  MessagesContext,
-} from '../../../contexts';
-import { useAuth } from '../../../hooks';
-import { getTime, groupMessages, scrollIntoView } from '../../../helpers';
+import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
+import { getTime, scrollIntoView } from '../../../helpers';
 import { ChatMessagesStyled } from './ChatMessages.styled';
 
 const Chats = ({ appBarHeight, textFieldHeight }: any) => {
-  const location = useLocation();
+  const navigate = useNavigate();
   const [navbarHeight] = useOutletContext<any>();
   const [searchParams] = useSearchParams();
   const chatId =
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
   const friendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
-  const { auth: { _id = '' } = {} } = useAuth();
-  const { isListItemClicked } = useContext(ChatsAndFriendsContext);
+  const { chatError, isListItemClicked } = useContext(ChatsAndFriendsContext);
   const {
     loadingCached,
     setLoadingCached,
@@ -91,6 +85,10 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
       window.removeEventListener('resize', checkScroll);
     };
   }, [messageGroups, messageQueue, isListItemClicked]);
+
+  if (chatError) {
+    navigate('/');
+  }
 
   if (loadingCached || loadingQueue) {
     return null;

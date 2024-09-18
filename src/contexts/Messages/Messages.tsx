@@ -320,7 +320,7 @@ export const MessagesProvider = ({ children }: any) => {
   ) => {
     setLoading?.(true);
     try {
-      const queuedMessages = await getQueuedMessagesByChatId(id, 10, 0);
+      const queuedMessages = await getQueuedMessagesByChatId(id, 25, 0);
       if (emptyMsgs) {
         setMessageGroups([]);
       }
@@ -337,13 +337,16 @@ export const MessagesProvider = ({ children }: any) => {
   };
 
   const getMessages = async (id: string, msgs: any[]) => {
-    await getQueuedMessages(id).catch((error) => {
+    try {
+      await getQueuedMessages(id);
+    } catch (error) {
       console.error('Error getting queued messages:', error);
       setMessageQueue([]);
-    });
+    }
 
     if (msgs && msgs?.length) {
       const messageGroupsData = groupMessages(msgs, _id);
+      console.log('hereeee');
       setMessageGroups(messageGroupsData);
     }
   };
@@ -369,7 +372,7 @@ export const MessagesProvider = ({ children }: any) => {
         await getMessages(id, cachedData?.messages);
       }
     } catch (error) {
-      console.error('Error reading cached data:', error);
+      console.error('Error getting cached messages:', error);
       setMessageGroups([]);
     } finally {
       setLoading?.(false);

@@ -46,9 +46,7 @@ const ChatMessages = () => {
     selectedMember,
   } = useContext(ChatsAndFriendsContext);
   const {
-    loadingMessages,
     createMessage,
-    setMessageGroups,
     setMessageQueue,
     addMessageToQueue,
     updateMessageToQueue,
@@ -251,9 +249,7 @@ const ChatMessages = () => {
           </Toolbar>
         </AppBar>
       </div>
-      {loading ? null : (
-        <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
-      )}
+      <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
       <div className="text-field-wrapper" ref={textFieldRef}>
         <AppBar position="static" className="app-bar text-field-app-bar">
           <Toolbar disableGutters variant="dense">

@@ -346,7 +346,6 @@ export const MessagesProvider = ({ children }: any) => {
 
     if (msgs && msgs?.length) {
       const messageGroupsData = groupMessages(msgs, _id);
-      console.log('hereeee');
       setMessageGroups(messageGroupsData);
     }
   };

@@ -23,11 +23,11 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
   const { auth: { _id = '' } = {} } = useAuth();
   const {
     chats = [],
+    subscribeChatsToMore,
     otherFriends = [],
+    otherFriendsClient,
     pendingRequestsCount = 0,
     sentRequestsCount = 0,
-    otherFriendsClient,
-    subscribeChatsToMore,
     setIsListItemClicked,
     selectedChat,
     setSelectedChat,

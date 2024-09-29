@@ -63,7 +63,7 @@ const DataList = ({
     );
     if (member) {
       return (
-        <>
+        <div key={`${JSON.stringify(obj)} ${idx}`}>
           <ListItem
             disableGutters={disableGutters}
             ref={itemsRef ? (el) => (itemsRef.current[idx] = el) : null}
@@ -93,7 +93,7 @@ const DataList = ({
             }}
           />
           <Divider variant={dividerVariant} />
-        </>
+        </div>
       );
     }
 

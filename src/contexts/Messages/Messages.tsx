@@ -1,8 +1,9 @@
-import { createContext, useState } from 'react';
+import { createContext, useContext, useLayoutEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLazyQuery, useMutation, useSubscription } from '@apollo/client';
 import {
   MESSAGES_QUERY,
+  MESSAGE_QUEUED_QUERY,
   CREATE_MESSAGE_MUTATION,
   UPDATE_MESSAGE_MUTATION,
   MESSAGE_ADDED_SUBSCRIPTION,
@@ -10,19 +11,23 @@ import {
 } from './gql';
 import { groupMessages } from '../../helpers';
 import { useAuth } from '../../hooks';
-import { MessageData } from './IMessage';
+import { MessageQueueService } from '../../services';
+import { ChatsAndFriendsContext } from '..';
 
 export const MessagesContext = createContext<any>({});
 
 export const MessagesProvider = ({ children }: any) => {
+  const MessageQueue = new MessageQueueService();
   const [searchParams] = useSearchParams();
   const chatId =
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
-  const { auth: { _id = '' } = {} } = useAuth();
   const [loadingCached, setLoadingCached] = useState(false);
   const [loadingQueue, setLoadingQueue] = useState(false);
   const [messageGroups, setMessageGroups] = useState<any[]>([]);
   const [messageQueue, setMessageQueue] = useState<any[]>([]);
+
+  const { auth: { _id = '' } = {} } = useAuth();
+  const { createChat, selectedMember } = useContext(ChatsAndFriendsContext);
 
   const [
     messagesQuery,
@@ -34,6 +39,18 @@ export const MessagesProvider = ({ children }: any) => {
       error: errorMessages,
     },
   ] = useLazyQuery(MESSAGES_QUERY);
+
+  const [
+    messageQueuedQuery,
+    {
+      client: messageQueuedClient,
+      data: messageQueued,
+      loading: loadingMessageQueued,
+      error: errorMessageQueued,
+    },
+  ] = useLazyQuery(MESSAGE_QUEUED_QUERY, {
+    fetchPolicy: 'network-only',
+  });
 
   const [
     createMessage,
@@ -84,234 +101,22 @@ export const MessagesProvider = ({ children }: any) => {
   //     },
   //   });
 
-  const openDatabase = () => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('messageQueueDatabase', 1);
+  useLayoutEffect(() => {
+    const processMessages = async () => {
+      const messageQueueService = new MessageQueueService(
+        messageQueuedQuery,
+        createChat,
+        createMessage,
+        selectedMember,
+        {
+          _id,
+        },
+      );
+      await messageQueueService.processQueue();
+    };
 
-      if (request) {
-        request.onupgradeneeded = (event: any) => {
-          const db = event?.target?.result;
-          if (!db.objectStoreNames.contains('messageQueueStore')) {
-            const objectStore = db.createObjectStore('messageQueueStore', {
-              keyPath: 'id',
-              autoIncrement: true,
-            });
-            objectStore.createIndex('chatId', 'chatId', { unique: false });
-            objectStore.createIndex('timestamp', 'timestamp', {
-              unique: false,
-            });
-            objectStore.createIndex(
-              'chatId_timestamp',
-              ['chatId', 'timestamp'],
-              { unique: false },
-            );
-          }
-        };
-
-        request.onsuccess = (event: any) => {
-          resolve(event?.target?.result);
-        };
-
-        request.onerror = (event: any) => {
-          reject(`Error opening database: ${event?.target?.errorCode}`);
-        };
-      }
-    });
-  };
-
-  const addMessageToQueue = async (messageData: MessageData) => {
-    const db: any = await openDatabase();
-
-    if (db) {
-      return new Promise<number | null>((resolve, reject) => {
-        const transaction = db?.transaction?.('messageQueueStore', 'readwrite');
-
-        if (transaction) {
-          const objectStore = transaction?.objectStore?.('messageQueueStore');
-
-          if (objectStore) {
-            const request = objectStore?.add?.(messageData);
-
-            if (request) {
-              request.onsuccess = (event: any) => {
-                const id = event?.target?.result;
-                if (id) {
-                  resolve(id);
-                } else {
-                  resolve(null);
-                }
-              };
-
-              request.onerror = () => {
-                reject('Error retrieving chat');
-              };
-            }
-          }
-        }
-      });
-    }
-  };
-
-  const updateMessageToQueue = async (id: number, newChatId: string) => {
-    const db: any = await openDatabase();
-
-    if (db) {
-      return new Promise<boolean>((resolve, reject) => {
-        const transaction = db?.transaction?.('messageQueueStore', 'readwrite');
-
-        if (transaction) {
-          const objectStore = transaction?.objectStore?.('messageQueueStore');
-
-          if (objectStore) {
-            const request = objectStore?.get?.(id);
-
-            if (request) {
-              request.onsuccess = (event: any) => {
-                const messageData = event?.target?.result;
-                if (messageData) {
-                  messageData.chatId = newChatId;
-                  const updateRequest = objectStore?.put?.(messageData);
-                  if (updateRequest) {
-                    updateRequest.onsuccess = () => {
-                      resolve(true);
-                    };
-
-                    updateRequest.onerror = () => {
-                      reject('Error updating message');
-                    };
-                  }
-                } else {
-                  resolve(false);
-                }
-              };
-
-              request.onerror = () => {
-                reject('Error retrieving chat');
-              };
-            }
-          }
-        }
-      });
-    }
-  };
-
-  const deleteMessageFromQueue = async (id: number) => {
-    const db: any = await openDatabase();
-
-    if (db) {
-      return new Promise<boolean>((resolve, reject) => {
-        const transaction = db?.transaction?.('messageQueueStore', 'readwrite');
-
-        if (transaction) {
-          const objectStore = transaction?.objectStore?.('messageQueueStore');
-
-          if (objectStore) {
-            const deleteRequest = objectStore?.delete?.(id);
-
-            if (deleteRequest) {
-              deleteRequest.onsuccess = () => {
-                resolve(true);
-              };
-
-              deleteRequest.onerror = () => {
-                reject('Error deleting message');
-              };
-            }
-          }
-        }
-      });
-    }
-  };
-
-  const getQueuedMessageById = async (id: number | null) => {
-    const db: any = await openDatabase();
-
-    return new Promise<MessageData | null>((resolve, reject) => {
-      const transaction = db?.transaction?.('messageQueueStore', 'readonly');
-
-      if (transaction) {
-        const objectStore = transaction?.objectStore?.('messageQueueStore');
-
-        if (objectStore) {
-          const request = objectStore?.get?.(id);
-
-          if (request) {
-            request.onsuccess = (event: any) => {
-              const message = event?.target?.result;
-
-              if (message) {
-                resolve(message);
-              } else {
-                resolve(null);
-              }
-            };
-
-            request.onerror = () => {
-              reject('Error fetching message by ID');
-            };
-          }
-        }
-      }
-    });
-  };
-
-  const getQueuedMessagesByChatId = async (
-    chatId: string,
-    limit: number,
-    offset: number,
-  ) => {
-    const db: any = await openDatabase();
-
-    return new Promise<any[]>((resolve, reject) => {
-      const transaction = db?.transaction?.('messageQueueStore', 'readonly');
-
-      if (transaction) {
-        const objectStore = transaction?.objectStore?.('messageQueueStore');
-
-        if (objectStore) {
-          const index = objectStore?.index?.('chatId_timestamp');
-
-          if (index) {
-            const lowerBound = [chatId, -Infinity]; //
-            const upperBound = [chatId, Infinity]; //
-            const range = IDBKeyRange.bound(lowerBound, upperBound);
-
-            const request = index?.openCursor?.(range, 'next');
-
-            if (request) {
-              const messages: any[] = [];
-              let count = 0;
-
-              request.onsuccess = (event: any) => {
-                const cursor = event?.target?.result;
-
-                if (!cursor) {
-                  resolve(messages);
-                  return;
-                }
-
-                if (count >= offset && messages?.length < limit) {
-                  messages?.push?.(cursor?.value);
-                }
-
-                count++;
-
-                if (messages?.length < limit) {
-                  cursor?.continue?.();
-                } else {
-                  resolve(messages);
-                }
-              };
-
-              request.onerror = () => {
-                reject('Error fetching paginated messages');
-              };
-            }
-          }
-        }
-      }
-    });
-  };
+    processMessages();
+  }, []);
 
   const getQueuedMessages = async (
     id: string,
@@ -320,7 +125,11 @@ export const MessagesProvider = ({ children }: any) => {
   ) => {
     setLoading?.(true);
     try {
-      const queuedMessages = await getQueuedMessagesByChatId(id, 25, 0);
+      const queuedMessages = await MessageQueue.getQueuedMessagesByChatId(
+        id,
+        25,
+        0,
+      );
       if (emptyMsgs) {
         setMessageGroups([]);
       }
@@ -330,7 +139,6 @@ export const MessagesProvider = ({ children }: any) => {
       if (emptyMsgs) {
         setMessageGroups([]);
       }
-      setMessageQueue([]);
     } finally {
       setLoading?.(false);
     }
@@ -341,7 +149,6 @@ export const MessagesProvider = ({ children }: any) => {
       await getQueuedMessages(id);
     } catch (error) {
       console.error('Error getting queued messages:', error);
-      setMessageQueue([]);
     }
 
     if (msgs && msgs?.length) {
@@ -372,7 +179,6 @@ export const MessagesProvider = ({ children }: any) => {
       }
     } catch (error) {
       console.error('Error getting cached messages:', error);
-      setMessageGroups([]);
     } finally {
       setLoading?.(false);
     }
@@ -388,6 +194,12 @@ export const MessagesProvider = ({ children }: any) => {
         errorMessages,
         refetchMessages,
         messagesClient,
+        // messageQueued
+        messageQueuedQuery,
+        messageQueued,
+        loadingMessageQueued,
+        errorMessageQueued,
+        messageQueuedClient,
         // createMessage
         createMessage,
         loadingCreateMessage,
@@ -411,13 +223,7 @@ export const MessagesProvider = ({ children }: any) => {
         // messageQueue
         messageQueue,
         setMessageQueue,
-        // messageQueueIndexedDb
-        openDatabase,
-        addMessageToQueue,
-        updateMessageToQueue,
-        deleteMessageFromQueue,
-        getQueuedMessageById,
-        getQueuedMessagesByChatId,
+        // getMessages
         getQueuedMessages,
         getCachedMessages,
       }}

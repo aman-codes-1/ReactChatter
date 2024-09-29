@@ -10,7 +10,7 @@ export const SideBarStyled = styled('div')(({ theme }) => ({
   gap: '0.7rem',
   overflow: 'auto',
   [theme.breakpoints.up('sm')]: {
-    '.flex-item:nth-child(2)': {
+    '.flex-item:nth-of-type(2)': {
       marginTop: '-1rem',
     },
   },

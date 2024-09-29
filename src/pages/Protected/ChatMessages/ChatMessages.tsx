@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 import {
+  useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -14,14 +15,23 @@ import { AppBar, IconButton, List, TextField, Toolbar } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { useAuth } from '../../../hooks';
 import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
-import { handleKeyPress, setFocus, updateHeight } from '../../../helpers';
-import { ChatMessagesStyled } from './ChatMessages.styled';
-import Chats from './Chats';
+import {
+  handleKeyPress,
+  setFocus,
+  updateHeight,
+  validateSearchParams,
+} from '../../../helpers';
 import { ListItem } from '../../../components';
 import { MainLayoutLoader } from '../components';
+import { MessageQueueService } from '../../../services';
+import Chats from './Chats';
+import { ChatMessagesStyled } from './ChatMessages.styled';
+import { MessageData } from '../../../contexts/Messages/IMessage';
 
 const ChatMessages = () => {
+  const MessageQueue = new MessageQueueService();
   const navigate = useNavigate();
+  const location = useLocation();
   const [navbarHeight] = useOutletContext<any>();
   const [searchParams, setSearchParams] = useSearchParams();
   const chatId =
@@ -35,23 +45,18 @@ const ChatMessages = () => {
   const [textFieldHeight, setTextFieldHeight] = useState(0);
   const { auth: { _id = '' } = {} } = useAuth();
   const {
+    chatError,
     chats = [],
     chatsLoading,
     chatsCalled,
+    createChat,
+    friendError,
     otherFriends = [],
     otherFriendsLoading,
     otherFriendsCalled,
-    createChat,
     selectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const {
-    createMessage,
-    setMessageQueue,
-    addMessageToQueue,
-    updateMessageToQueue,
-    deleteMessageFromQueue,
-    getQueuedMessageById,
-  } = useContext(MessagesContext);
+  const { createMessage, setMessageQueue } = useContext(MessagesContext);
   const inputRef = useRef<any>(null);
   const appBarRef = useRef<any>(null);
   const textFieldRef = useRef<any>(null);
@@ -90,7 +95,7 @@ const ChatMessages = () => {
       !chatsCalled ||
       otherFriendsLoading ||
       !otherFriendsCalled ||
-      loadingCreateChat
+      loadingCreateMessage
     )
       return;
     if ((chatId && !chats?.length) || (friendId && !otherFriends?.length)) {
@@ -105,7 +110,7 @@ const ChatMessages = () => {
     otherFriends?.length,
     otherFriendsLoading,
     otherFriendsCalled,
-    loadingCreateChat,
+    loadingCreateMessage,
     navigate,
   ]);
 
@@ -117,89 +122,135 @@ const ChatMessages = () => {
     resetAllStates();
   }, [chatId, friendId]);
 
+  useLayoutEffect(() => {
+    try {
+      const isValid = validateSearchParams(location?.search);
+      if (!isValid) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error getting url:', error);
+    }
+  }, [location, navigate]);
+
   const handleChangeMessage = (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
   ) => {
     setMessage(e?.target?.value);
   };
 
+  const getQueuedMessage = async (data: MessageData) => {
+    const queuedMessage = await MessageQueue.addMessageToQueue(data);
+
+    if (!queuedMessage) return null;
+
+    if (
+      queuedMessage?.chatId == chatId ||
+      queuedMessage?.friendId === friendId
+    ) {
+      setMessageQueue((prev: any) => [...prev, queuedMessage]);
+      return queuedMessage;
+    }
+
+    return null;
+  };
+
   const handleSendMessage = async () => {
     if (!message) return;
+
     setMessage('');
     const timestamp = Date.now();
-    const id = await addMessageToQueue({
-      chatId: chatId || friendId,
-      message,
-      timestamp,
-    });
-    let queuedMessage: any;
-    if (id) {
-      queuedMessage = await getQueuedMessageById(id);
-      if (
-        queuedMessage?.chatId === chatId ||
-        queuedMessage?.chatId === friendId
-      ) {
-        setMessageQueue((prev: any) => [...prev, queuedMessage]);
-      }
-    }
-    if (friendId) {
-      setLoadingCreateChat(true);
-      const chatResult = await createChat({
-        variables: {
-          userId: _id,
+
+    setLoadingCreateMessage(true);
+
+    try {
+      let chatIdToUse = chatId || '';
+      let queuedMessage = null;
+
+      if (!chatIdToUse && friendId) {
+        setLoadingCreateChat(true);
+
+        const QueuedMessage = await getQueuedMessage({
           friendId,
-          type: 'private',
-          friendUserId: selectedMember?._id,
-        },
-      });
-      const newChatId = chatResult?.data?.createChat?._id;
-      if (newChatId) {
-        await updateMessageToQueue(queuedMessage?.id, newChatId);
-        const msgResult = await createMessage({
+          message,
+          timestamp,
+        });
+
+        queuedMessage = QueuedMessage;
+
+        const createdChat = await createChat({
           variables: {
-            chatId: newChatId,
+            userId: _id,
+            friendId,
+            type: 'private',
+            friendUserId: selectedMember?._id,
+          },
+        });
+
+        const createdChatData = createdChat?.data?.createChat;
+        const createdChatId = createdChatData?._id;
+
+        if (!createdChatId) throw new Error('Failed to create chat');
+
+        chatIdToUse = createdChatId;
+        setLoadingCreateChat(false);
+
+        if (queuedMessage?.id) {
+          await MessageQueue.updateMessageToQueue(queuedMessage?.id, {
+            chatId: createdChatId,
+          });
+        }
+      }
+
+      if (chatIdToUse) {
+        queuedMessage =
+          queuedMessage ||
+          (await getQueuedMessage({ chatId: chatIdToUse, message, timestamp }));
+
+        const createdMessage = await createMessage({
+          variables: {
+            chatId: chatIdToUse,
             senderId: _id,
-            localId: queuedMessage?.id,
+            queueId: queuedMessage?.id,
             message,
             timestamp,
           },
         });
+
+        const createdMessageData = createdMessage?.data?.createMessage;
+        const createdMessageId = createdMessageData?._id;
+
+        if (!createdMessageId) throw new Error('Failed to create message');
+
+        setSearchParams((params) => {
+          params.set('id', chatIdToUse);
+          params.set('type', 'chat');
+          return params;
+        });
+
         if (
-          msgResult?.data?.createMessage?.localId &&
-          msgResult?.data?.createMessage?.localId === queuedMessage?.id
+          createdMessageData?.queueId &&
+          queuedMessage?.id &&
+          createdMessageData?.queueId === queuedMessage?.id
         ) {
-          await deleteMessageFromQueue(queuedMessage?.id);
+          await MessageQueue.deleteMessageFromQueue(queuedMessage?.id);
         }
-        if (msgResult?.data?.createMessage?._id) {
-          setSearchParams((params) => {
-            params.set('id', newChatId);
-            params.set('type', 'chat');
-            return params;
-          });
-        }
-        setLoadingCreateChat(false);
       }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setLoadingCreateMessage(false);
       setLoadingCreateChat(false);
     }
-    setLoadingCreateChat(false);
-    if (chatId) {
-      setLoadingCreateMessage(true);
-      await createMessage({
-        variables: {
-          chatId,
-          message,
-          senderId: _id,
-          timestamp,
-        },
-      });
-      setLoadingCreateMessage(false);
-    }
-    setLoadingCreateMessage(false);
   };
 
   const loading =
     (chatId && (chatsLoading || !chatsCalled)) ||
     (friendId && (otherFriendsLoading || !otherFriendsCalled));
+
+  if (chatError || friendError) {
+    navigate('/');
+  }
 
   return (
     <ChatMessagesStyled
@@ -246,7 +297,9 @@ const ChatMessages = () => {
           </AppBar>
         </div>
       ) : null}
-      <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
+      {loading ? null : (
+        <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
+      )}
       <div className="text-field-wrapper" ref={textFieldRef}>
         <AppBar position="static" className="app-bar text-field-app-bar">
           <Toolbar disableGutters variant="dense">

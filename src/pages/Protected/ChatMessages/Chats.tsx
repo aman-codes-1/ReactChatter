@@ -1,9 +1,5 @@
 import { useContext, useLayoutEffect, useRef } from 'react';
-import {
-  useNavigate,
-  useOutletContext,
-  useSearchParams,
-} from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
@@ -15,14 +11,15 @@ import { getTime, scrollIntoView } from '../../../helpers';
 import { ChatMessagesStyled } from './ChatMessages.styled';
 
 const Chats = ({ appBarHeight, textFieldHeight }: any) => {
-  const navigate = useNavigate();
   const [navbarHeight] = useOutletContext<any>();
   const [searchParams] = useSearchParams();
   const chatId =
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
   const friendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
-  const { chatError, isListItemClicked } = useContext(ChatsAndFriendsContext);
+  const { selectedMember, isListItemClicked } = useContext(
+    ChatsAndFriendsContext,
+  );
   const {
     loadingCached,
     setLoadingCached,
@@ -36,6 +33,8 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   const scrollRef = useRef<any>(null);
 
   useLayoutEffect(() => {
+    if (selectedMember) return;
+
     if (chatId) {
       (async () => {
         try {
@@ -55,7 +54,7 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
         }
       })();
     }
-  }, []);
+  }, [selectedMember]);
 
   useLayoutEffect(() => {
     scrollIntoView(scrollRef);
@@ -85,10 +84,6 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
       window.removeEventListener('resize', checkScroll);
     };
   }, [messageGroups, messageQueue, isListItemClicked]);
-
-  if (chatError) {
-    navigate('/');
-  }
 
   if (loadingCached || loadingQueue) {
     return null;

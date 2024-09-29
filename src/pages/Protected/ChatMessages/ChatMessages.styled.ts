@@ -74,10 +74,10 @@ export const ChatMessagesStyled = styled('div')<{
     textAlign: 'right',
     margin: '3.5px 0px',
   },
-  '.msg-left-row:nth-child(1)': {
+  '.msg-left-row:nth-of-type(1)': {
     marginTop: 0,
   },
-  '.msg-right-row:nth-child(1)': {
+  '.msg-right-row:nth-of-type(1)': {
     marginTop: 0,
   },
   '.msg': {

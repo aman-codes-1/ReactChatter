@@ -111,6 +111,27 @@ const CHAT_UPDATED_SUBSCRIPTION = gql(/* GraphQL */ `
   }
 `) as DocumentNode;
 
+const FRIEND_QUERY = gql(/* GraphQL */ `
+  query friend($friendId: String!) {
+    friend(input: { friendId: $friendId }) {
+      _id
+      isFriend
+      members {
+        _id
+        hasAdded
+        memberDetails {
+          name
+          email
+          email_verified
+          picture
+          given_name
+          family_name
+        }
+      }
+    }
+  }
+`) as DocumentNode;
+
 const FRIENDS_QUERY = gql(/* GraphQL */ `
   query friends($userId: String!) {
     friends(input: { userId: $userId }, limit: 25, skip: 0) {
@@ -292,6 +313,7 @@ export {
   CREATE_CHAT_MUTATION,
   CHAT_ADDED_SUBSCRIPTION,
   CHAT_UPDATED_SUBSCRIPTION,
+  FRIEND_QUERY,
   FRIENDS_QUERY,
   OTHER_FRIENDS_QUERY,
   FRIEND_ADDED_SUBSCRIPTION,

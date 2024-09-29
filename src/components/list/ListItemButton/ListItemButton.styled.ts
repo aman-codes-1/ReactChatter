@@ -25,8 +25,8 @@ export const ListItemButtonStyled = styled('div')<{
           ...(primaryEllipsesLineClamp
             ? {
                 display: '-webkit-box',
-                '-webkitLineClamp': primaryEllipsesLineClamp,
-                '-webkitBoxOrient': 'vertical',
+                WebkitLineClamp: primaryEllipsesLineClamp,
+                WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
               }
@@ -38,8 +38,8 @@ export const ListItemButtonStyled = styled('div')<{
           ...(secondaryEllipsesLineClamp
             ? {
                 display: '-webkit-box',
-                '-webkitLineClamp': secondaryEllipsesLineClamp,
-                '-webkitBoxOrient': 'vertical',
+                WebkitLineClamp: secondaryEllipsesLineClamp,
+                WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
               }

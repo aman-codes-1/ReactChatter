@@ -1,6 +1,8 @@
-export interface MessageData {
-  id: number;
-  chatId: string;
+export type MessageData = {
+  id?: string;
+  chatId?: string;
+  friendId?: string;
   message: string;
   timestamp: number;
-}
+  isRetry?: boolean;
+};

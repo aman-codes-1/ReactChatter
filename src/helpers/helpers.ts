@@ -140,6 +140,29 @@ export const compareObjects = (first: any, second: any) => {
   return true;
 };
 
+export const validateSearchParams = (search: string) => {
+  if (search) {
+    const searchParams = new URLSearchParams(search);
+    const expectedParams = ['id', 'type'];
+    const isValid = expectedParams.every((param) => {
+      const value = searchParams.get(param);
+      if (!value || value.trim() === '') {
+        return false;
+      }
+      const expectedTypeParams = ['chat', 'friend'];
+      if (
+        param === 'type' &&
+        !expectedTypeParams.some((typeParam) => typeParam === value)
+      ) {
+        return false;
+      }
+      return true;
+    });
+    return isValid;
+  }
+  return false;
+};
+
 export const regex = {
   validateEmail:
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,

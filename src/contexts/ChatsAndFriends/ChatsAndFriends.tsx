@@ -8,6 +8,7 @@ import {
   CREATE_REQUEST_MUTATION,
   FRIEND_ADDED_SUBSCRIPTION,
   PENDING_REQUESTS_QUERY,
+  FRIEND_QUERY,
   OTHER_FRIENDS_QUERY,
   REQUEST_ADDED_SUBSCRIPTION,
   REQUEST_UPDATED_SUBSCRIPTION,
@@ -69,6 +70,15 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         chats?.find((el: any) => el?._id === chatId)),
   });
 
+  const [
+    createChat,
+    {
+      data: createChatData,
+      loading: createChatLoading,
+      error: createChatError,
+    },
+  ] = useMutation(CREATE_CHAT_MUTATION);
+
   const {
     data: { otherFriends = [] } = {},
     loading: otherFriendsLoading,
@@ -84,14 +94,27 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     skip: isSocketLoading,
   });
 
-  const [
-    createChat,
-    {
-      data: createChatData,
-      loading: createChatLoading,
-      error: createChatError,
+  const {
+    data: friend,
+    loading: friendLoading,
+    error: friendError,
+    client: friendClient,
+    called: friendCalled,
+  } = useQuery(FRIEND_QUERY, {
+    variables: {
+      friendId,
     },
-  ] = useMutation(CREATE_CHAT_MUTATION);
+    fetchPolicy: 'network-only',
+    skip:
+      isSocketLoading ||
+      chatId ||
+      !friendId ||
+      (otherFriendsCalled &&
+        !otherFriendsLoading &&
+        otherFriends?.length &&
+        friendId &&
+        otherFriends?.find((el: any) => el?._id === friendId)),
+  });
 
   const {
     data: OnFriendAddedData,
@@ -342,6 +365,17 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         chatsClient,
         chatsCalled,
         subscribeChatsToMore,
+        // createChat
+        createChat,
+        createChatData,
+        createChatLoading,
+        createChatError,
+        // friend
+        friend,
+        friendLoading,
+        friendError,
+        friendClient,
+        friendCalled,
         // otherFriends
         otherFriends,
         otherFriendsLoading,
@@ -349,11 +383,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         otherFriendsClient,
         otherFriendsCalled,
         subscribeOtherFriendsToMore,
-        // createChat
-        createChat,
-        createChatData,
-        createChatLoading,
-        createChatError,
         // OnFriendAdded
         OnFriendAddedData,
         OnFriendAddedLoading,

@@ -29,11 +29,19 @@ const MESSAGES_QUERY = gql(/* GraphQL */ `
   }
 `) as DocumentNode;
 
+const MESSAGE_QUEUED_QUERY = gql(/* GraphQL */ `
+  query messageQueued($queueId: String!) {
+    messageQueued(input: { queueId: $queueId }) {
+      _id
+    }
+  }
+`) as DocumentNode;
+
 const CREATE_MESSAGE_MUTATION = gql(/* GraphQL */ `
   mutation createMessage(
     $chatId: String!
     $senderId: String!
-    $localId: Float
+    $queueId: String
     $message: String!
     $timestamp: Float!
   ) {
@@ -41,13 +49,13 @@ const CREATE_MESSAGE_MUTATION = gql(/* GraphQL */ `
       input: {
         chatId: $chatId
         senderId: $senderId
-        localId: $localId
+        queueId: $queueId
         message: $message
         timestamp: $timestamp
       }
     ) {
       _id
-      localId
+      queueId
     }
   }
 `) as DocumentNode;
@@ -136,6 +144,7 @@ const MESSAGE_UPDATED_SUBSCRIPTION = gql(/* GraphQL */ `
 
 export {
   MESSAGES_QUERY,
+  MESSAGE_QUEUED_QUERY,
   CREATE_MESSAGE_MUTATION,
   UPDATE_MESSAGE_MUTATION,
   MESSAGE_ADDED_SUBSCRIPTION,

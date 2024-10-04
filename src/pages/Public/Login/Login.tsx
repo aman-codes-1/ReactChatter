@@ -28,6 +28,7 @@ const Login = () => {
       });
       navigate('/', { replace: true });
     };
+
     if (token) {
       googleLogin();
     }

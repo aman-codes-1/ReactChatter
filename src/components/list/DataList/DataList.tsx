@@ -61,6 +61,7 @@ const DataList = ({
     const member = obj?.members?.find(
       (chatMember: any) => chatMember?._id !== _id,
     );
+
     if (member) {
       return (
         <div key={`${JSON.stringify(obj)} ${idx}`}>
@@ -123,7 +124,7 @@ const DataList = ({
           renderList(
             obj,
             idx,
-            obj === selectedItem,
+            obj?._id === selectedItem?._id,
             handleClickListItem,
             listItemsRef,
           ),

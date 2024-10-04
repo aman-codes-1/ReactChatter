@@ -48,6 +48,11 @@ const AddFriend = () => {
     });
   };
 
+  useLayoutEffect(() => {
+    setFocus(inputRef);
+    resetStates();
+  }, [isListItemClicked]);
+
   const handleChangeEmail = (e: ChangeEvent) => {
     resetStates();
     setState({
@@ -126,12 +131,6 @@ const AddFriend = () => {
 
   const { isRequired, isNotValid } = validation;
   const { message, type } = state;
-
-  setFocus(inputRef);
-
-  useLayoutEffect(() => {
-    resetStates();
-  }, [isListItemClicked]);
 
   return (
     <AddFriendStyled>

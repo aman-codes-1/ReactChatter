@@ -1,4 +1,4 @@
-import { useContext, useLayoutEffect, useState } from 'react';
+import { useContext, useEffect, useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge, List } from '@mui/material';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
@@ -35,7 +35,11 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     setSelectedFriend,
     setSelectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const { getCachedMessages, getQueuedMessages } = useContext(MessagesContext);
+  const {
+    setLoadingChatMessages,
+    getChatMessagesWithQueue,
+    getFriendMessagesWithQueue,
+  } = useContext(MessagesContext);
   const [toggleChats, setToggleChats] = useState(!!chats?.length);
   const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
   const [hasChatsScrollbar, setHasChatsScrollbar] = useState(false);
@@ -77,8 +81,8 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     }
   }, [otherFriends]);
 
-  useLayoutEffect(() => {
-    const chatsUnsubscribe: any = subscribeChatsToMore?.({
+  useEffect(() => {
+    const chatsUnsubscribe: any = subscribeChatsToMore({
       document: CHAT_ADDED_SUBSCRIPTION,
       updateQuery: (prev: any, { subscriptionData }: any) => {
         if (Object.values(prev || {})?.length) {
@@ -92,7 +96,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
           if (
             prev?.chats &&
             prev?.chats?.length &&
-            prev?.chats?.find((chat: any) => chat === OnChatAddedChat)
+            prev?.chats?.some((chat: any) => chat === OnChatAddedChat)
           ) {
             return prev;
           }
@@ -118,6 +122,8 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
                 },
               });
             }
+            setSelectedFriend();
+            setSelectedChat(OnChatAddedChat);
             return { ...prev, chats: [OnChatAddedChat, ...prev.chats] };
           }
         }
@@ -146,14 +152,15 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
 
     if (chat?._id) {
       try {
-        await getCachedMessages(chat?._id);
-        toggleDrawer?.();
         setSelectedFriend(undefined);
         setSelectedChat(chat);
         setSelectedMember(selectedMember);
+        setLoadingChatMessages(false);
+        await getChatMessagesWithQueue(chat?._id);
         navigate(`/chat?id=${chat?._id}&type=chat`);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        toggleDrawer?.();
+      } catch (error: any) {
+        console.error('Error fetching messages:', error);
       }
     }
   };
@@ -167,14 +174,15 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
 
     if (friend?._id) {
       try {
-        await getQueuedMessages(friend?._id, true);
-        toggleDrawer?.();
         setSelectedChat(undefined);
         setSelectedFriend(friend);
         setSelectedMember(selectedMember);
+        setLoadingChatMessages(false);
+        await getFriendMessagesWithQueue(friend?._id);
         navigate(`/chat?id=${friend?._id}&type=friend`);
+        toggleDrawer?.();
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching messages:', error);
       }
     }
   };

@@ -59,6 +59,11 @@ export class MessageQueueService {
               ['chatId', 'timestamp'],
               { unique: false },
             );
+            objectStore.createIndex(
+              'friendId_timestamp',
+              ['friendId', 'timestamp'],
+              { unique: false },
+            );
           }
         };
 
@@ -220,8 +225,9 @@ export class MessageQueueService {
     }
   }
 
-  async getQueuedMessagesByChatId(
-    chatId: string,
+  async getQueuedMessagesById(
+    id: string,
+    key: string,
     limit: number,
     offset: number,
   ) {
@@ -235,11 +241,11 @@ export class MessageQueueService {
           const objectStore = transaction?.objectStore?.('messageQueueStore');
 
           if (objectStore) {
-            const index = objectStore?.index?.('chatId_timestamp');
+            const index = objectStore?.index?.(`${key}_timestamp`);
 
             if (index) {
-              const lowerBound = [chatId, -Infinity]; //
-              const upperBound = [chatId, Infinity]; //
+              const lowerBound = [id, -Infinity]; //
+              const upperBound = [id, Infinity]; //
               const range = IDBKeyRange.bound(lowerBound, upperBound);
 
               const request = index?.openCursor?.(range, 'next');
@@ -418,8 +424,10 @@ export class MessageQueueService {
         (await getNextMessageForProcessing(offset)) || {};
       if (!message) return;
 
-      const { id, isRetry = false, chatId, friendId, ...rest } = message || {};
+      const { id, sender, chatId, friendId, ...rest } = message || {};
       if (!id) await removeCursorFromQueueAndRestart(cursor);
+
+      const isRetry = sender?.sentStatus?.isRetry || false;
 
       let chatIdToUse = chatId || '';
 
@@ -461,22 +469,7 @@ export class MessageQueueService {
         await shouldRetryAndProcessNext(id, retryCount, isRetry, offset);
       } catch (error: any) {
         const errorMessage = error?.message || '';
-        const isMessageNotFoundError =
-          errorMessage?.includes?.('Message not found');
         const isChatNotFoundError = errorMessage?.includes?.('Chat not found');
-
-        if (isMessageNotFoundError) {
-          await createMessageAndRemoveFromQueue(
-            id,
-            chatIdToUse,
-            rest,
-            retryCount,
-            isRetry,
-            offset,
-          );
-
-          await removeFromQueueAndRestart(id);
-        }
 
         if (isChatNotFoundError && chatId) {
           await removeFromQueueAndRestart(id);

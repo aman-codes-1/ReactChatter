@@ -1,6 +1,7 @@
 import {
   ChangeEvent,
   useContext,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -16,6 +17,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { useAuth } from '../../../hooks';
 import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
 import {
+  addQueuedMessageToLastGroup,
   handleKeyPress,
   setFocus,
   updateHeight,
@@ -28,7 +30,7 @@ import Chats from './Chats';
 import { ChatMessagesStyled } from './ChatMessages.styled';
 import { MessageData } from '../../../contexts/Messages/IMessage';
 
-const ChatMessages = () => {
+const ChatMessages = ({ loadingFallback }: any) => {
   const MessageQueue = new MessageQueueService();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,29 +41,34 @@ const ChatMessages = () => {
   const friendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const [message, setMessage] = useState('');
-  const [loadingCreateChat, setLoadingCreateChat] = useState(false);
   const [loadingCreateMessage, setLoadingCreateMessage] = useState(false);
   const [appBarHeight, setAppBarHeight] = useState(0);
   const [textFieldHeight, setTextFieldHeight] = useState(0);
   const { auth: { _id = '' } = {} } = useAuth();
   const {
-    chatError,
-    chats = [],
-    chatsLoading,
-    chatsCalled,
+    chatQuery,
+    chatLoading,
+    friendQuery,
+    friendLoading,
     createChat,
-    friendError,
-    otherFriends = [],
-    otherFriendsLoading,
-    otherFriendsCalled,
+    isListItemClicked,
     selectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const { createMessage, setMessageQueue } = useContext(MessagesContext);
+  const {
+    createMessage,
+    setMessageGroups,
+    loadingChatMessages,
+    setLoadingChatMessages,
+    getChatMessagesWithQueue,
+    getFriendMessagesWithQueue,
+  } = useContext(MessagesContext);
   const inputRef = useRef<any>(null);
   const appBarRef = useRef<any>(null);
   const textFieldRef = useRef<any>(null);
 
-  setFocus(inputRef);
+  useLayoutEffect(() => {
+    setFocus(inputRef);
+  }, [isListItemClicked]);
 
   useLayoutEffect(() => {
     updateHeight(appBarRef, setAppBarHeight);
@@ -89,31 +96,6 @@ const ChatMessages = () => {
     };
   }, []);
 
-  useLayoutEffect(() => {
-    if (
-      chatsLoading ||
-      !chatsCalled ||
-      otherFriendsLoading ||
-      !otherFriendsCalled ||
-      loadingCreateMessage
-    )
-      return;
-    if ((chatId && !chats?.length) || (friendId && !otherFriends?.length)) {
-      navigate('/');
-    }
-  }, [
-    chatId,
-    chats?.length,
-    chatsLoading,
-    chatsCalled,
-    friendId,
-    otherFriends?.length,
-    otherFriendsLoading,
-    otherFriendsCalled,
-    loadingCreateMessage,
-    navigate,
-  ]);
-
   const resetAllStates = () => {
     setMessage('');
   };
@@ -133,13 +115,61 @@ const ChatMessages = () => {
     }
   }, [location, navigate]);
 
+  const fetchData = async (
+    id: string,
+    key: string,
+    query: any,
+    fetchQuery: any,
+  ) => {
+    setLoadingChatMessages(true);
+
+    try {
+      const res = await query({
+        variables: {
+          [key]: id,
+        },
+      });
+
+      if (res?.error?.message) {
+        throw new Error(res?.error?.message);
+      }
+
+      await fetchQuery(id, setLoadingChatMessages);
+    } catch (error) {
+      navigate('/');
+    } finally {
+      setLoadingChatMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    if (loadingFallback || selectedMember) return;
+
+    const fetchMessages = async () => {
+      if (chatId) {
+        await fetchData(chatId, 'chatId', chatQuery, getChatMessagesWithQueue);
+      }
+
+      if (friendId) {
+        await fetchData(
+          friendId,
+          'friendId',
+          friendQuery,
+          getFriendMessagesWithQueue,
+        );
+      }
+    };
+
+    fetchMessages();
+  }, [loadingFallback || selectedMember]);
+
   const handleChangeMessage = (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
   ) => {
     setMessage(e?.target?.value);
   };
 
-  const getQueuedMessage = async (data: MessageData) => {
+  const addAndGetQueuedMessage = async (data: MessageData) => {
     const queuedMessage = await MessageQueue.addMessageToQueue(data);
 
     if (!queuedMessage) return null;
@@ -148,7 +178,11 @@ const ChatMessages = () => {
       queuedMessage?.chatId == chatId ||
       queuedMessage?.friendId === friendId
     ) {
-      setMessageQueue((prev: any) => [...prev, queuedMessage]);
+      setMessageGroups((prev: any) => {
+        const newGroups = addQueuedMessageToLastGroup(prev, queuedMessage);
+        return newGroups;
+      });
+
       return queuedMessage;
     }
 
@@ -168,11 +202,16 @@ const ChatMessages = () => {
       let queuedMessage = null;
 
       if (!chatIdToUse && friendId) {
-        setLoadingCreateChat(true);
-
-        const QueuedMessage = await getQueuedMessage({
+        const QueuedMessage = await addAndGetQueuedMessage({
           friendId,
           message,
+          sender: {
+            _id,
+            sentStatus: {
+              isQueued: true,
+              timestamp,
+            },
+          },
           timestamp,
         });
 
@@ -193,7 +232,6 @@ const ChatMessages = () => {
         if (!createdChatId) throw new Error('Failed to create chat');
 
         chatIdToUse = createdChatId;
-        setLoadingCreateChat(false);
 
         if (queuedMessage?.id) {
           await MessageQueue.updateMessageToQueue(queuedMessage?.id, {
@@ -205,7 +243,18 @@ const ChatMessages = () => {
       if (chatIdToUse) {
         queuedMessage =
           queuedMessage ||
-          (await getQueuedMessage({ chatId: chatIdToUse, message, timestamp }));
+          (await addAndGetQueuedMessage({
+            chatId: chatIdToUse,
+            message,
+            sender: {
+              _id,
+              sentStatus: {
+                isQueued: true,
+                timestamp,
+              },
+            },
+            timestamp,
+          }));
 
         const createdMessage = await createMessage({
           variables: {
@@ -240,17 +289,10 @@ const ChatMessages = () => {
       console.error('Error sending message:', error);
     } finally {
       setLoadingCreateMessage(false);
-      setLoadingCreateChat(false);
     }
   };
 
-  const loading =
-    (chatId && (chatsLoading || !chatsCalled)) ||
-    (friendId && (otherFriendsLoading || !otherFriendsCalled));
-
-  if (chatError || friendError) {
-    navigate('/');
-  }
+  const loading = loadingChatMessages || chatLoading || friendLoading;
 
   return (
     <ChatMessagesStyled
@@ -258,45 +300,43 @@ const ChatMessages = () => {
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
     >
-      {loading || selectedMember ? (
-        <div className="app-bar-wrapper">
-          <AppBar position="static" className="app-bar" ref={appBarRef}>
-            <Toolbar>
-              {loading ? (
-                <MainLayoutLoader dense disablePadding disableGutters />
-              ) : (
-                <List dense disablePadding>
-                  <ListItem
-                    disableHover
-                    disableGutters
-                    disablePadding
-                    btnProps={{
-                      disableGutters: true,
-                      alignItems: 'flex-start',
-                      textProps: {
-                        primary: selectedMember?.memberDetails?.name,
-                        secondary: selectedMember?.memberDetails?.email,
-                        primaryTypographyProps: {
-                          fontSize: '1.08rem',
-                        },
-                        secondaryTypographyProps: {
-                          fontSize: '0.85rem',
-                          style: {
-                            WebkitLineClamp: 1,
-                          },
+      <div className="app-bar-wrapper">
+        <AppBar position="static" className="app-bar" ref={appBarRef}>
+          <Toolbar>
+            {loading ? (
+              <MainLayoutLoader dense disablePadding disableGutters />
+            ) : (
+              <List dense disablePadding>
+                <ListItem
+                  disableHover
+                  disableGutters
+                  disablePadding
+                  btnProps={{
+                    disableGutters: true,
+                    alignItems: 'flex-start',
+                    textProps: {
+                      primary: selectedMember?.memberDetails?.name,
+                      secondary: selectedMember?.memberDetails?.email,
+                      primaryTypographyProps: {
+                        fontSize: '1.08rem',
+                      },
+                      secondaryTypographyProps: {
+                        fontSize: '0.85rem',
+                        style: {
+                          WebkitLineClamp: 1,
                         },
                       },
-                      avatarProps: {
-                        src: selectedMember?.memberDetails?.picture,
-                      },
-                    }}
-                  />
-                </List>
-              )}
-            </Toolbar>
-          </AppBar>
-        </div>
-      ) : null}
+                    },
+                    avatarProps: {
+                      src: selectedMember?.memberDetails?.picture,
+                    },
+                  }}
+                />
+              </List>
+            )}
+          </Toolbar>
+        </AppBar>
+      </div>
       {loading ? null : (
         <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
       )}

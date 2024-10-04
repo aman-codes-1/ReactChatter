@@ -1,17 +1,17 @@
 import { MouseEventHandler, useContext } from 'react';
-import { FriendRequest, MainLayout } from '..';
+import { FriendRequest } from '..';
 import { useSnackbar } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
 
 const SentRequests = () => {
   const { openSnackbar } = useSnackbar();
   const {
-    updateRequest,
-    updateRequestLoading,
-    sentRequests,
+    sentRequests = [],
     sentRequestsLoading,
     sentRequestsCalled,
     sentRequestsError,
+    updateRequest,
+    updateRequestLoading,
   } = useContext(ChatsAndFriendsContext);
 
   const handleClickRequest = async (

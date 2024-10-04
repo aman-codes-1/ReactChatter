@@ -1,6 +1,11 @@
 import { createContext, useLayoutEffect, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useSubscription } from '@apollo/client';
+import { useLocation } from 'react-router-dom';
+import {
+  useLazyQuery,
+  useMutation,
+  useQuery,
+  useSubscription,
+} from '@apollo/client';
 import {
   CHAT_QUERY,
   CHATS_QUERY,
@@ -15,23 +20,63 @@ import {
   SENT_REQUESTS_QUERY,
   UPDATE_REQUEST_MUTATION,
 } from '.';
-import { useAuth, useSocket } from '../../hooks';
+import { useAuth } from '../../hooks';
 
 export const ChatsAndFriendsContext = createContext<any>({});
 
 export const ChatsAndFriendsProvider = ({ children }: any) => {
-  const [searchParams] = useSearchParams();
-  const chatId =
-    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
-  const friendId =
-    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const { pathname } = useLocation();
   const [isListItemClicked, setIsListItemClicked] = useState(false);
   const [selectedChat, setSelectedChat] = useState();
   const [selectedFriend, setSelectedFriend] = useState();
   const [selectedMember, setSelectedMember] = useState();
   const { auth: { _id = '' } = {} } = useAuth();
-  const { isLoading: isSocketLoading } = useSocket();
+
+  const [
+    chatQuery,
+    {
+      data: chat,
+      loading: chatLoading,
+      error: chatError,
+      client: chatClient,
+      called: chatCalled,
+    },
+  ] = useLazyQuery(CHAT_QUERY, {
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      const selChat = data?.chat;
+      if (selChat) {
+        setSelectedChat(selChat);
+        const selMember = selChat?.members?.find(
+          (chatMember: any) => chatMember?._id !== _id,
+        );
+        setSelectedMember(selMember);
+      }
+    },
+  });
+
+  const [
+    friendQuery,
+    {
+      data: friend,
+      loading: friendLoading,
+      error: friendError,
+      client: friendClient,
+      called: friendCalled,
+    },
+  ] = useLazyQuery(FRIEND_QUERY, {
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      const selFriend = data?.friend;
+      if (selFriend) {
+        setSelectedFriend(selFriend);
+        const selMember = selFriend?.members?.find(
+          (friendMember: any) => friendMember?._id !== _id,
+        );
+        setSelectedMember(selMember);
+      }
+    },
+  });
 
   const {
     data: { chats = [] } = {},
@@ -45,39 +90,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       userId: _id,
     },
     fetchPolicy: 'network-only',
-    skip: isSocketLoading,
   });
-
-  const {
-    data: chat,
-    loading: chatLoading,
-    error: chatError,
-    client: chatClient,
-    called: chatCalled,
-  } = useQuery(CHAT_QUERY, {
-    variables: {
-      chatId,
-    },
-    fetchPolicy: 'network-only',
-    skip:
-      isSocketLoading ||
-      friendId ||
-      !chatId ||
-      (chatsCalled &&
-        !chatsLoading &&
-        chats?.length &&
-        chatId &&
-        chats?.find((el: any) => el?._id === chatId)),
-  });
-
-  const [
-    createChat,
-    {
-      data: createChatData,
-      loading: createChatLoading,
-      error: createChatError,
-    },
-  ] = useMutation(CREATE_CHAT_MUTATION);
 
   const {
     data: { otherFriends = [] } = {},
@@ -91,29 +104,40 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       userId: _id,
     },
     fetchPolicy: 'network-only',
-    skip: isSocketLoading,
   });
 
   const {
-    data: friend,
-    loading: friendLoading,
-    error: friendError,
-    client: friendClient,
-    called: friendCalled,
-  } = useQuery(FRIEND_QUERY, {
+    data: {
+      pendingRequests: {
+        data: pendingRequests = [],
+        totalCount: pendingRequestsCount = 0,
+      } = {},
+    } = {},
+    loading: pendingRequestsLoading,
+    error: pendingRequestsError,
+    client: pendingRequestsClient,
+    called: pendingRequestsCalled,
+  } = useQuery(PENDING_REQUESTS_QUERY, {
     variables: {
-      friendId,
+      userId: _id,
     },
-    fetchPolicy: 'network-only',
-    skip:
-      isSocketLoading ||
-      chatId ||
-      !friendId ||
-      (otherFriendsCalled &&
-        !otherFriendsLoading &&
-        otherFriends?.length &&
-        friendId &&
-        otherFriends?.find((el: any) => el?._id === friendId)),
+  });
+
+  const {
+    data: {
+      sentRequests: {
+        data: sentRequests = [],
+        totalCount: sentRequestsCount = 0,
+      } = {},
+    } = {},
+    loading: sentRequestsLoading,
+    error: sentRequestsError,
+    client: sentRequestsClient,
+    called: sentRequestsCalled,
+  } = useQuery(SENT_REQUESTS_QUERY, {
+    variables: {
+      userId: _id,
+    },
   });
 
   const {
@@ -145,60 +169,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       }
     },
   });
-
-  const {
-    data: {
-      pendingRequests: {
-        data: pendingRequests = [],
-        totalCount: pendingRequestsCount = 0,
-      } = {},
-    } = {},
-    loading: pendingRequestsLoading,
-    error: pendingRequestsError,
-    client: pendingRequestsClient,
-    called: pendingRequestsCalled,
-  } = useQuery(PENDING_REQUESTS_QUERY, {
-    variables: {
-      userId: _id,
-    },
-    skip: isSocketLoading,
-  });
-
-  const {
-    data: {
-      sentRequests: {
-        data: sentRequests = [],
-        totalCount: sentRequestsCount = 0,
-      } = {},
-    } = {},
-    loading: sentRequestsLoading,
-    error: sentRequestsError,
-    client: sentRequestsClient,
-    called: sentRequestsCalled,
-  } = useQuery(SENT_REQUESTS_QUERY, {
-    variables: {
-      userId: _id,
-    },
-    skip: isSocketLoading,
-  });
-
-  const [
-    createRequest,
-    {
-      data: createRequestData,
-      loading: createRequestLoading,
-      error: createRequestError,
-    },
-  ] = useMutation(CREATE_REQUEST_MUTATION);
-
-  const [
-    updateRequest,
-    {
-      data: updateRequestData,
-      loading: updateRequestLoading,
-      error: updateRequestError,
-    },
-  ] = useMutation(UPDATE_REQUEST_MUTATION);
 
   const {
     data: OnRequestAddedData,
@@ -314,6 +284,33 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     },
   });
 
+  const [
+    createChat,
+    {
+      data: createChatData,
+      loading: createChatLoading,
+      error: createChatError,
+    },
+  ] = useMutation(CREATE_CHAT_MUTATION);
+
+  const [
+    createRequest,
+    {
+      data: createRequestData,
+      loading: createRequestLoading,
+      error: createRequestError,
+    },
+  ] = useMutation(CREATE_REQUEST_MUTATION);
+
+  const [
+    updateRequest,
+    {
+      data: updateRequestData,
+      loading: updateRequestLoading,
+      error: updateRequestError,
+    },
+  ] = useMutation(UPDATE_REQUEST_MUTATION);
+
   useLayoutEffect(() => {
     if (!pathname?.includes('/chat')) {
       setSelectedChat(undefined);
@@ -322,42 +319,23 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     }
   }, [pathname]);
 
-  useLayoutEffect(() => {
-    if (chats?.length && chatId) {
-      const selChat = chats?.find((el: any) => el?._id === chatId);
-      setSelectedChat(selChat);
-      const selMember = selChat?.members?.find(
-        (chatMember: any) => chatMember?._id !== _id,
-      );
-      setSelectedMember(selMember);
-    }
-  }, [chats, chatId]);
-
-  useLayoutEffect(() => {
-    if (otherFriends?.length && friendId) {
-      const selFriend = otherFriends?.find((el: any) => el?._id === friendId);
-      setSelectedFriend(selFriend);
-      const selMember = selFriend?.members?.find(
-        (friendMember: any) => friendMember?._id !== _id,
-      );
-      setSelectedMember((prev) => {
-        if (prev && !selMember) {
-          return prev;
-        }
-        return selMember;
-      });
-    }
-  }, [otherFriends, friendId]);
-
   return (
     <ChatsAndFriendsContext.Provider
       value={{
         // chat
+        chatQuery,
         chat,
         chatLoading,
         chatError,
         chatClient,
         chatCalled,
+        // friend
+        friendQuery,
+        friend,
+        friendLoading,
+        friendError,
+        friendClient,
+        friendCalled,
         // chats
         chats,
         chatsLoading,
@@ -365,17 +343,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         chatsClient,
         chatsCalled,
         subscribeChatsToMore,
-        // createChat
-        createChat,
-        createChatData,
-        createChatLoading,
-        createChatError,
-        // friend
-        friend,
-        friendLoading,
-        friendError,
-        friendClient,
-        friendCalled,
         // otherFriends
         otherFriends,
         otherFriendsLoading,
@@ -383,10 +350,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         otherFriendsClient,
         otherFriendsCalled,
         subscribeOtherFriendsToMore,
-        // OnFriendAdded
-        OnFriendAddedData,
-        OnFriendAddedLoading,
-        OnFriendAddedError,
         // pendingRequests
         pendingRequests,
         pendingRequestsCount,
@@ -401,6 +364,23 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         sentRequestsError,
         sentRequestsClient,
         sentRequestsCalled,
+        // OnFriendAdded
+        OnFriendAddedData,
+        OnFriendAddedLoading,
+        OnFriendAddedError,
+        // OnRequestAdded
+        OnRequestAddedData,
+        OnRequestAddedLoading,
+        OnRequestAddedError,
+        // OnRequestUpdated
+        OnRequestUpdatedData,
+        OnRequestUpdatedLoading,
+        OnRequestUpdatedError,
+        // createChat
+        createChat,
+        createChatData,
+        createChatLoading,
+        createChatError,
         // createRequest
         createRequest,
         createRequestData,
@@ -411,14 +391,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         updateRequestData,
         updateRequestLoading,
         updateRequestError,
-        // OnRequestAdded
-        OnRequestAddedData,
-        OnRequestAddedLoading,
-        OnRequestAddedError,
-        // OnRequestUpdated
-        OnRequestUpdatedData,
-        OnRequestUpdatedLoading,
-        OnRequestUpdatedError,
         // isListItemClicked
         isListItemClicked,
         setIsListItemClicked,

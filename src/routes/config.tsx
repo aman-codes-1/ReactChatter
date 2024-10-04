@@ -48,7 +48,7 @@ export const routesConfig = () => [
       <SuspenseWrapper
         path="pages"
         compName="ChatMessages"
-        fallback={<ChatMessages />}
+        fallback={<ChatMessages loadingFallback />}
       />
     ),
   },

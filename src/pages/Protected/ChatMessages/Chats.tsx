@@ -1,5 +1,5 @@
 import { useContext, useLayoutEffect, useRef } from 'react';
-import { useOutletContext, useSearchParams } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
@@ -12,49 +12,9 @@ import { ChatMessagesStyled } from './ChatMessages.styled';
 
 const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   const [navbarHeight] = useOutletContext<any>();
-  const [searchParams] = useSearchParams();
-  const chatId =
-    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
-  const friendId =
-    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
-  const { selectedMember, isListItemClicked } = useContext(
-    ChatsAndFriendsContext,
-  );
-  const {
-    loadingCached,
-    setLoadingCached,
-    loadingQueue,
-    setLoadingQueue,
-    messageGroups = [],
-    messageQueue = [],
-    getCachedMessages,
-    getQueuedMessages,
-  } = useContext(MessagesContext);
+  const { isListItemClicked } = useContext(ChatsAndFriendsContext);
+  const { messageGroups = [] } = useContext(MessagesContext);
   const scrollRef = useRef<any>(null);
-
-  useLayoutEffect(() => {
-    if (selectedMember) return;
-
-    if (chatId) {
-      (async () => {
-        try {
-          await getCachedMessages(chatId, setLoadingCached);
-        } catch (error) {
-          console.error('Error fetching data:', error);
-        }
-      })();
-    }
-
-    if (friendId) {
-      (async () => {
-        try {
-          await getQueuedMessages(friendId, true, setLoadingQueue);
-        } catch (error) {
-          console.error('Error fetching data:', error);
-        }
-      })();
-    }
-  }, [selectedMember]);
 
   useLayoutEffect(() => {
     scrollIntoView(scrollRef);
@@ -69,25 +29,10 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
           }
         });
       }
-
-      if (messageQueue?.length) {
-        messageQueue?.forEach(() => {
-          scrollIntoView(scrollRef);
-        });
-      }
     };
 
     checkScroll();
-    window.addEventListener('resize', checkScroll);
-
-    return () => {
-      window.removeEventListener('resize', checkScroll);
-    };
-  }, [messageGroups, messageQueue, isListItemClicked]);
-
-  if (loadingCached || loadingQueue) {
-    return null;
-  }
+  }, [messageGroups, isListItemClicked]);
 
   const attachClass = (data: any, index: number, side: string) => {
     if (index === 0) {
@@ -101,10 +46,14 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
 
   const renderChat = (msg: any, index: number, data: any, side: string) => {
     return (
-      <div className={`msg-${side}-row`} key={msg?._id}>
+      <div
+        className={`msg-${side}-row`}
+        key={`${JSON.stringify(msg)} ${index}`}
+      >
         <Typography
+          component="div"
           align="left"
-          className={`msg msg-${side} ${attachClass(data, index, side)}`}
+          className={`msg msg-${side} ${attachClass(data, index, side)} ${msg?.sender?.sentStatus?.isQueued ? 'msg-animation' : ''}`}
         >
           <div className="msg-content">{msg?.message}</div>
           <div className="msg-timestamp">
@@ -120,6 +69,9 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
             ) : null}
             {side === 'right' ? (
               <>
+                {msg?.sender?.sentStatus?.isQueued === true ? (
+                  <AccessTimeIcon fontSize="inherit" />
+                ) : null}
                 {msg?.sender?.sentStatus?.isSent === true ? (
                   <DoneRoundedIcon fontSize="inherit" />
                 ) : null}
@@ -134,7 +86,7 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
     );
   };
 
-  const IsNoMessages = !messageGroups?.length && !messageQueue?.length;
+  const IsNoMessages = !messageGroups?.length;
 
   return (
     <ChatMessagesStyled
@@ -146,7 +98,7 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
         {IsNoMessages ? (
           <div className="no-messages-wrapper">No Messages</div>
         ) : null}
-        {messageGroups?.length || messageQueue?.length ? (
+        {messageGroups?.length ? (
           <div className="chat-wrapper">
             <div className="chat-grid">
               {messageGroups?.map((messageGroup: any, idx: number) => (
@@ -175,38 +127,6 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
                           ),
                         )
                       : null}
-                  </Grid>
-                </Grid>
-              ))}
-              {messageQueue?.map((msgQueue: any, idx: number) => (
-                <Grid
-                  container
-                  spacing={2}
-                  justifyContent="flex-end"
-                  key={`${JSON.stringify(msgQueue)} ${idx}`}
-                >
-                  <Grid size={8}>
-                    <div className="msg-right-row">
-                      <Typography
-                        align="left"
-                        className="msg msg-right msg-animation"
-                      >
-                        <div className="msg-content">{msgQueue?.message}</div>
-                        <div className="msg-timestamp">
-                          {msgQueue?.timestamp ? (
-                            <Typography
-                              variant="caption"
-                              whiteSpace="nowrap"
-                              fontWeight={600}
-                              className="msg-timestamp-text"
-                            >
-                              {getTime(msgQueue.timestamp)}
-                            </Typography>
-                          ) : null}
-                          <AccessTimeIcon fontSize="inherit" />
-                        </div>
-                      </Typography>
-                    </div>
                   </Grid>
                 </Grid>
               ))}

@@ -6,11 +6,11 @@ import { ChatsAndFriendsContext } from '../../../contexts';
 const FriendRequests = () => {
   const { openSnackbar } = useSnackbar();
   const {
-    updateRequest,
-    pendingRequests,
+    pendingRequests = [],
     pendingRequestsLoading,
     pendingRequestsCalled,
     pendingRequestsError,
+    updateRequest,
   } = useContext(ChatsAndFriendsContext);
 
   const handleClickRequest = async (

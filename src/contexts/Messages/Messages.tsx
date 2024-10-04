@@ -1,5 +1,4 @@
-import { createContext, useContext, useLayoutEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useLazyQuery, useMutation, useSubscription } from '@apollo/client';
 import {
   MESSAGES_QUERY,
@@ -9,7 +8,7 @@ import {
   MESSAGE_ADDED_SUBSCRIPTION,
   // MESSAGE_UPDATED_SUBSCRIPTION,
 } from './gql';
-import { groupMessages } from '../../helpers';
+import { addQueuedMessagesToLastGroup, groupMessages } from '../../helpers';
 import { useAuth } from '../../hooks';
 import { MessageQueueService } from '../../services';
 import { ChatsAndFriendsContext } from '..';
@@ -18,13 +17,8 @@ export const MessagesContext = createContext<any>({});
 
 export const MessagesProvider = ({ children }: any) => {
   const MessageQueue = new MessageQueueService();
-  const [searchParams] = useSearchParams();
-  const chatId =
-    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
-  const [loadingCached, setLoadingCached] = useState(false);
-  const [loadingQueue, setLoadingQueue] = useState(false);
+  const [loadingChatMessages, setLoadingChatMessages] = useState(true);
   const [messageGroups, setMessageGroups] = useState<any[]>([]);
-  const [messageQueue, setMessageQueue] = useState<any[]>([]);
 
   const { auth: { _id = '' } = {} } = useAuth();
   const { createChat, selectedMember } = useContext(ChatsAndFriendsContext);
@@ -51,16 +45,6 @@ export const MessagesProvider = ({ children }: any) => {
   ] = useLazyQuery(MESSAGE_QUEUED_QUERY, {
     fetchPolicy: 'network-only',
   });
-
-  const [
-    createMessage,
-    { loading: loadingCreateMessage, error: errorCreateMessage },
-  ] = useMutation(CREATE_MESSAGE_MUTATION);
-
-  const [
-    updateMessage,
-    { loading: loadingUpdateMessage, error: errorUpdateMessage },
-  ] = useMutation(UPDATE_MESSAGE_MUTATION);
 
   const { loading: loadingOnMessageAdded, error: errorOnMessageAdded } =
     useSubscription(MESSAGE_ADDED_SUBSCRIPTION, {
@@ -101,7 +85,17 @@ export const MessagesProvider = ({ children }: any) => {
   //     },
   //   });
 
-  useLayoutEffect(() => {
+  const [
+    createMessage,
+    { loading: loadingCreateMessage, error: errorCreateMessage },
+  ] = useMutation(CREATE_MESSAGE_MUTATION);
+
+  const [
+    updateMessage,
+    { loading: loadingUpdateMessage, error: errorUpdateMessage },
+  ] = useMutation(UPDATE_MESSAGE_MUTATION);
+
+  useEffect(() => {
     const processMessages = async () => {
       const messageQueueService = new MessageQueueService(
         messageQueuedQuery,
@@ -116,69 +110,103 @@ export const MessagesProvider = ({ children }: any) => {
     };
 
     processMessages();
-  }, []);
+  }, [_id, selectedMember]);
 
   const getQueuedMessages = async (
     id: string,
+    key: string,
     emptyMsgs?: boolean,
-    setLoading?: any,
   ) => {
-    setLoading?.(true);
     try {
-      const queuedMessages = await MessageQueue.getQueuedMessagesByChatId(
+      const queuedMessages = await MessageQueue.getQueuedMessagesById(
         id,
+        key,
         25,
         0,
       );
+
       if (emptyMsgs) {
         setMessageGroups([]);
       }
-      setMessageQueue(queuedMessages);
-    } catch (error) {
-      console.error('Error getting queued messages:', error);
+
+      return queuedMessages;
+    } catch (error: any) {
       if (emptyMsgs) {
         setMessageGroups([]);
       }
-    } finally {
-      setLoading?.(false);
+
+      throw new Error(error?.message);
     }
   };
 
-  const getMessages = async (id: string, msgs: any[]) => {
+  const getCombinedMessages = async (id: string, msgs: any[] = []) => {
+    if (!msgs?.length) return;
+
     try {
-      await getQueuedMessages(id);
-    } catch (error) {
-      console.error('Error getting queued messages:', error);
-    }
+      const queuedMessages = await getQueuedMessages(id, 'chatId');
 
-    if (msgs && msgs?.length) {
-      const messageGroupsData = groupMessages(msgs, _id);
-      setMessageGroups(messageGroupsData);
+      const combinedMessages = queuedMessages?.length
+        ? msgs.concat(queuedMessages)
+        : msgs;
+
+      if (combinedMessages?.length) {
+        const messageGroupsData = groupMessages(combinedMessages, _id);
+        setMessageGroups(messageGroupsData);
+      }
+    } catch (error: any) {
+      throw new Error(error?.message);
     }
   };
 
-  const getCachedMessages = async (id: string, setLoading: any) => {
+  const fetchMessages = async (id: string) => {
+    const res = await messagesQuery({
+      variables: { chatId: id },
+      fetchPolicy: 'network-only',
+    });
+
+    if (res?.error?.message) {
+      throw new Error(res?.error?.message);
+    }
+
+    return res?.data?.messages || [];
+  };
+
+  const getChatMessagesWithQueue = async (id: string, setLoading?: any) => {
     setLoading?.(true);
+
     try {
       const cachedData = await messagesClient?.readQuery({
         query: MESSAGES_QUERY,
         variables: { chatId: id },
       });
 
-      if (!cachedData) {
-        const res = await messagesQuery({
-          variables: {
-            chatId: id,
-          },
-          fetchPolicy: 'network-only',
-        });
+      const messages =
+        cachedData && cachedData?.messages
+          ? cachedData?.messages
+          : await fetchMessages(id);
 
-        await getMessages(id, res?.data?.messages);
-      } else {
-        await getMessages(id, cachedData?.messages);
+      await getCombinedMessages(id, messages);
+    } catch (error: any) {
+      throw new Error(error);
+    } finally {
+      setLoading?.(false);
+    }
+  };
+
+  const getFriendMessagesWithQueue = async (id: string, setLoading?: any) => {
+    setLoading?.(true);
+
+    try {
+      const queuedMessages = await getQueuedMessages(id, 'friendId', true);
+
+      if (queuedMessages?.length) {
+        setMessageGroups((prev: any) => {
+          const newGroups = addQueuedMessagesToLastGroup(prev, queuedMessages);
+          return newGroups;
+        });
       }
-    } catch (error) {
-      console.error('Error getting cached messages:', error);
+    } catch (error: any) {
+      throw new Error(error);
     } finally {
       setLoading?.(false);
     }
@@ -200,6 +228,9 @@ export const MessagesProvider = ({ children }: any) => {
         loadingMessageQueued,
         errorMessageQueued,
         messageQueuedClient,
+        // OnMessageAdded
+        loadingOnMessageAdded,
+        errorOnMessageAdded,
         // createMessage
         createMessage,
         loadingCreateMessage,
@@ -208,24 +239,17 @@ export const MessagesProvider = ({ children }: any) => {
         updateMessage,
         loadingUpdateMessage,
         errorUpdateMessage,
-        // OnMessageAdded
-        loadingOnMessageAdded,
-        errorOnMessageAdded,
-        // loadingCached
-        loadingCached,
-        setLoadingCached,
-        // loadingQueue
-        loadingQueue,
-        setLoadingQueue,
+        // loadingChatMessages
+        loadingChatMessages,
+        setLoadingChatMessages,
         // messageGroups
         messageGroups,
         setMessageGroups,
-        // messageQueue
-        messageQueue,
-        setMessageQueue,
         // getMessages
         getQueuedMessages,
-        getCachedMessages,
+        getCombinedMessages,
+        getChatMessagesWithQueue,
+        getFriendMessagesWithQueue,
       }}
     >
       {children}

@@ -126,6 +126,44 @@ export const groupMessages = (msgs: any, _id: string) => {
   return groupedMessages;
 };
 
+export const addQueuedMessageToLastGroup = (
+  prev: any[] = [],
+  queuedMessage: any,
+) => {
+  if (prev?.length) {
+    const lastIndex = prev.length - 1;
+    const lastGroup = prev[lastIndex];
+
+    if (lastGroup.side === 'right') {
+      return [
+        ...prev.slice(0, lastIndex),
+        { ...lastGroup, data: [...lastGroup.data, queuedMessage] },
+      ];
+    }
+  }
+
+  const newGroup = {
+    side: 'right',
+    data: [queuedMessage],
+  };
+
+  return [...prev, newGroup];
+};
+
+export const addQueuedMessagesToLastGroup = (
+  prev: any[] = [],
+  queuedMessages: any[],
+) => {
+  const lastGroup = prev[prev.length - 1];
+
+  if (lastGroup?.side === 'right') {
+    lastGroup.data = [...lastGroup.data, ...queuedMessages];
+    return [...prev];
+  }
+
+  return [...prev, { side: 'right', data: queuedMessages }];
+};
+
 export const compareObjects = (first: any, second: any) => {
   if (first === second) return true;
   if (first === null || second === null) return false;

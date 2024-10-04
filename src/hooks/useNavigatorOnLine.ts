@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const useNavigatorOnLine = () => {
   const url = 'https://www.google.com';
@@ -7,7 +7,7 @@ export const useNavigatorOnLine = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     let controllerTimeout: any = 0;
     const fetchRequest = async () => {
       const controller = new AbortController();

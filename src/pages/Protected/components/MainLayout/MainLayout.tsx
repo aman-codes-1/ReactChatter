@@ -1,7 +1,6 @@
 import { useOutletContext } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { SuccessErrorMessage } from '../../../../components';
-import { useSocket } from '../../../../hooks';
 import { MainLayoutLoader } from '.';
 import { MainLayoutProps } from './IMainLayout';
 import { MainLayoutStyled } from './MainLayout.styled';
@@ -18,8 +17,7 @@ const MainLayout = ({
   children,
 }: MainLayoutProps) => {
   const [navbarHeight] = useOutletContext<any>();
-  const { isLoading: isSocketLoading } = useSocket();
-  const isLoading = (loading || isSocketLoading) && !disableLoader;
+  const isLoading = loading && !disableLoader;
 
   return (
     <MainLayoutStyled navbarHeight={navbarHeight}>

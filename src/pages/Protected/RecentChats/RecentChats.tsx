@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '..';
-import { ChatsAndFriendsContext } from '../../../contexts';
+import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
 import { DataList } from '../../../components';
 
 const RecentChats = () => {
@@ -17,6 +17,7 @@ const RecentChats = () => {
     setSelectedFriend,
     setSelectedMember,
   } = useContext(ChatsAndFriendsContext);
+  const { getChatMessagesWithQueue } = useContext(MessagesContext);
 
   const handleClickChat = async (
     _: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -24,11 +25,17 @@ const RecentChats = () => {
     selectedMember: any,
   ) => {
     setIsListItemClicked((prev: boolean) => !prev);
+
     if (chat?._id) {
-      setSelectedFriend(undefined);
-      setSelectedChat(chat);
-      setSelectedMember(selectedMember);
-      navigate(`/chat?id=${chat?._id}&type=chat`);
+      try {
+        setSelectedFriend(undefined);
+        setSelectedChat(chat);
+        setSelectedMember(selectedMember);
+        await getChatMessagesWithQueue(chat?._id);
+        navigate(`/chat?id=${chat?._id}&type=chat`);
+      } catch (error: any) {
+        console.error('Error fetching messages:', error);
+      }
     }
   };
 

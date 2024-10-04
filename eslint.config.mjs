@@ -67,7 +67,6 @@ export default [
       'import/export': 2,
       'linebreak-style': 0,
       'class-methods-use-this': 0,
-      'eslint-disable-next-line react/jsx-no-useless-fragment': 'off',
       'no-underscore-dangle': 'off',
       'no-useless-constructor': 0,
       'max-classes-per-file': 'off',

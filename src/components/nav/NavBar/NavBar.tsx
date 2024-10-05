@@ -3,27 +3,18 @@ import { Link } from 'react-router-dom';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { BaseSvg, Button } from '../..';
-import { useAuth } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
 import { NavBarStyled } from './NavBar.styled';
 
 const NavBar = forwardRef(
   ({ onMenuClick, toggleDrawer, className }: any, ref: any) => {
-    const { setAuth } = useAuth();
     const { chats = [], otherFriends = [] } = useContext(
       ChatsAndFriendsContext,
     );
 
     return (
       <NavBarStyled className={className} ref={ref}>
-        <Link
-          to="/"
-          className="nav-logo"
-          onClick={() => {
-            toggleDrawer?.();
-            setAuth(undefined);
-          }}
-        >
+        <Link to="/" className="nav-logo" onClick={() => toggleDrawer?.()}>
           <BaseSvg id="logo" className="nav-logo-svg" />
         </Link>
         {chats?.length || otherFriends?.length ? (

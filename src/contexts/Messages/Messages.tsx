@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useLazyQuery, useMutation, useSubscription } from '@apollo/client';
 import {
   MESSAGES_QUERY,
@@ -6,7 +7,7 @@ import {
   CREATE_MESSAGE_MUTATION,
   UPDATE_MESSAGE_MUTATION,
   MESSAGE_ADDED_SUBSCRIPTION,
-  // MESSAGE_UPDATED_SUBSCRIPTION,
+  MESSAGE_UPDATED_SUBSCRIPTION,
 } from './gql';
 import { addQueuedMessagesToLastGroup, groupMessages } from '../../helpers';
 import { useAuth } from '../../hooks';
@@ -17,82 +18,87 @@ export const MessagesContext = createContext<any>({});
 
 export const MessagesProvider = ({ children }: any) => {
   const MessageQueue = new MessageQueueService();
-  const [loadingChatMessages, setLoadingChatMessages] = useState(true);
+  const { pathname } = useLocation();
   const [messageGroups, setMessageGroups] = useState<any[]>([]);
 
   const { auth: { _id = '' } = {} } = useAuth();
-  const { createChat, selectedMember } = useContext(ChatsAndFriendsContext);
-
-  const [
-    messagesQuery,
-    {
-      client: messagesClient,
-      refetch: refetchMessages,
-      data: { messages = [] } = {},
-      loading: loadingMessages,
-      error: errorMessages,
-    },
-  ] = useLazyQuery(MESSAGES_QUERY);
+  const { createChat, createChatLoading, isListItemClicked, selectedMember } =
+    useContext(ChatsAndFriendsContext);
 
   const [
     messageQueuedQuery,
     {
-      client: messageQueuedClient,
       data: messageQueued,
-      loading: loadingMessageQueued,
-      error: errorMessageQueued,
+      loading: messageQueuedLoading,
+      error: messageQueuedError,
+      client: messageQueuedClient,
+      called: messageQueuedCalled,
     },
   ] = useLazyQuery(MESSAGE_QUEUED_QUERY, {
     fetchPolicy: 'network-only',
   });
 
-  const { loading: loadingOnMessageAdded, error: errorOnMessageAdded } =
-    useSubscription(MESSAGE_ADDED_SUBSCRIPTION, {
-      // variables: {
-      //   isDelivered: true,
-      // },
-      onData: () => {
-        // const OnMessageAdded = res?.data?.data?.OnMessageAdded;
-        // const OnMessagesAddedUserId = OnMessagesAdded?.userId;
-        // const OnMessageAddedChatId = OnMessageAdded?.chatId;
-        // const OnMessageAddedData = OnMessageAdded?.data;
-        // const OnMessageAddedMessageId = OnMessageAdded?._id;
-        // if (
-        //   OnMessagesAddedUserId === _id &&
-        //   OnMessageAddedChatId !== chatId
-        // ) {
-        //   updateMessage({
-        //     variables: {
-        //       messageId: OnMessageAddedChatId,
-        //       receivedStatus: 'unread',
-        //     },
-        //   });
-        // }
-      },
-    });
+  const [
+    messagesQuery,
+    {
+      data: { messages = [] } = {},
+      loading: messagesLoading,
+      error: messagesError,
+      client: messagesClient,
+      called: messagesCalled,
+    },
+  ] = useLazyQuery(MESSAGES_QUERY);
 
-  // const { loading: loadingOnMessagesAdded, error: errorOnMessagesAdded } =
-  //   useSubscription(MESSAGES_ADDED_SUBSCRIPTION, {
-  //     onData: async (res) => {
-  //       await client?.clearStore();
-  //       const OnMessagesAdded = res?.data?.data?.OnMessagesAdded;
-  //       const OnMessagesAddedUserId = OnMessagesAdded?.userId;
-  //       const OnMessagesAddedChatId = OnMessagesAdded?.chatId;
-  //       const OnMessagesAddedData = OnMessagesAdded?.data;
-  //       if (OnMessagesAddedUserId === _id && OnMessagesAddedChatId === chatId) {
-  //         messagesWithQueue(OnMessagesAddedData);
-  //       }
-  //     },
-  //   });
+  const {
+    data: OnMessageAddedData,
+    loading: OnMessageAddedLoading,
+    error: OnMessageAddedError,
+  } = useSubscription(MESSAGE_ADDED_SUBSCRIPTION, {
+    // variables: {
+    //   isDelivered: true,
+    // },
+    onData: () => {
+      // const OnMessageAdded = res?.data?.data?.OnMessageAdded;
+      // const OnMessagesAddedUserId = OnMessagesAdded?.userId;
+      // const OnMessageAddedChatId = OnMessageAdded?.chatId;
+      // const OnMessageAddedData = OnMessageAdded?.data;
+      // const OnMessageAddedMessageId = OnMessageAdded?._id;
+      // if (
+      //   OnMessagesAddedUserId === _id &&
+      //   OnMessageAddedChatId !== chatId
+      // ) {
+      //   updateMessage({
+      //     variables: {
+      //       messageId: OnMessageAddedChatId,
+      //       receivedStatus: 'unread',
+      //     },
+      //   });
+      // }
+    },
+  });
+
+  const {
+    data: OnMessageUpdatedData,
+    loading: OnMessageUpdatedLoading,
+    error: OnMessageUpdatedError,
+  } = useSubscription(MESSAGE_UPDATED_SUBSCRIPTION);
 
   const [
     createMessage,
-    { loading: loadingCreateMessage, error: errorCreateMessage },
+    {
+      data: createMessageData,
+      loading: createMessageLoading,
+      error: createMessageError,
+    },
   ] = useMutation(CREATE_MESSAGE_MUTATION);
 
   const [
     updateMessage,
-    { loading: loadingUpdateMessage, error: errorUpdateMessage },
+    {
+      data: updateMessageData,
+      loading: updateMessageLoading,
+      error: updateMessageError,
+    },
   ] = useMutation(UPDATE_MESSAGE_MUTATION);
 
   useEffect(() => {
@@ -110,7 +116,27 @@ export const MessagesProvider = ({ children }: any) => {
     };
 
     processMessages();
-  }, [_id, selectedMember]);
+  }, [
+    _id,
+    selectedMember,
+    isListItemClicked,
+    createChatLoading,
+    createMessageLoading,
+    pathname,
+  ]);
+
+  const fetchMessages = async (id: string) => {
+    const res = await messagesQuery({
+      variables: { chatId: id },
+      fetchPolicy: 'network-only',
+    });
+
+    if (res?.error?.message) {
+      throw new Error(res?.error?.message);
+    }
+
+    return res?.data?.messages || [];
+  };
 
   const getQueuedMessages = async (
     id: string,
@@ -158,22 +184,7 @@ export const MessagesProvider = ({ children }: any) => {
     }
   };
 
-  const fetchMessages = async (id: string) => {
-    const res = await messagesQuery({
-      variables: { chatId: id },
-      fetchPolicy: 'network-only',
-    });
-
-    if (res?.error?.message) {
-      throw new Error(res?.error?.message);
-    }
-
-    return res?.data?.messages || [];
-  };
-
-  const getChatMessagesWithQueue = async (id: string, setLoading?: any) => {
-    setLoading?.(true);
-
+  const getChatMessagesWithQueue = async (id: string) => {
     try {
       const cachedData = await messagesClient?.readQuery({
         query: MESSAGES_QUERY,
@@ -188,14 +199,10 @@ export const MessagesProvider = ({ children }: any) => {
       await getCombinedMessages(id, messages);
     } catch (error: any) {
       throw new Error(error);
-    } finally {
-      setLoading?.(false);
     }
   };
 
-  const getFriendMessagesWithQueue = async (id: string, setLoading?: any) => {
-    setLoading?.(true);
-
+  const getFriendMessagesWithQueue = async (id: string) => {
     try {
       const queuedMessages = await getQueuedMessages(id, 'friendId', true);
 
@@ -207,8 +214,6 @@ export const MessagesProvider = ({ children }: any) => {
       }
     } catch (error: any) {
       throw new Error(error);
-    } finally {
-      setLoading?.(false);
     }
   };
 
@@ -218,34 +223,40 @@ export const MessagesProvider = ({ children }: any) => {
         // messages
         messagesQuery,
         messages,
-        loadingMessages,
-        errorMessages,
-        refetchMessages,
+        messagesLoading,
+        messagesError,
         messagesClient,
+        messagesCalled,
         // messageQueued
         messageQueuedQuery,
         messageQueued,
-        loadingMessageQueued,
-        errorMessageQueued,
+        messageQueuedLoading,
+        messageQueuedError,
         messageQueuedClient,
+        messageQueuedCalled,
         // OnMessageAdded
-        loadingOnMessageAdded,
-        errorOnMessageAdded,
+        OnMessageAddedData,
+        OnMessageAddedLoading,
+        OnMessageAddedError,
+        // OnMessageUpdated
+        OnMessageUpdatedData,
+        OnMessageUpdatedLoading,
+        OnMessageUpdatedError,
         // createMessage
         createMessage,
-        loadingCreateMessage,
-        errorCreateMessage,
+        createMessageData,
+        createMessageLoading,
+        createMessageError,
         // updateMessage
         updateMessage,
-        loadingUpdateMessage,
-        errorUpdateMessage,
-        // loadingChatMessages
-        loadingChatMessages,
-        setLoadingChatMessages,
+        updateMessageData,
+        updateMessageLoading,
+        updateMessageError,
         // messageGroups
         messageGroups,
         setMessageGroups,
         // getMessages
+        fetchMessages,
         getQueuedMessages,
         getCombinedMessages,
         getChatMessagesWithQueue,

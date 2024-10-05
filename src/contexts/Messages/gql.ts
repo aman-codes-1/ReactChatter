@@ -1,6 +1,14 @@
 import { DocumentNode } from 'graphql';
 import { gql } from '../../__generated__/gql';
 
+const MESSAGE_QUEUED_QUERY = gql(/* GraphQL */ `
+  query messageQueued($queueId: String!) {
+    messageQueued(input: { queueId: $queueId }) {
+      _id
+    }
+  }
+`) as DocumentNode;
+
 const MESSAGES_QUERY = gql(/* GraphQL */ `
   query messages($chatId: String!) {
     messages(input: { chatId: $chatId }, limit: 25, skip: 0) {
@@ -25,14 +33,6 @@ const MESSAGES_QUERY = gql(/* GraphQL */ `
           timestamp
         }
       }
-    }
-  }
-`) as DocumentNode;
-
-const MESSAGE_QUEUED_QUERY = gql(/* GraphQL */ `
-  query messageQueued($queueId: String!) {
-    messageQueued(input: { queueId: $queueId }) {
-      _id
     }
   }
 `) as DocumentNode;

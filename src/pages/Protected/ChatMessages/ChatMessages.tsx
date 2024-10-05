@@ -52,13 +52,13 @@ const ChatMessages = ({ loadingFallback }: any) => {
     friendLoading,
     createChat,
     isListItemClicked,
+    loadingChatMessages,
+    setLoadingChatMessages,
     selectedMember,
   } = useContext(ChatsAndFriendsContext);
   const {
     createMessage,
     setMessageGroups,
-    loadingChatMessages,
-    setLoadingChatMessages,
     getChatMessagesWithQueue,
     getFriendMessagesWithQueue,
   } = useContext(MessagesContext);
@@ -130,13 +130,16 @@ const ChatMessages = ({ loadingFallback }: any) => {
         },
       });
 
-      if (res?.error?.message) {
-        throw new Error(res?.error?.message);
+      const error = res?.error?.message;
+
+      if (error) {
+        navigate('/');
+        throw new Error(error);
       }
 
-      await fetchQuery(id, setLoadingChatMessages);
-    } catch (error) {
-      navigate('/');
+      await fetchQuery(id);
+    } catch (error: any) {
+      console.error('Error fetching data:', error);
     } finally {
       setLoadingChatMessages(false);
     }
@@ -161,7 +164,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
     };
 
     fetchMessages();
-  }, [loadingFallback || selectedMember]);
+  }, [loadingFallback, selectedMember]);
 
   const handleChangeMessage = (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
@@ -282,7 +285,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
           queuedMessage?.id &&
           createdMessageData?.queueId === queuedMessage?.id
         ) {
-          await MessageQueue.deleteMessageFromQueue(queuedMessage?.id);
+          // await MessageQueue.deleteMessageFromQueue(queuedMessage?.id);
         }
       }
     } catch (error) {

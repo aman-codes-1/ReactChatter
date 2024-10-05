@@ -12,27 +12,19 @@ import { ChatMessagesStyled } from './ChatMessages.styled';
 
 const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   const [navbarHeight] = useOutletContext<any>();
-  const { isListItemClicked } = useContext(ChatsAndFriendsContext);
+  const { isListItemClicked, selectedChat } = useContext(
+    ChatsAndFriendsContext,
+  );
   const { messageGroups = [] } = useContext(MessagesContext);
   const scrollRef = useRef<any>(null);
 
   useLayoutEffect(() => {
-    scrollIntoView(scrollRef);
-
-    const checkScroll = () => {
-      if (messageGroups?.length) {
-        messageGroups?.forEach((messageGroup: any) => {
-          if (messageGroup?.data?.length) {
-            messageGroup?.data?.forEach(() => {
-              scrollIntoView(scrollRef);
-            });
-          }
-        });
-      }
-    };
-
-    checkScroll();
-  }, [messageGroups, isListItemClicked]);
+    if (selectedChat) {
+      requestAnimationFrame(() => {
+        scrollIntoView(scrollRef);
+      });
+    }
+  }, [messageGroups, isListItemClicked, selectedChat]);
 
   const attachClass = (data: any, index: number, side: string) => {
     if (index === 0) {

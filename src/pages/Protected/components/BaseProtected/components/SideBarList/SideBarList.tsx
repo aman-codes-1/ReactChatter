@@ -29,17 +29,15 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     pendingRequestsCount = 0,
     sentRequestsCount = 0,
     setIsListItemClicked,
+    setLoadingChatMessages,
     selectedChat,
     setSelectedChat,
     selectedFriend,
     setSelectedFriend,
     setSelectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const {
-    setLoadingChatMessages,
-    getChatMessagesWithQueue,
-    getFriendMessagesWithQueue,
-  } = useContext(MessagesContext);
+  const { getChatMessagesWithQueue, getFriendMessagesWithQueue } =
+    useContext(MessagesContext);
   const [toggleChats, setToggleChats] = useState(!!chats?.length);
   const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
   const [hasChatsScrollbar, setHasChatsScrollbar] = useState(false);

@@ -77,7 +77,7 @@ export const updateHeight = (ref: any, setHeight: any) => {
 export const scrollIntoView = (ref: any) => {
   const listElement = ref?.current;
   if (listElement) {
-    listElement?.scrollIntoView({ block: 'end', inline: 'nearest' });
+    listElement?.scrollIntoView?.({ block: 'end', inline: 'nearest' });
   }
 };
 

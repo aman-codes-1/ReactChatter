@@ -33,7 +33,7 @@ export const FriendRequestStyled = styled('div')<{
     maxWidth: hasScrollbar ? 'calc(100% - 1.5rem)' : '100%',
   },
   '.friend-request-list-item-btn': {
-    border: `1px solid ${theme.palette.grey[400]}`,
+    border: `1px solid ${theme.palette.grey[500]}`,
     borderRadius: '8px',
     [theme.breakpoints.down('lg')]: {
       marginRight: '1.7rem',

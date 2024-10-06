@@ -31,6 +31,7 @@ export const ChatMessagesStyled = styled('div')<{
     position: 'fixed',
     width: 'stretch',
     top: 0,
+    zIndex: 1,
   },
   '.app-bar': {
     backgroundColor: theme.palette.primary.light,
@@ -61,9 +62,11 @@ export const ChatMessagesStyled = styled('div')<{
     marginTop: 'auto',
   },
   '.chat-grid': {
-    margin: '8px 0px 13px 0px',
+    display: 'grid',
+    gap: '0.6rem',
+    margin: '0.8rem 0rem 1.45rem 0rem',
     [theme.breakpoints.down('sm')]: {
-      margin: '8px 0px 11px 0px',
+      margin: '0.8rem 0rem 1.35rem 0rem',
     },
   },
   '.msg-left-row': {
@@ -74,17 +77,18 @@ export const ChatMessagesStyled = styled('div')<{
     textAlign: 'right',
     margin: '3.5px 0px',
   },
-  '.msg-left-row:nth-of-type(1)': {
+  '.msg-left-row:nth-of-type(1), .msg-right-row:nth-of-type(1)': {
     marginTop: 0,
   },
-  '.msg-right-row:nth-of-type(1)': {
-    marginTop: 0,
+  '.msg-left-row:nth-last-of-type(1), .msg-right-row:nth-last-of-type(1)': {
+    marginBottom: 0,
   },
   '.msg': {
     display: 'inline-flex',
     position: 'relative',
     padding: '8px 14px 11px 14px',
     borderRadius: 4,
+    textAlign: 'left',
   },
   '.msg-animation': {
     transition: 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out',
@@ -96,7 +100,8 @@ export const ChatMessagesStyled = styled('div')<{
   '.msg-left': {
     borderTopRightRadius: 16,
     borderBottomRightRadius: 16,
-    backgroundColor: theme.palette.grey[100],
+    backgroundColor: theme.palette.grey[200],
+    color: theme.palette.grey[900],
   },
   '.msg-right': {
     borderTopLeftRadius: 16,
@@ -120,9 +125,13 @@ export const ChatMessagesStyled = styled('div')<{
     position: 'relative',
     display: 'inline-block',
     fontWeight: 470,
-    color: theme.palette.common.white,
   },
-  '.msg-content::after': {
+  '.msg-content-left::after': {
+    content: '""',
+    display: 'inline-block',
+    width: '65px',
+  },
+  '.msg-content-right::after': {
     content: '""',
     display: 'inline-block',
     width: '85px',
@@ -135,7 +144,10 @@ export const ChatMessagesStyled = styled('div')<{
     gap: '0.25rem',
     alignItems: 'center',
   },
-  '.msg-timestamp-text': {
+  '.msg-timestamp-text-left': {
+    color: theme.palette.grey[700],
+  },
+  '.msg-timestamp-text-right': {
     color: theme.palette.primary.contrastText,
   },
   '.text-field-wrapper': {
@@ -143,17 +155,18 @@ export const ChatMessagesStyled = styled('div')<{
     width: 'stretch',
     top: 'auto',
     bottom: 0,
+    zIndex: 1,
     [theme.breakpoints.down('sm')]: {
       bottom: navbarHeight,
     },
   },
   '.text-field-app-bar': {
-    padding: '1.28rem 2.5rem',
+    padding: '0.875rem 2.5rem',
     [theme.breakpoints.down('md')]: {
-      padding: '1.28rem 1.5rem',
+      padding: '0.875rem 1.5rem',
     },
     [theme.breakpoints.down('sm')]: {
-      padding: '1rem',
+      padding: '0.875rem 1rem',
     },
   },
   '.text-field-input-wrapper': {

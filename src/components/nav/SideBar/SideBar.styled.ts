@@ -6,7 +6,7 @@ export const SideBarStyled = styled('div')(({ theme }) => ({
   width: '100%',
   maxWidth: '22%',
   height: '100svh',
-  borderRight: `1px solid ${theme.palette.grey[200]}`,
+  borderRight: `1px solid ${theme.palette.grey[300]}`,
   gap: '0.7rem',
   overflow: 'auto',
   [theme.breakpoints.up('sm')]: {

@@ -19,7 +19,7 @@ export const HomeStyled = styled('div')(({ theme }) => ({
     '.home-heading': {
       fontSize: '3.625rem',
       color: theme.palette.common.white,
-      textShadow: `0 1px 0 ${theme.palette.grey[700]}`,
+      textShadow: `0 1px 0 ${theme.palette.grey[50]}`,
       marginBottom: 8,
       [theme.breakpoints.down('sm')]: {
         fontSize: '2.8125rem',

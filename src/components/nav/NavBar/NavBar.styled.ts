@@ -11,7 +11,7 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
   [theme.breakpoints.down('sm')]: {
     margin: 0,
     padding: '0.7rem 1rem',
-    backgroundColor: theme.palette.grey[50],
+    backgroundColor: theme.palette.grey[100],
   },
   '.nav-logo': {
     display: 'flex',
@@ -27,7 +27,7 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
       padding: '0.4rem 1rem',
       borderRadius: '8px',
       justifyContent: 'center',
-      backgroundColor: theme.palette.grey[300],
+      backgroundColor: theme.palette.grey[400],
     },
     [theme.breakpoints.down('xs')]: {
       flexBasis: '0',
@@ -49,7 +49,7 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
   },
   '.nav-logo:hover': {
     [theme.breakpoints.down('sm')]: {
-      backgroundColor: theme.palette.grey[300],
+      backgroundColor: theme.palette.grey[400],
     },
   },
   '.nav-menu-btn': {

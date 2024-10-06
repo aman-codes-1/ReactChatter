@@ -18,7 +18,7 @@ const SideBarFooter = ({ className }: any) => {
 
   return (
     <SideBarFooterStyled className={className}>
-      <List>
+      <List dense>
         <ListItem
           disablePadding
           disableHover
@@ -42,7 +42,6 @@ const SideBarFooter = ({ className }: any) => {
             avatarProps: {
               src: picture,
             },
-            height: '4.4rem',
             endIcon: (
               <Button
                 color="secondary"
@@ -57,8 +56,8 @@ const SideBarFooter = ({ className }: any) => {
                 }
                 className="text-hidden"
                 sx={{
-                  minHeight: '3.6rem',
-                  minWidth: '3.6rem',
+                  minHeight: '3.25rem',
+                  minWidth: '3.25rem',
                   ml: '1.7rem',
                 }}
                 disabled={isLoading}

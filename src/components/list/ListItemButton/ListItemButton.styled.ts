@@ -33,7 +33,7 @@ export const ListItemButtonStyled = styled('div')<{
             : {}),
         },
         '.MuiListItemText-secondary': {
-          color: theme.palette.grey[500],
+          color: theme.palette.grey[700],
           wordBreak: 'break-word',
           ...(secondaryEllipsesLineClamp
             ? {
@@ -48,7 +48,7 @@ export const ListItemButtonStyled = styled('div')<{
       },
     },
     '.list-item-btn:hover': {
-      backgroundColor: disableHover ? 'transparent' : theme.palette.grey[50],
+      backgroundColor: disableHover ? 'transparent' : theme.palette.grey[100],
       cursor: disableHover ? 'default' : 'pointer',
       color: disableHover ? '' : theme.palette.secondary.main,
       '.MuiTypography-root, .Mui-selected': {

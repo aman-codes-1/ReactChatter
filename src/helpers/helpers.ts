@@ -120,9 +120,13 @@ export const groupMessages = (msgs: any, _id: string) => {
       }
       return acc;
     }, [])
-    .map((msgGroups: any) => ({
+    .map((msgGroups: any, idx: number) => ({
       side: msgGroups?.[0]?.sender?._id === _id ? 'right' : 'left',
       data: msgGroups,
+      groupDetails:
+        msgGroups?.[0]?.sender?._id === _id
+          ? msgGroups?.[0]?.sender
+          : msgGroups?.[idx]?.sender,
     }));
 
   return groupedMessages;

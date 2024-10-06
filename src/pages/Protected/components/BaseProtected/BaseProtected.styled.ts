@@ -12,7 +12,7 @@ export const BaseProtectedStyled = styled('div')(({ theme }: any) => ({
   [theme.breakpoints.down('sm')]: {
     display: 'block',
     '.mobile-navbar': {
-      borderTop: `1px solid ${theme.palette.grey[300]}`,
+      borderTop: `1px solid ${theme.palette.grey[400]}`,
       top: 'auto',
       bottom: 0,
       zIndex: theme.zIndex.drawer + 1,

@@ -6,6 +6,7 @@ import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Avatar } from '../../../components';
+import { useAuth } from '../../../hooks';
 import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
 import { getTime, scrollIntoView } from '../../../helpers';
 import { ChatMessagesStyled } from './ChatMessages.styled';
@@ -17,6 +18,7 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
   const friendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
+  const { auth: { _id = '' } = {} } = useAuth();
   const { isListItemClicked, selectedChat } = useContext(
     ChatsAndFriendsContext,
   );
@@ -72,43 +74,68 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   };
 
   const renderChat = (msg: any, index: number, data: any, side: string) => {
+    if (!msg) return null;
+
+    const sender = msg?.sender;
+    const sentStatus = sender?.sentStatus;
+    const sentTimeStamp = sentStatus?.timestamp;
+    const isQueued = sentStatus?.isQueued;
+    const isSent = sentStatus?.isSent;
+
+    let readStatus;
+    let readTimestamp;
+    let isRead;
+
+    if (selectedChat && selectedChat?.type === 'private') {
+      const receivers = msg?.otherMembers;
+      readStatus =
+        receivers?.length === 1 &&
+        receivers?.find((otherMember: any) => otherMember?._id !== _id);
+      readTimestamp = readStatus?.timestamp;
+      isRead = readStatus?.isRead;
+    }
+
     return (
       <div
         className={`msg-${side}-row`}
         key={`${JSON.stringify(msg)} ${index}`}
       >
-        <Typography
-          component="div"
-          align="left"
-          className={`msg msg-${side} ${attachClass(data, index, side)} ${msg?.sender?.sentStatus?.isQueued ? 'msg-animation' : ''}`}
+        <div
+          className={`msg msg-${side} ${attachClass(data, index, side)} ${isQueued ? 'msg-animation' : ''}`}
         >
-          <div className="msg-content">{msg?.message}</div>
-          <div className="msg-timestamp">
-            {msg?.sender?.sentStatus?.timestamp ? (
-              <Typography
-                variant="caption"
-                whiteSpace="nowrap"
-                fontWeight={600}
-                className="msg-timestamp-text"
-              >
-                {getTime(msg?.sender?.sentStatus?.timestamp)}
-              </Typography>
-            ) : null}
-            {side === 'right' ? (
-              <>
-                {msg?.sender?.sentStatus?.isQueued === true ? (
-                  <AccessTimeIcon fontSize="inherit" />
-                ) : null}
-                {msg?.sender?.sentStatus?.isSent === true ? (
-                  <DoneRoundedIcon fontSize="inherit" />
-                ) : null}
-                {msg?.receiver?.readStatus?.isRead === true ? (
-                  <DoneAllRoundedIcon fontSize="inherit" />
-                ) : null}
-              </>
-            ) : null}
-          </div>
-        </Typography>
+          {msg?.message ? (
+            <Typography className={`msg-content msg-content-${side}`}>
+              {msg?.message}
+            </Typography>
+          ) : null}
+          {sentStatus || readStatus ? (
+            <div className="msg-timestamp">
+              {sentTimeStamp ? (
+                <Typography
+                  variant="caption"
+                  whiteSpace="nowrap"
+                  fontWeight={500}
+                  className={`msg-timestamp-text-${side}`}
+                >
+                  {getTime(sentTimeStamp)}
+                </Typography>
+              ) : null}
+              {side === 'right' ? (
+                <>
+                  {isQueued === true ? (
+                    <AccessTimeIcon fontSize="inherit" />
+                  ) : null}
+                  {isSent === true ? (
+                    <DoneRoundedIcon fontSize="inherit" />
+                  ) : null}
+                  {isRead === true ? (
+                    <DoneAllRoundedIcon fontSize="inherit" />
+                  ) : null}
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   };

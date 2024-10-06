@@ -27,7 +27,7 @@ export const ChatsAndFriendsContext = createContext<any>({});
 export const ChatsAndFriendsProvider = ({ children }: any) => {
   const { pathname } = useLocation();
   const [isListItemClicked, setIsListItemClicked] = useState(false);
-  const [loadingChatMessages, setLoadingChatMessages] = useState(true);
+  const [loadingQuery, setLoadingQuery] = useState(true);
   const [selectedChat, setSelectedChat] = useState();
   const [selectedFriend, setSelectedFriend] = useState();
   const [selectedMember, setSelectedMember] = useState();
@@ -90,6 +90,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     variables: {
       userId: _id,
     },
+    fetchPolicy: 'network-only',
   });
 
   const {
@@ -103,6 +104,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     variables: {
       userId: _id,
     },
+    fetchPolicy: 'network-only',
   });
 
   const {
@@ -393,9 +395,9 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         // isListItemClicked
         isListItemClicked,
         setIsListItemClicked,
-        // loadingChatMessages
-        loadingChatMessages,
-        setLoadingChatMessages,
+        // loadingQuery
+        loadingQuery,
+        setLoadingQuery,
         // selectedChat
         selectedChat,
         setSelectedChat,

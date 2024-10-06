@@ -34,6 +34,7 @@ const DataList = ({
     const listRefObserver = new MutationObserver(() =>
       checkScrollbar(listRef, setHasScrollbar),
     );
+
     const listElement = listRef?.current;
     if (listElement) {
       listRefObserver?.observe(listElement, {

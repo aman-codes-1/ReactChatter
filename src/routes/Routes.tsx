@@ -17,21 +17,15 @@ const AppRoutes = () => {
     routesConfig().forEach((route: IRouteConfig, index: number) => {
       const { Element, path, type } = route;
       const key = `${index + 1}`;
+      const routeElement = (
+        <Route key={key} path={path} element={<Element />} />
+      );
       if (type === 'private') {
-        setPrivateRoutes((prev: ReactNode[]) => [
-          ...prev,
-          <Route key={key} path={path} element={<Element />} />,
-        ]);
+        setPrivateRoutes((prev: ReactNode[]) => [...prev, routeElement]);
       } else if (type === 'public') {
-        setPublicRoutes((prev: ReactNode[]) => [
-          ...prev,
-          <Route key={key} path={path} element={<Element />} />,
-        ]);
+        setPublicRoutes((prev: ReactNode[]) => [...prev, routeElement]);
       } else if (type === 'default') {
-        setDefaultRoutes((prev: ReactNode[]) => [
-          ...prev,
-          <Route key={key} path={path} element={<Element />} />,
-        ]);
+        setDefaultRoutes((prev: ReactNode[]) => [...prev, routeElement]);
       }
     });
   }, []);

@@ -52,16 +52,11 @@ const ChatMessages = ({ loadingFallback }: any) => {
     friendLoading,
     createChat,
     isListItemClicked,
-    loadingChatMessages,
-    setLoadingChatMessages,
+    loadingQuery,
+    setLoadingQuery,
     selectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const {
-    createMessage,
-    setMessageGroups,
-    getChatMessagesWithQueue,
-    getFriendMessagesWithQueue,
-  } = useContext(MessagesContext);
+  const { createMessage, setMessageGroups } = useContext(MessagesContext);
   const inputRef = useRef<any>(null);
   const appBarRef = useRef<any>(null);
   const textFieldRef = useRef<any>(null);
@@ -115,14 +110,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
     }
   }, [location, navigate]);
 
-  const fetchData = async (
-    id: string,
-    key: string,
-    query: any,
-    fetchQuery: any,
-  ) => {
-    setLoadingChatMessages(true);
-
+  const fetchData = async (id: string, key: string, query: any) => {
     try {
       const res = await query({
         variables: {
@@ -136,12 +124,10 @@ const ChatMessages = ({ loadingFallback }: any) => {
         navigate('/');
         throw new Error(error);
       }
-
-      await fetchQuery(id);
     } catch (error: any) {
       console.error('Error fetching data:', error);
     } finally {
-      setLoadingChatMessages(false);
+      setLoadingQuery(false);
     }
   };
 
@@ -150,16 +136,11 @@ const ChatMessages = ({ loadingFallback }: any) => {
 
     const fetchMessages = async () => {
       if (chatId) {
-        await fetchData(chatId, 'chatId', chatQuery, getChatMessagesWithQueue);
+        await fetchData(chatId, 'chatId', chatQuery);
       }
 
       if (friendId) {
-        await fetchData(
-          friendId,
-          'friendId',
-          friendQuery,
-          getFriendMessagesWithQueue,
-        );
+        await fetchData(friendId, 'friendId', friendQuery);
       }
     };
 
@@ -216,6 +197,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
             },
           },
           timestamp,
+          selectedMember,
         });
 
         queuedMessage = QueuedMessage;
@@ -224,6 +206,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
           variables: {
             userId: _id,
             friendId,
+            queueId: QueuedMessage?.id,
             type: 'private',
             friendUserId: selectedMember?._id,
           },
@@ -257,6 +240,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
               },
             },
             timestamp,
+            selectedMember,
           }));
 
         const createdMessage = await createMessage({
@@ -285,7 +269,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
           queuedMessage?.id &&
           createdMessageData?.queueId === queuedMessage?.id
         ) {
-          // await MessageQueue.deleteMessageFromQueue(queuedMessage?.id);
+          await MessageQueue.deleteMessageFromQueue(queuedMessage?.id);
         }
       }
     } catch (error) {
@@ -295,7 +279,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
     }
   };
 
-  const loading = loadingChatMessages || chatLoading || friendLoading;
+  const loading = loadingQuery || chatLoading || friendLoading;
 
   return (
     <ChatMessagesStyled

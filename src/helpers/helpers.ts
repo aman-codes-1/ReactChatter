@@ -87,7 +87,9 @@ export const scrollToSelected = (
   itemsRef: any,
   selectedListItem: any,
 ) => {
-  const selectedItemIndex = listItems?.indexOf(selectedListItem);
+  const selectedItemIndex = listItems?.findIndex(
+    (item) => item?._id === selectedListItem?._id,
+  );
   const listElement = ref?.current;
   const itemElement = itemsRef?.current?.[selectedItemIndex];
   if (selectedItemIndex !== -1 && listElement && itemElement) {

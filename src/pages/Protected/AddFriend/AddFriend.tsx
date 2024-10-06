@@ -30,11 +30,9 @@ const AddFriend = () => {
   const [isTimeoutRunning, setIsTimeoutRunning] = useTimeout(() => {
     setIsTimeoutRunning(false);
   }, 4000);
-  const {
-    createRequest,
-    createRequestLoading: loading,
-    isListItemClicked,
-  } = useContext(ChatsAndFriendsContext);
+  const { createRequest, createRequestLoading, isListItemClicked } = useContext(
+    ChatsAndFriendsContext,
+  );
   const inputRef = useRef<any>(null);
 
   const resetStates = () => {
@@ -97,12 +95,15 @@ const AddFriend = () => {
   };
 
   const handleClickAdd = async () => {
-    if (disabled || loading) return;
+    if (disabled || createRequestLoading) return;
+
     resetStates();
+
     const validationCheck = handleCheckEmail();
     if (Object.values(validationCheck).some((x) => x === true)) {
       return;
     }
+
     try {
       const { data } = await createRequest({
         variables: {
@@ -170,10 +171,10 @@ const AddFriend = () => {
           </div>
           <div className="add-friend-email-btn-wrapper">
             <LoadingButton
-              loading={loading}
+              loading={createRequestLoading}
               variant="contained"
               className={`add-friend-email-btn ${
-                loading || disabled ? '' : 'add-btn-active'
+                createRequestLoading || disabled ? '' : 'add-btn-active'
               }`}
               onClick={handleClickAdd}
               disabled={disabled}

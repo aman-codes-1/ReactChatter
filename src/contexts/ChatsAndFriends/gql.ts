@@ -47,6 +47,7 @@ const CREATE_CHAT_MUTATION = gql(/* GraphQL */ `
   mutation createChat(
     $userId: String!
     $friendId: String!
+    $queueId: String
     $type: String!
     $friendUserId: String!
   ) {
@@ -54,11 +55,13 @@ const CREATE_CHAT_MUTATION = gql(/* GraphQL */ `
       input: {
         userId: $userId
         friendId: $friendId
+        queueId: $queueId
         type: $type
         friendUserId: $friendUserId
       }
     ) {
       _id
+      queueId
     }
   }
 `) as DocumentNode;

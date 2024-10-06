@@ -29,15 +29,18 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     pendingRequestsCount = 0,
     sentRequestsCount = 0,
     setIsListItemClicked,
-    setLoadingChatMessages,
+    setLoadingQuery,
     selectedChat,
     setSelectedChat,
     selectedFriend,
     setSelectedFriend,
     setSelectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const { getChatMessagesWithQueue, getFriendMessagesWithQueue } =
-    useContext(MessagesContext);
+  const {
+    setLoadingChatMessages,
+    getChatMessagesWithQueue,
+    getFriendMessagesWithQueue,
+  } = useContext(MessagesContext);
   const [toggleChats, setToggleChats] = useState(!!chats?.length);
   const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
   const [hasChatsScrollbar, setHasChatsScrollbar] = useState(false);
@@ -150,11 +153,12 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
 
     if (chat?._id) {
       try {
+        setLoadingQuery(false);
+        setLoadingChatMessages(false);
+        await getChatMessagesWithQueue(chat?._id);
         setSelectedFriend(undefined);
         setSelectedChat(chat);
         setSelectedMember(selectedMember);
-        setLoadingChatMessages(false);
-        await getChatMessagesWithQueue(chat?._id);
         navigate(`/chat?id=${chat?._id}&type=chat`);
         toggleDrawer?.();
       } catch (error: any) {
@@ -172,11 +176,12 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
 
     if (friend?._id) {
       try {
+        setLoadingQuery(false);
+        setLoadingChatMessages(false);
+        await getFriendMessagesWithQueue(friend?._id);
         setSelectedChat(undefined);
         setSelectedFriend(friend);
         setSelectedMember(selectedMember);
-        setLoadingChatMessages(false);
-        await getFriendMessagesWithQueue(friend?._id);
         navigate(`/chat?id=${friend?._id}&type=friend`);
         toggleDrawer?.();
       } catch (error) {

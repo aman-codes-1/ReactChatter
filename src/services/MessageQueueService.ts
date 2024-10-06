@@ -3,24 +3,12 @@ import { MessageData } from '../contexts/Messages/IMessage';
 export class MessageQueueService {
   private isSending: boolean = false;
   private intervalId: any = null;
-  private messageQueuedQuery: any;
   private createChat: any;
   private createMessage: any;
-  private selectedMember: any;
-  private authData: any;
 
-  constructor(
-    messageQueueQuery?: any,
-    createChatMutation?: any,
-    createMessageMutation?: any,
-    selectedMember?: any,
-    authData?: any,
-  ) {
-    this.messageQueuedQuery = messageQueueQuery || null;
+  constructor(createChatMutation?: any, createMessageMutation?: any) {
     this.createChat = createChatMutation || null;
     this.createMessage = createMessageMutation || null;
-    this.selectedMember = selectedMember || {};
-    this.authData = authData || {};
   }
 
   start() {
@@ -313,6 +301,11 @@ export class MessageQueueService {
                     return;
                   }
 
+                  if (offset === 1 && count === 0) {
+                    resolve(null);
+                    return;
+                  }
+
                   if (count === offset) {
                     const message = cursor?.value;
                     resolve({ message, cursor });
@@ -365,16 +358,19 @@ export class MessageQueueService {
     const createChatAndUpdateToQueue = async (
       id: string,
       friendId: string,
+      selectedMember: any,
       retryCount: number,
+      senderId: string,
       isRetry: boolean,
       offset: number,
     ) => {
       const createdChat = await this.createChat?.({
         variables: {
-          userId: this.authData?._id,
+          userId: senderId,
           friendId,
+          queueId: id,
           type: 'private',
-          friendUserId: this.selectedMember?._id,
+          friendUserId: selectedMember?._id,
         },
       });
 
@@ -395,6 +391,7 @@ export class MessageQueueService {
       chatId: string,
       rest: any,
       retryCount: number,
+      senderId: any,
       isRetry: boolean,
       offset: number,
     ) => {
@@ -402,7 +399,7 @@ export class MessageQueueService {
         variables: {
           ...rest,
           chatId,
-          senderId: this.authData?._id,
+          senderId,
           queueId: id,
         },
       });
@@ -422,11 +419,15 @@ export class MessageQueueService {
     ): Promise<void> => {
       const { message, cursor } =
         (await getNextMessageForProcessing(offset)) || {};
+
       if (!message) return;
 
-      const { id, sender, chatId, friendId, ...rest } = message || {};
+      const { id, sender, chatId, friendId, selectedMember, ...rest } =
+        message || {};
+
       if (!id) await removeCursorFromQueueAndRestart(cursor);
 
+      const senderId = sender?._id;
       const isRetry = sender?.sentStatus?.isRetry || false;
 
       let chatIdToUse = chatId || '';
@@ -436,32 +437,24 @@ export class MessageQueueService {
           chatIdToUse = await createChatAndUpdateToQueue(
             id,
             friendId,
+            selectedMember,
             retryCount,
+            senderId,
             isRetry,
             offset,
           );
         }
 
         if (chatIdToUse) {
-          const messageQueued = await this.messageQueuedQuery?.({
-            variables: {
-              queueId: id,
-            },
-          });
-
-          const isMessageNotFoundError =
-            messageQueued?.error?.message?.includes?.('Message not found');
-
-          if (isMessageNotFoundError) {
-            await createMessageAndRemoveFromQueue(
-              id,
-              chatIdToUse,
-              rest,
-              retryCount,
-              isRetry,
-              offset,
-            );
-          }
+          await createMessageAndRemoveFromQueue(
+            id,
+            chatIdToUse,
+            rest,
+            retryCount,
+            senderId,
+            isRetry,
+            offset,
+          );
 
           await removeFromQueueAndRestart(id);
         }
@@ -469,9 +462,10 @@ export class MessageQueueService {
         await shouldRetryAndProcessNext(id, retryCount, isRetry, offset);
       } catch (error: any) {
         const errorMessage = error?.message || '';
+        const isDuplicateRecordFound = errorMessage?.includes?.('Duplicate');
         const isChatNotFoundError = errorMessage?.includes?.('Chat not found');
 
-        if (isChatNotFoundError && chatId) {
+        if (isDuplicateRecordFound || isChatNotFoundError) {
           await removeFromQueueAndRestart(id);
         }
 

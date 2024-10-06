@@ -1,5 +1,5 @@
-import { useContext, useLayoutEffect, useRef } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useContext, useEffect, useLayoutEffect, useRef } from 'react';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
@@ -12,10 +12,21 @@ import { ChatMessagesStyled } from './ChatMessages.styled';
 
 const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   const [navbarHeight] = useOutletContext<any>();
+  const [searchParams] = useSearchParams();
+  const chatId =
+    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
+  const friendId =
+    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const { isListItemClicked, selectedChat } = useContext(
     ChatsAndFriendsContext,
   );
-  const { messageGroups = [] } = useContext(MessagesContext);
+  const {
+    loadingChatMessages,
+    setLoadingChatMessages,
+    messageGroups = [],
+    getChatMessagesWithQueue,
+    getFriendMessagesWithQueue,
+  } = useContext(MessagesContext);
   const scrollRef = useRef<any>(null);
 
   useLayoutEffect(() => {
@@ -25,6 +36,30 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
       });
     }
   }, [messageGroups, isListItemClicked, selectedChat]);
+
+  const fetchData = async (id: string, fetchQuery: any) => {
+    try {
+      await fetchQuery(id);
+    } catch (error: any) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoadingChatMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (chatId) {
+        await fetchData(chatId, getChatMessagesWithQueue);
+      }
+
+      if (friendId) {
+        await fetchData(friendId, getFriendMessagesWithQueue);
+      }
+    };
+
+    fetchMessages();
+  }, []);
 
   const attachClass = (data: any, index: number, side: string) => {
     if (index === 0) {
@@ -77,6 +112,10 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
       </div>
     );
   };
+
+  if (loadingChatMessages) {
+    return null;
+  }
 
   const IsNoMessages = !messageGroups?.length;
 

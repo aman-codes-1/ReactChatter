@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLazyQuery, useMutation, useSubscription } from '@apollo/client';
 import {
   MESSAGES_QUERY,
@@ -18,12 +18,12 @@ export const MessagesContext = createContext<any>({});
 
 export const MessagesProvider = ({ children }: any) => {
   const MessageQueue = new MessageQueueService();
-  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const [loadingChatMessages, setLoadingChatMessages] = useState(true);
   const [messageGroups, setMessageGroups] = useState<any[]>([]);
 
   const { auth: { _id = '' } = {} } = useAuth();
-  const { createChat, createChatLoading, isListItemClicked, selectedMember } =
-    useContext(ChatsAndFriendsContext);
+  const { createChat } = useContext(ChatsAndFriendsContext);
 
   const [
     messageQueuedQuery,
@@ -104,26 +104,15 @@ export const MessagesProvider = ({ children }: any) => {
   useEffect(() => {
     const processMessages = async () => {
       const messageQueueService = new MessageQueueService(
-        messageQueuedQuery,
         createChat,
         createMessage,
-        selectedMember,
-        {
-          _id,
-        },
       );
+
       await messageQueueService.processQueue();
     };
 
     processMessages();
-  }, [
-    _id,
-    selectedMember,
-    isListItemClicked,
-    createChatLoading,
-    createMessageLoading,
-    pathname,
-  ]);
+  }, []);
 
   const fetchMessages = async (id: string) => {
     const res = await messagesQuery({
@@ -131,8 +120,14 @@ export const MessagesProvider = ({ children }: any) => {
       fetchPolicy: 'network-only',
     });
 
-    if (res?.error?.message) {
-      throw new Error(res?.error?.message);
+    const error = res?.error?.message;
+
+    if (error) {
+      if (error?.includes('Chat not found')) {
+        navigate('/');
+      }
+
+      throw new Error(error);
     }
 
     return res?.data?.messages || [];
@@ -166,18 +161,23 @@ export const MessagesProvider = ({ children }: any) => {
   };
 
   const getCombinedMessages = async (id: string, msgs: any[] = []) => {
-    if (!msgs?.length) return;
+    if (!msgs?.length) {
+      setMessageGroups([]);
+      return;
+    }
 
     try {
       const queuedMessages = await getQueuedMessages(id, 'chatId');
 
       const combinedMessages = queuedMessages?.length
-        ? msgs.concat(queuedMessages)
+        ? msgs?.concat?.(queuedMessages)
         : msgs;
 
       if (combinedMessages?.length) {
         const messageGroupsData = groupMessages(combinedMessages, _id);
         setMessageGroups(messageGroupsData);
+      } else {
+        setMessageGroups([]);
       }
     } catch (error: any) {
       throw new Error(error?.message);
@@ -252,6 +252,9 @@ export const MessagesProvider = ({ children }: any) => {
         updateMessageData,
         updateMessageLoading,
         updateMessageError,
+        // loadingChatMessages
+        loadingChatMessages,
+        setLoadingChatMessages,
         // messageGroups
         messageGroups,
         setMessageGroups,

@@ -20,7 +20,7 @@ import {
   MessagesContext,
 } from '../../../contexts';
 import { MessageQueueService } from '../../../services';
-import { getTime, scrollIntoView } from '../../../helpers';
+import { getTime, groupMessages, scrollIntoView } from '../../../helpers';
 import { ChatsStyled } from './Chats.styled';
 
 const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
@@ -49,6 +49,7 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
   const unsubscribeRef = useRef<() => void>();
 
   useLayoutEffect(() => {
+    console.log(selectedChat);
     if (selectedChat) {
       requestAnimationFrame(() => {
         scrollIntoView(scrollRef);
@@ -64,6 +65,7 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
       const OnMessageAddedChatId = OnMessageAdded?.chatId;
       const OnMessageAddedMessage = OnMessageAdded?.message;
       const OnMessageAddedQueueId = OnMessageAddedMessage?.queueId;
+      const OnMessageAddedOtherMembers = OnMessageAddedMessage?.otherMembers;
 
       const isAlreadyExists = prev?.messages?.length
         ? prev?.messages?.some(
@@ -74,29 +76,48 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
       const isChatExists = OnMessageAddedChatId === chatId;
 
       if (!isAlreadyExists && isChatExists) {
-        setMessageGroups((prevGroup: any) => {
-          if (!prevGroup?.length) return prevGroup;
+        const isOtherMember = OnMessageAddedOtherMembers?.length
+          ? OnMessageAddedOtherMembers?.some(
+              (otherMember: any) => otherMember?._id === _id,
+            )
+          : false;
 
-          const updatedGroups = prevGroup?.map((group: any) => {
-            const index = group?.data?.findIndex(
-              (item: any) => item?.id === OnMessageAddedQueueId,
-            );
+        if (isOtherMember) {
+          const messages = prev?.messages?.length
+            ? [...prev.messages, OnMessageAddedMessage]
+            : [OnMessageAddedMessage];
 
-            if (index < 0) return group;
+          console.log(messages);
 
-            const dataCopy = [...group.data];
-            dataCopy[index] = OnMessageAddedMessage;
+          const messageGroupsData = groupMessages(messages, _id);
+          setMessageGroups(messageGroupsData);
+        } else {
+          setMessageGroups((prevGroups: any) => {
+            if (!prevGroups?.length) return prevGroups;
 
-            return {
-              ...group,
-              data: dataCopy,
-            };
+            const updatedGroups = prevGroups?.map((group: any) => {
+              const index = group?.data?.findIndex(
+                (item: any) => item?.id === OnMessageAddedQueueId,
+              );
+
+              console.log(index);
+
+              if (index < 0) return group;
+
+              const dataCopy = [...group.data];
+              dataCopy[index] = OnMessageAddedMessage;
+
+              return {
+                ...group,
+                data: dataCopy,
+              };
+            });
+
+            return updatedGroups;
           });
 
-          return updatedGroups;
-        });
-
-        await MessageQueue.deleteMessageFromQueue(OnMessageAddedQueueId);
+          await MessageQueue.deleteMessageFromQueue(OnMessageAddedQueueId);
+        }
 
         const data = {
           ...prev,

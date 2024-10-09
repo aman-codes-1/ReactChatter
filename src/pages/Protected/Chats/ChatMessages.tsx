@@ -49,7 +49,6 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
   const unsubscribeRef = useRef<() => void>();
 
   useLayoutEffect(() => {
-    console.log(selectedChat);
     if (selectedChat) {
       requestAnimationFrame(() => {
         scrollIntoView(scrollRef);
@@ -87,8 +86,6 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
             ? [...prev.messages, OnMessageAddedMessage]
             : [OnMessageAddedMessage];
 
-          console.log(messages);
-
           const messageGroupsData = groupMessages(messages, _id);
           setMessageGroups(messageGroupsData);
         } else {
@@ -99,8 +96,6 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
               const index = group?.data?.findIndex(
                 (item: any) => item?.id === OnMessageAddedQueueId,
               );
-
-              console.log(index);
 
               if (index < 0) return group;
 

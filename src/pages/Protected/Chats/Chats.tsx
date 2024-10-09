@@ -318,7 +318,7 @@ const Chats = ({ loadingFallback }: any) => {
         </AppBar>
       </div>
       {loading ? null : (
-        <Chats
+        <ChatMessages
           appBarHeight={appBarHeight}
           textFieldHeight={textFieldHeight}
           message={message}
@@ -355,4 +355,4 @@ const Chats = ({ loadingFallback }: any) => {
   );
 };
 
-export default ChatMessages;
+export default Chats;

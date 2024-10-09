@@ -4,10 +4,7 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  gap: '1.4rem',
-  [theme.breakpoints.between('sm', 'md')]: {
-    gap: '1.2rem',
-  },
+  gap: '1rem',
   [theme.breakpoints.down('sm')]: {
     margin: 0,
     padding: '0.7rem 1rem',
@@ -17,10 +14,7 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     flex: '1 1 auto',
-    padding: '1.3rem 0rem 1.3rem 1.7rem',
-    [theme.breakpoints.down('md')]: {
-      padding: '1.5rem 0rem 1.3rem 1.2rem',
-    },
+    padding: '1.3rem 0rem 1.3rem 1.5rem',
     [theme.breakpoints.down('sm')]: {
       flex: '0',
       flexBasis: '5.85rem',

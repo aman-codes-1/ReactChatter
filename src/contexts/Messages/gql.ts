@@ -14,6 +14,7 @@ const MESSAGES_QUERY = gql(/* GraphQL */ `
     messages(input: { chatId: $chatId }, limit: 25, skip: 0) {
       _id
       chatId
+      queueId
       message
       sender {
         _id
@@ -76,6 +77,7 @@ const UPDATE_MESSAGE_MUTATION = gql(/* GraphQL */ `
       }
     ) {
       _id
+      queueId
     }
   }
 `) as DocumentNode;
@@ -87,6 +89,7 @@ const MESSAGE_ADDED_SUBSCRIPTION = gql(/* GraphQL */ `
       message {
         _id
         chatId
+        queueId
         message
         sender {
           _id
@@ -118,6 +121,7 @@ const MESSAGE_UPDATED_SUBSCRIPTION = gql(/* GraphQL */ `
       message {
         _id
         chatId
+        queueId
         message
         sender {
           _id

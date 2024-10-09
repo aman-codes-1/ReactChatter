@@ -5,10 +5,16 @@ export class MessageQueueService {
   private intervalId: any = null;
   private createChat: any;
   private createMessage: any;
+  private setMessageGroups: any;
 
-  constructor(createChatMutation?: any, createMessageMutation?: any) {
+  constructor(
+    createChatMutation?: any,
+    createMessageMutation?: any,
+    setChatMessageGroups?: any,
+  ) {
     this.createChat = createChatMutation || null;
     this.createMessage = createMessageMutation || null;
+    this.setMessageGroups = setChatMessageGroups || null;
   }
 
   start() {
@@ -334,6 +340,28 @@ export class MessageQueueService {
 
     const removeFromQueueAndRestart = async (id: string) => {
       await this.deleteMessageFromQueue(id);
+
+      this.setMessageGroups?.((prevGroup: any) => {
+        if (!prevGroup?.length) return prevGroup;
+
+        const updatedGroups = prevGroup?.map((group: any) => {
+          const index = group?.data?.findIndex((item: any) => item?.id === id);
+
+          if (index < 0) return group;
+
+          const dataCopy = group.data.filter(
+            (_: any, i: number) => i !== index,
+          );
+
+          return {
+            ...group,
+            data: dataCopy,
+          };
+        });
+
+        return updatedGroups;
+      });
+
       return processNextMessage(0);
     };
 
@@ -386,7 +414,7 @@ export class MessageQueueService {
       return createdChatId;
     };
 
-    const createMessageAndRemoveFromQueue = async (
+    const createMessageAndProcessNext = async (
       id: string,
       chatId: string,
       rest: any,
@@ -446,7 +474,7 @@ export class MessageQueueService {
         }
 
         if (chatIdToUse) {
-          await createMessageAndRemoveFromQueue(
+          await createMessageAndProcessNext(
             id,
             chatIdToUse,
             rest,

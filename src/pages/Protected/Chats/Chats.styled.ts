@@ -22,11 +22,12 @@ const fadeOut = keyframes`
   }
 `;
 
-export const ChatMessagesStyled = styled('div')<{
-  navbarHeight?: number;
-  appBarHeight?: number;
-  textFieldHeight?: number;
-}>(({ theme, navbarHeight, appBarHeight, textFieldHeight }) => ({
+export const ChatsStyled = styled('div')<{
+  navbarHeight: number;
+  appBarHeight: number;
+  textFieldHeight: number;
+  message: string;
+}>(({ theme, navbarHeight, appBarHeight, textFieldHeight, message }) => ({
   '.app-bar-wrapper': {
     position: 'fixed',
     width: 'stretch',
@@ -41,7 +42,7 @@ export const ChatMessagesStyled = styled('div')<{
     width: '100%',
     marginTop: `${appBarHeight}px`,
     overflow: 'auto',
-    padding: '0rem 2.5rem',
+    padding: '0rem 4rem',
     height: `calc(100svh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px)`,
     [theme.breakpoints.down('md')]: {
       padding: '0rem 1.5rem',
@@ -161,7 +162,7 @@ export const ChatMessagesStyled = styled('div')<{
     },
   },
   '.text-field-app-bar': {
-    padding: '0.875rem 2.5rem',
+    padding: message ? '0.875rem 0.875rem 0.875rem 4rem' : '0.875rem 4rem',
     [theme.breakpoints.down('md')]: {
       padding: '0.875rem 1.5rem',
     },
@@ -171,7 +172,7 @@ export const ChatMessagesStyled = styled('div')<{
   },
   '.text-field-input-wrapper': {
     display: 'flex',
-    gap: '0.7rem',
+    gap: '0.625rem',
     alignItems: 'center',
     width: '100%',
   },

@@ -150,12 +150,12 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       const OnFriendAdded = res?.data?.data?.OnFriendAdded;
       const OnFriendAddedFriend = OnFriendAdded?.friend;
       const OnFriendAddedMembers = OnFriendAddedFriend?.members;
-      if (
-        OnFriendAddedMembers?.length &&
-        OnFriendAddedMembers?.some(
-          (OnFriendAddedMember: any) => OnFriendAddedMember?._id === _id,
-        )
-      ) {
+
+      const isMemberExists = OnFriendAddedMembers?.length
+        ? OnFriendAddedMembers?.some((member: any) => member?._id === _id)
+        : false;
+
+      if (isMemberExists) {
         otherFriendsClient.writeQuery({
           query: OTHER_FRIENDS_QUERY,
           data: {
@@ -171,6 +171,25 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     },
   });
 
+  const checkIsMember = (OnRequestAddedMembers: any) => {
+    let isMemberExists = false;
+    let isMemberExists2 = false;
+
+    if (OnRequestAddedMembers?.length) {
+      OnRequestAddedMembers.forEach((member: any) => {
+        if (member?._id === _id) {
+          if (member?.hasSent === true) {
+            isMemberExists = true;
+          } else if (member?.hasSent === false) {
+            isMemberExists2 = true;
+          }
+        }
+      });
+    }
+
+    return { isMemberExists, isMemberExists2 };
+  };
+
   const {
     data: OnRequestAddedData,
     loading: OnRequestAddedLoading,
@@ -180,47 +199,43 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       const OnRequestAdded = res?.data?.data?.OnRequestAdded;
       const OnRequestAddedRequest = OnRequestAdded?.request;
       const OnRequestAddedMembers = OnRequestAddedRequest?.members;
-      if (OnRequestAddedMembers?.length) {
-        if (
-          OnRequestAddedMembers?.some(
-            (member: any) => member?._id === _id && member?.hasSent === true,
-          )
-        ) {
-          sentRequestsClient.writeQuery({
-            query: SENT_REQUESTS_QUERY,
-            data: {
-              sentRequests: {
-                data: Object.keys(OnRequestAddedRequest || {})?.length
-                  ? [OnRequestAddedRequest, ...sentRequests]
-                  : sentRequests,
-                totalCount: sentRequestsCount + 1,
-              },
+
+      const { isMemberExists, isMemberExists2 } = checkIsMember(
+        OnRequestAddedMembers,
+      );
+
+      if (isMemberExists) {
+        sentRequestsClient.writeQuery({
+          query: SENT_REQUESTS_QUERY,
+          data: {
+            sentRequests: {
+              data: Object.keys(OnRequestAddedRequest || {})?.length
+                ? [OnRequestAddedRequest, ...sentRequests]
+                : sentRequests,
+              totalCount: sentRequestsCount + 1,
             },
-            variables: {
-              userId: _id,
+          },
+          variables: {
+            userId: _id,
+          },
+        });
+      }
+
+      if (isMemberExists2) {
+        pendingRequestsClient.writeQuery({
+          query: PENDING_REQUESTS_QUERY,
+          data: {
+            pendingRequests: {
+              data: Object.keys(OnRequestAddedRequest || {})?.length
+                ? [OnRequestAddedRequest, ...pendingRequests]
+                : pendingRequests,
+              totalCount: pendingRequestsCount + 1,
             },
-          });
-        }
-        if (
-          OnRequestAddedMembers?.some(
-            (member: any) => member?._id === _id && member?.hasSent === false,
-          )
-        ) {
-          pendingRequestsClient.writeQuery({
-            query: PENDING_REQUESTS_QUERY,
-            data: {
-              pendingRequests: {
-                data: Object.keys(OnRequestAddedRequest || {})?.length
-                  ? [OnRequestAddedRequest, ...pendingRequests]
-                  : pendingRequests,
-                totalCount: pendingRequestsCount + 1,
-              },
-            },
-            variables: {
-              userId: _id,
-            },
-          });
-        }
+          },
+          variables: {
+            userId: _id,
+          },
+        });
       }
     },
   });
@@ -234,53 +249,49 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       const OnRequestUpdated = res?.data?.data?.OnRequestUpdated;
       const OnRequestUpdatedRequest = OnRequestUpdated?.request;
       const OnRequestUpdatedMembers = OnRequestUpdatedRequest?.members;
-      if (OnRequestUpdatedMembers?.length) {
-        if (
-          OnRequestUpdatedMembers?.some(
-            (member: any) => member?._id === _id && member?.hasSent === true,
-          )
-        ) {
-          sentRequestsClient.writeQuery({
-            query: SENT_REQUESTS_QUERY,
-            data: {
-              sentRequests: {
-                data: sentRequests?.length
-                  ? sentRequests?.filter(
-                      (sentRequest: any) =>
-                        sentRequest?._id !== OnRequestUpdatedRequest?._id,
-                    )
-                  : sentRequests,
-                totalCount: sentRequestsCount - 1,
-              },
+
+      const { isMemberExists, isMemberExists2 } = checkIsMember(
+        OnRequestUpdatedMembers,
+      );
+
+      if (isMemberExists) {
+        sentRequestsClient.writeQuery({
+          query: SENT_REQUESTS_QUERY,
+          data: {
+            sentRequests: {
+              data: sentRequests?.length
+                ? sentRequests?.filter(
+                    (sentRequest: any) =>
+                      sentRequest?._id !== OnRequestUpdatedRequest?._id,
+                  )
+                : sentRequests,
+              totalCount: sentRequestsCount - 1,
             },
-            variables: {
-              userId: _id,
+          },
+          variables: {
+            userId: _id,
+          },
+        });
+      }
+
+      if (isMemberExists2) {
+        pendingRequestsClient.writeQuery({
+          query: PENDING_REQUESTS_QUERY,
+          data: {
+            pendingRequests: {
+              data: pendingRequests?.length
+                ? pendingRequests?.filter(
+                    (request: any) =>
+                      request?._id !== OnRequestUpdatedRequest?._id,
+                  )
+                : pendingRequests,
+              totalCount: pendingRequestsCount - 1,
             },
-          });
-        }
-        if (
-          OnRequestUpdatedMembers?.some(
-            (member: any) => member?._id === _id && member?.hasSent === false,
-          )
-        ) {
-          pendingRequestsClient.writeQuery({
-            query: PENDING_REQUESTS_QUERY,
-            data: {
-              pendingRequests: {
-                data: pendingRequests?.length
-                  ? pendingRequests?.filter(
-                      (request: any) =>
-                        request?._id !== OnRequestUpdatedRequest?._id,
-                    )
-                  : pendingRequests,
-                totalCount: pendingRequestsCount - 1,
-              },
-            },
-            variables: {
-              userId: _id,
-            },
-          });
-        }
+          },
+          variables: {
+            userId: _id,
+          },
+        });
       }
     },
   });

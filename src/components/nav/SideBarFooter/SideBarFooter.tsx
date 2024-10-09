@@ -21,6 +21,7 @@ const SideBarFooter = ({ className }: any) => {
       <List dense>
         <ListItem
           disablePadding
+          disableGutters
           disableHover
           btnProps={{
             textProps: {

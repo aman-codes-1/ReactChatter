@@ -1,4 +1,10 @@
-import { useContext, useEffect, useLayoutEffect, useRef } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -7,11 +13,18 @@ import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Avatar } from '../../../components';
 import { useAuth } from '../../../hooks';
-import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
+import {
+  ChatsAndFriendsContext,
+  MESSAGE_ADDED_SUBSCRIPTION,
+  MESSAGES_QUERY,
+  MessagesContext,
+} from '../../../contexts';
+import { MessageQueueService } from '../../../services';
 import { getTime, scrollIntoView } from '../../../helpers';
-import { ChatMessagesStyled } from './ChatMessages.styled';
+import { ChatsStyled } from './Chats.styled';
 
-const Chats = ({ appBarHeight, textFieldHeight }: any) => {
+const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
+  const MessageQueue = new MessageQueueService();
   const [navbarHeight] = useOutletContext<any>();
   const [searchParams] = useSearchParams();
   const chatId =
@@ -23,13 +36,17 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
     ChatsAndFriendsContext,
   );
   const {
+    messagesClient,
+    subscribeMessagesToMore,
     loadingChatMessages,
     setLoadingChatMessages,
     messageGroups = [],
+    setMessageGroups,
     getChatMessagesWithQueue,
     getFriendMessagesWithQueue,
   } = useContext(MessagesContext);
   const scrollRef = useRef<any>(null);
+  const unsubscribeRef = useRef<() => void>();
 
   useLayoutEffect(() => {
     if (selectedChat) {
@@ -38,6 +55,91 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
       });
     }
   }, [messageGroups, isListItemClicked, selectedChat]);
+
+  const updateQuery = useCallback(
+    async (prev: any, { subscriptionData }: any) => {
+      if (!subscriptionData?.data) return prev;
+
+      const OnMessageAdded = subscriptionData?.data?.OnMessageAdded;
+      const OnMessageAddedChatId = OnMessageAdded?.chatId;
+      const OnMessageAddedMessage = OnMessageAdded?.message;
+      const OnMessageAddedQueueId = OnMessageAddedMessage?.queueId;
+
+      const isAlreadyExists = prev?.messages?.length
+        ? prev?.messages?.some(
+            (message: any) => message?._id === OnMessageAddedMessage?._id,
+          )
+        : false;
+
+      const isChatExists = OnMessageAddedChatId === chatId;
+
+      if (!isAlreadyExists && isChatExists) {
+        setMessageGroups((prevGroup: any) => {
+          if (!prevGroup?.length) return prevGroup;
+
+          const updatedGroups = prevGroup?.map((group: any) => {
+            const index = group?.data?.findIndex(
+              (item: any) => item?.id === OnMessageAddedQueueId,
+            );
+
+            if (index < 0) return group;
+
+            const dataCopy = [...group.data];
+            dataCopy[index] = OnMessageAddedMessage;
+
+            return {
+              ...group,
+              data: dataCopy,
+            };
+          });
+
+          return updatedGroups;
+        });
+
+        await MessageQueue.deleteMessageFromQueue(OnMessageAddedQueueId);
+
+        const data = {
+          ...prev,
+          messages: prev?.messages?.length
+            ? [...prev.messages, OnMessageAddedMessage]
+            : [OnMessageAddedMessage],
+        };
+
+        messagesClient.writeQuery({
+          query: MESSAGES_QUERY,
+          data,
+          variables: {
+            chatId,
+          },
+        });
+
+        return data;
+      }
+
+      return prev;
+    },
+    [chatId, setMessageGroups, messagesClient],
+  );
+
+  useEffect(() => {
+    if (unsubscribeRef?.current) {
+      unsubscribeRef?.current();
+    }
+
+    unsubscribeRef.current = subscribeMessagesToMore({
+      document: MESSAGE_ADDED_SUBSCRIPTION,
+      updateQuery,
+      variables: {
+        chatId,
+      },
+    });
+
+    return () => {
+      if (unsubscribeRef?.current) {
+        unsubscribeRef?.current();
+      }
+    };
+  }, [chatId, subscribeMessagesToMore, updateQuery]);
 
   const fetchData = async (id: string, fetchQuery: any) => {
     try {
@@ -147,10 +249,11 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
   const IsNoMessages = !messageGroups?.length;
 
   return (
-    <ChatMessagesStyled
+    <ChatsStyled
       navbarHeight={navbarHeight}
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
+      message={message}
     >
       <div className="chat-container">
         {IsNoMessages ? (
@@ -193,8 +296,8 @@ const Chats = ({ appBarHeight, textFieldHeight }: any) => {
           </div>
         ) : null}
       </div>
-    </ChatMessagesStyled>
+    </ChatsStyled>
   );
 };
 
-export default Chats;
+export default ChatMessages;

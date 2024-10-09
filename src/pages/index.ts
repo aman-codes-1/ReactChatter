@@ -2,7 +2,7 @@ export { Home, Login } from './Public';
 export {
   AddFriend,
   BaseProtected,
-  ChatMessages,
+  Chats,
   FriendRequest,
   FriendRequests,
   MainLayout,

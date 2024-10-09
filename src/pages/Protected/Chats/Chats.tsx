@@ -26,11 +26,11 @@ import {
 import { ListItem } from '../../../components';
 import { MainLayoutLoader } from '../components';
 import { MessageQueueService } from '../../../services';
-import Chats from './Chats';
-import { ChatMessagesStyled } from './ChatMessages.styled';
 import { MessageData } from '../../../contexts/Messages/IMessage';
+import ChatMessages from './ChatMessages';
+import { ChatsStyled } from './Chats.styled';
 
-const ChatMessages = ({ loadingFallback }: any) => {
+const Chats = ({ loadingFallback }: any) => {
   const MessageQueue = new MessageQueueService();
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,7 +41,6 @@ const ChatMessages = ({ loadingFallback }: any) => {
   const friendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const [message, setMessage] = useState('');
-  const [loadingCreateMessage, setLoadingCreateMessage] = useState(false);
   const [appBarHeight, setAppBarHeight] = useState(0);
   const [textFieldHeight, setTextFieldHeight] = useState(0);
   const { auth: { _id = '' } = {} } = useAuth();
@@ -56,7 +55,8 @@ const ChatMessages = ({ loadingFallback }: any) => {
     setLoadingQuery,
     selectedMember,
   } = useContext(ChatsAndFriendsContext);
-  const { createMessage, setMessageGroups } = useContext(MessagesContext);
+  const { createMessage, setLoadingCreateMessage, setMessageGroups } =
+    useContext(MessagesContext);
   const inputRef = useRef<any>(null);
   const appBarRef = useRef<any>(null);
   const textFieldRef = useRef<any>(null);
@@ -219,6 +219,12 @@ const ChatMessages = ({ loadingFallback }: any) => {
 
         chatIdToUse = createdChatId;
 
+        setSearchParams((params) => {
+          params.set('id', chatIdToUse);
+          params.set('type', 'chat');
+          return params;
+        });
+
         if (queuedMessage?.id) {
           await MessageQueue.updateMessageToQueue(queuedMessage?.id, {
             chatId: createdChatId,
@@ -257,20 +263,6 @@ const ChatMessages = ({ loadingFallback }: any) => {
         const createdMessageId = createdMessageData?._id;
 
         if (!createdMessageId) throw new Error('Failed to create message');
-
-        setSearchParams((params) => {
-          params.set('id', chatIdToUse);
-          params.set('type', 'chat');
-          return params;
-        });
-
-        if (
-          createdMessageData?.queueId &&
-          queuedMessage?.id &&
-          createdMessageData?.queueId === queuedMessage?.id
-        ) {
-          await MessageQueue.deleteMessageFromQueue(queuedMessage?.id);
-        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -282,10 +274,11 @@ const ChatMessages = ({ loadingFallback }: any) => {
   const loading = loadingQuery || chatLoading || friendLoading;
 
   return (
-    <ChatMessagesStyled
+    <ChatsStyled
       navbarHeight={navbarHeight}
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
+      message={message}
     >
       <div className="app-bar-wrapper">
         <AppBar position="static" className="app-bar" ref={appBarRef}>
@@ -295,9 +288,9 @@ const ChatMessages = ({ loadingFallback }: any) => {
             ) : (
               <List dense disablePadding>
                 <ListItem
-                  disableHover
-                  disableGutters
                   disablePadding
+                  disableGutters
+                  disableHover
                   btnProps={{
                     disableGutters: true,
                     alignItems: 'flex-start',
@@ -325,7 +318,11 @@ const ChatMessages = ({ loadingFallback }: any) => {
         </AppBar>
       </div>
       {loading ? null : (
-        <Chats appBarHeight={appBarHeight} textFieldHeight={textFieldHeight} />
+        <Chats
+          appBarHeight={appBarHeight}
+          textFieldHeight={textFieldHeight}
+          message={message}
+        />
       )}
       <div className="text-field-wrapper" ref={textFieldRef}>
         <AppBar position="static" className="app-bar text-field-app-bar">
@@ -354,7 +351,7 @@ const ChatMessages = ({ loadingFallback }: any) => {
           </Toolbar>
         </AppBar>
       </div>
-    </ChatMessagesStyled>
+    </ChatsStyled>
   );
 };
 

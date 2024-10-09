@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '..';
 import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
@@ -6,7 +6,6 @@ import { DataList } from '../../../components';
 
 const RecentChats = () => {
   const navigate = useNavigate();
-  const [hasScrollbar, setHasScrollbar] = useState(false);
   const {
     chats = [],
     chatsLoading,
@@ -47,17 +46,12 @@ const RecentChats = () => {
       data={chats}
     >
       <DataList
-        dense={hasScrollbar}
         disableGutters
         data={chats}
         selectedItem={selectedChat}
         handleClickListItem={handleClickChat}
         className="overflow-wrapper"
-        dividerVariant="fullWidth"
         WebkitLineClamp={2}
-        sxScrollPaddingRight="1.25rem"
-        hasScrollbar={hasScrollbar}
-        setHasScrollbar={setHasScrollbar}
       />
     </MainLayout>
   );

@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { SuspenseWrapper } from '../components';
 import {
   AddFriend,
-  ChatMessages,
+  Chats,
   FriendRequests,
   Home,
   Login,
@@ -47,8 +47,8 @@ export const routesConfig = () => [
     Element: () => (
       <SuspenseWrapper
         path="pages"
-        compName="ChatMessages"
-        fallback={<ChatMessages loadingFallback />}
+        compName="Chats"
+        fallback={<Chats loadingFallback />}
       />
     ),
   },

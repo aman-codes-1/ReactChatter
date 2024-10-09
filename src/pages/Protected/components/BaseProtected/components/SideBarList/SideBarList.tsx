@@ -1,4 +1,11 @@
-import { useContext, useEffect, useLayoutEffect, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge, List } from '@mui/material';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
@@ -9,6 +16,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { Button, DataList, ListItem } from '../../../../../../components';
 import {
   CHAT_ADDED_SUBSCRIPTION,
+  CHATS_QUERY,
   ChatsAndFriendsContext,
   MessagesContext,
   OTHER_FRIENDS_QUERY,
@@ -20,9 +28,11 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const selectedOverviewLink = pathname?.split?.('/')?.[1];
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const { auth: { _id = '' } = {} } = useAuth();
   const {
     chats = [],
+    chatsClient,
     subscribeChatsToMore,
     otherFriends = [],
     otherFriendsClient,
@@ -43,8 +53,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
   } = useContext(MessagesContext);
   const [toggleChats, setToggleChats] = useState(!!chats?.length);
   const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
-  const [hasChatsScrollbar, setHasChatsScrollbar] = useState(false);
-  const [hasFriendsScrollbar, setHasFriendsScrollbar] = useState(false);
+  const unsubscribeRef = useRef<() => void>();
 
   const navLinks = [
     {
@@ -67,6 +76,13 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
   ];
 
   useLayoutEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useLayoutEffect(() => {
     if (chats?.length) {
       setToggleChats(true);
     } else {
@@ -82,60 +98,87 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
     }
   }, [otherFriends]);
 
-  useEffect(() => {
-    const chatsUnsubscribe: any = subscribeChatsToMore({
-      document: CHAT_ADDED_SUBSCRIPTION,
-      updateQuery: (prev: any, { subscriptionData }: any) => {
-        if (Object.values(prev || {})?.length) {
-          if (!subscriptionData?.data) {
-            return prev;
-          }
-          const OnChatAdded = subscriptionData?.data?.OnChatAdded;
-          const OnChatAddedFriendId = OnChatAdded?.friendId;
-          const OnChatAddedChat = OnChatAdded?.chat;
-          const OnChatAddedMembers = OnChatAddedChat?.members;
-          if (
-            prev?.chats &&
-            prev?.chats?.length &&
-            prev?.chats?.some((chat: any) => chat === OnChatAddedChat)
-          ) {
-            return prev;
-          }
-          if (
-            OnChatAddedMembers?.length &&
-            OnChatAddedMembers?.some(
-              (OnChatAddedMember: any) => OnChatAddedMember?._id === _id,
-            )
-          ) {
-            if (OnChatAddedChat?.type === 'private') {
-              otherFriendsClient.writeQuery({
-                query: OTHER_FRIENDS_QUERY,
-                data: {
-                  otherFriends: otherFriends?.length
-                    ? otherFriends?.filter(
-                        (otherFriend: any) =>
-                          otherFriend?._id !== OnChatAddedFriendId,
-                      )
-                    : otherFriends,
-                },
-                variables: {
-                  userId: _id,
-                },
-              });
-            }
-            setSelectedFriend();
-            setSelectedChat(OnChatAddedChat);
-            return { ...prev, chats: [OnChatAddedChat, ...prev.chats] };
-          }
+  const updateQuery = useCallback(
+    (prev: any, { subscriptionData }: any) => {
+      if (!subscriptionData?.data) return prev;
+
+      const OnChatAdded = subscriptionData?.data?.OnChatAdded;
+      const OnChatAddedFriendId = OnChatAdded?.friendId;
+      const OnChatAddedChat = OnChatAdded?.chat;
+      const OnChatAddedMembers = OnChatAddedChat?.members;
+      const isChatAddedPrivate = OnChatAddedChat?.type === 'private';
+
+      const isAlreadyExists = prev?.chats?.length
+        ? prev?.chats?.some((chat: any) => chat?._id === OnChatAddedChat?._id)
+        : false;
+
+      const isMemberExists = OnChatAddedMembers?.length
+        ? OnChatAddedMembers.some((member: any) => member?._id === _id)
+        : false;
+
+      if (!isAlreadyExists && isMemberExists) {
+        if (isChatAddedPrivate) {
+          otherFriendsClient.writeQuery({
+            query: OTHER_FRIENDS_QUERY,
+            data: {
+              otherFriends: otherFriends?.length
+                ? otherFriends?.filter(
+                    (otherFriend: any) =>
+                      otherFriend?._id !== OnChatAddedFriendId,
+                  )
+                : otherFriends,
+            },
+            variables: {
+              userId: _id,
+            },
+          });
         }
-        return prev;
+
+        setSelectedFriend();
+        setSelectedChat(OnChatAddedChat);
+
+        const data = {
+          ...prev,
+          chats: prev?.chats?.length
+            ? [OnChatAddedChat, ...prev.chats]
+            : [OnChatAddedChat],
+        };
+
+        chatsClient.writeQuery({
+          query: CHATS_QUERY,
+          data,
+          variables: {
+            userId: _id,
+          },
+        });
+
+        return data;
+      }
+
+      return prev;
+    },
+    [otherFriends, otherFriendsClient, chatsClient],
+  );
+
+  useEffect(() => {
+    if (unsubscribeRef?.current) {
+      unsubscribeRef?.current();
+    }
+
+    unsubscribeRef.current = subscribeChatsToMore({
+      document: CHAT_ADDED_SUBSCRIPTION,
+      updateQuery,
+      variables: {
+        userId: _id,
       },
     });
 
     return () => {
-      chatsUnsubscribe?.();
+      if (unsubscribeRef?.current) {
+        unsubscribeRef?.current();
+      }
     };
-  }, [_id, otherFriends, otherFriendsClient, subscribeChatsToMore]);
+  }, [subscribeChatsToMore, updateQuery]);
 
   const handleToggle = (
     _: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -202,18 +245,15 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
   return (
     <SideBarListStyled
       chats={chats}
-      otherFriends={otherFriends}
-      toggleChats={toggleChats}
       toggleFriends={toggleFriends}
       className={`flex-item ${className}`}
-      hasChatsScrollbar={hasChatsScrollbar}
-      hasFriendsScrollbar={hasFriendsScrollbar}
     >
       {chats?.length ? (
         <>
           <ListItem
             dense
-            sx={{ pt: 0, pb: 0 }}
+            disablePadding
+            disableGutters
             btnProps={{
               textProps: {
                 primary: 'Chats',
@@ -241,8 +281,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
               className={toggleChats ? 'chats-wrapper margin-bottom' : ''}
               scrollDependencies={[toggleChats, toggleFriends]}
               WebkitLineClamp={1}
-              hasScrollbar={hasChatsScrollbar}
-              setHasScrollbar={setHasChatsScrollbar}
+              disableGutters={isMobile}
             />
           ) : null}
         </>
@@ -251,7 +290,8 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
         <>
           <ListItem
             dense
-            sx={{ pt: 0, pb: 0 }}
+            disablePadding
+            disableGutters
             btnProps={{
               textProps: {
                 primary: chats?.length ? 'New Chat' : 'Your Friends',
@@ -285,8 +325,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
                 className={toggleFriends ? 'friends-wrapper margin-bottom' : ''}
                 scrollDependencies={[toggleChats, toggleFriends]}
                 WebkitLineClamp={1}
-                hasScrollbar={hasFriendsScrollbar}
-                setHasScrollbar={setHasFriendsScrollbar}
+                disableGutters={isMobile}
               />
               {toggleChats && chats?.length > 2 && otherFriends?.length > 2 ? (
                 <Button
@@ -306,7 +345,8 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
         <>
           <ListItem
             dense
-            sx={{ pt: 0, pb: 0 }}
+            disablePadding
+            disableGutters
             disableHover
             btnProps={{
               textProps: {
@@ -350,6 +390,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
                     ),
                   onClick: (_) => handleClickOverviewItem(_, navLink?.link),
                 }}
+                disableGutters={isMobile}
               />
             ))}
           </List>

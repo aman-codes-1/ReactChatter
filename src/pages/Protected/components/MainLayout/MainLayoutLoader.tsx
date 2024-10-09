@@ -21,8 +21,8 @@ const MainLayoutLoader = ({
     <List dense={dense} disablePadding className={listClassName}>
       <ListItem
         disableHover
-        disableGutters
         disablePadding={disablePadding}
+        disableGutters
         sx={sx}
         btnProps={{
           disableGutters,

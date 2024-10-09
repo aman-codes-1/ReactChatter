@@ -6,8 +6,8 @@ import {
   InMemoryCache,
   split,
 } from '@apollo/client';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { ErrorResponse, onError } from '@apollo/client/link/error';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { RetryLink } from '@apollo/client/link/retry';

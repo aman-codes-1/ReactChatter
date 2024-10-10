@@ -132,9 +132,9 @@ const Chats = ({ loadingFallback }: any) => {
   };
 
   useEffect(() => {
-    if (loadingFallback || selectedMember) return;
+    if (loadingFallback) return;
 
-    const fetchMessages = async () => {
+    const fetchQuery = async () => {
       if (chatId) {
         await fetchData(chatId, 'chatId', chatQuery);
       }
@@ -144,8 +144,8 @@ const Chats = ({ loadingFallback }: any) => {
       }
     };
 
-    fetchMessages();
-  }, [loadingFallback, selectedMember]);
+    fetchQuery();
+  }, [loadingFallback]);
 
   const handleChangeMessage = (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,

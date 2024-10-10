@@ -43,7 +43,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       called: chatCalled,
     },
   ] = useLazyQuery(CHAT_QUERY, {
-    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       const selChat = data?.chat;
       if (selChat) {
@@ -66,7 +65,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       called: friendCalled,
     },
   ] = useLazyQuery(FRIEND_QUERY, {
-    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       const selFriend = data?.friend;
       if (selFriend) {

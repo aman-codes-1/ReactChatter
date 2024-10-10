@@ -35,11 +35,11 @@ export const WebSocketProvider = ({ children }: any) => {
 
       setUser(userOnlineStatus(true));
 
-      const onWindowBlur = () => {
+      const onOffline = () => {
         setUser(userOnlineStatus(false));
       };
 
-      const onWindowFocus = () => {
+      const onOnline = () => {
         setUser(userOnlineStatus(true));
       };
 
@@ -48,14 +48,31 @@ export const WebSocketProvider = ({ children }: any) => {
         setUser(userOnlineStatus(isTabVisible));
       };
 
-      document.addEventListener('visibilitychange', onVisibilityChange);
-      window.addEventListener('blur', onWindowBlur);
-      window.addEventListener('focus', onWindowFocus);
+      const events = [
+        { name: 'online', handler: onOnline },
+        { name: 'visibilitychange', handler: onVisibilityChange },
+        { name: 'blur', handler: onOffline },
+        { name: 'focus', handler: onOnline },
+        { name: 'click', handler: onOnline },
+        { name: 'scroll', handler: onOnline },
+      ];
+
+      events.forEach(({ name, handler }) => {
+        if (name === 'visibilitychange') {
+          document.addEventListener(name, handler);
+        } else {
+          window.addEventListener(name, handler);
+        }
+      });
 
       return () => {
-        document.removeEventListener('visibilitychange', onVisibilityChange);
-        window.removeEventListener('blur', onWindowBlur);
-        window.removeEventListener('focus', onWindowFocus);
+        events.forEach(({ name, handler }) => {
+          if (name === 'visibilitychange') {
+            document.removeEventListener(name, handler);
+          } else {
+            window.removeEventListener(name, handler);
+          }
+        });
       };
     }
     return () => {};

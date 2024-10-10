@@ -49,12 +49,10 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
   const unsubscribeRef = useRef<() => void>();
 
   useLayoutEffect(() => {
-    if (selectedChat) {
-      requestAnimationFrame(() => {
-        scrollIntoView(scrollRef);
-      });
-    }
-  }, [messageGroups, isListItemClicked, selectedChat]);
+    requestAnimationFrame(() => {
+      scrollIntoView(scrollRef);
+    });
+  }, [messageGroups, isListItemClicked]);
 
   const updateQuery = useCallback(
     async (prev: any, { subscriptionData }: any) => {

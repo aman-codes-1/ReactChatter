@@ -20,6 +20,8 @@ export const MessagesProvider = ({ children }: any) => {
   const navigate = useNavigate();
   const [loadingChatMessages, setLoadingChatMessages] = useState(true);
   const [loadingCreateMessage, setLoadingCreateMessage] = useState(false);
+  const [loadingProcessNextMessage, setLoadingProcessNextMessage] =
+    useState(false);
   const [messageGroups, setMessageGroups] = useState<any[]>([]);
   const { auth: { _id = '' } = {} } = useAuth();
   const { createChat } = useContext(ChatsAndFriendsContext);
@@ -74,20 +76,53 @@ export const MessagesProvider = ({ children }: any) => {
   ] = useMutation(UPDATE_MESSAGE_MUTATION);
 
   useEffect(() => {
-    if (loadingCreateMessage) return;
+    const messageQueueService = new MessageQueueService(
+      createChat,
+      createMessage,
+      setMessageGroups,
+      setLoadingProcessNextMessage,
+    );
 
-    const processMessages = async () => {
-      const messageQueueService = new MessageQueueService(
-        createChat,
-        createMessage,
-        setMessageGroups,
-      );
-
+    const startQueueProcessing = async () => {
+      if (loadingCreateMessage || loadingProcessNextMessage) return;
       await messageQueueService.processQueue();
     };
 
-    processMessages();
-  }, [loadingCreateMessage]);
+    startQueueProcessing();
+
+    const handleNetworkChange = () => {
+      if (navigator.onLine) {
+        startQueueProcessing();
+      }
+    };
+
+    const events = [
+      { name: 'online', handler: handleNetworkChange },
+      { name: 'visibilitychange', handler: startQueueProcessing },
+      { name: 'blur', handler: startQueueProcessing },
+      { name: 'focus', handler: startQueueProcessing },
+      { name: 'click', handler: startQueueProcessing },
+      { name: 'scroll', handler: startQueueProcessing },
+    ];
+
+    events.forEach(({ name, handler }) => {
+      if (name === 'visibilitychange') {
+        document.addEventListener(name, handler);
+      } else {
+        window.addEventListener(name, handler);
+      }
+    });
+
+    return () => {
+      events.forEach(({ name, handler }) => {
+        if (name === 'visibilitychange') {
+          document.removeEventListener(name, handler);
+        } else {
+          window.removeEventListener(name, handler);
+        }
+      });
+    };
+  }, [loadingCreateMessage, loadingProcessNextMessage]);
 
   const fetchMessages = async (id: string) => {
     const res = await messagesQuery({

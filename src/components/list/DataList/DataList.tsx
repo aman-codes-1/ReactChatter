@@ -75,7 +75,11 @@ const DataList = ({
               selected,
             }}
           />
-          <Divider variant={dividerVariant || (!disableGutters && 'middle')} />
+          <Divider
+            variant={
+              dividerVariant || (disableGutters ? 'fullWidth' : 'middle')
+            }
+          />
         </div>
       );
     }

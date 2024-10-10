@@ -74,6 +74,13 @@ export const updateHeight = (ref: any, setHeight: any) => {
   }
 };
 
+export const updateWidth = (ref: any, setHeight: any) => {
+  const listElement = ref?.current;
+  if (listElement) {
+    setHeight(listElement?.clientWidth);
+  }
+};
+
 export const scrollIntoView = (ref: any) => {
   const listElement = ref?.current;
   if (listElement) {

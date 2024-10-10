@@ -25,7 +25,7 @@ import { ChatsStyled } from './Chats.styled';
 
 const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
   const MessageQueue = new MessageQueueService();
-  const [navbarHeight] = useOutletContext<any>();
+  const [navbarHeight, sideBarWidth] = useOutletContext<any>();
   const [searchParams] = useSearchParams();
   const chatId =
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
@@ -268,6 +268,7 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
       message={message}
+      sideBarWidth={sideBarWidth}
     >
       <div className="chat-container">
         {IsNoMessages ? (

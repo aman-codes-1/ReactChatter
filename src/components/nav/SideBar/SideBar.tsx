@@ -1,12 +1,17 @@
+import { forwardRef } from 'react';
 import { NavBar, SideBarFooter } from '..';
 import { SideBarStyled } from './SideBar.styled';
 
-const SideBar = ({ className, children }: any) => (
-  <SideBarStyled className={className}>
-    <NavBar className="hidden-from-mobile flex-item" />
-    {children}
-    <SideBarFooter />
-  </SideBarStyled>
-);
+const SideBar = forwardRef((props: any, ref: any) => {
+  const { className, children } = props;
+
+  return (
+    <SideBarStyled className={className} ref={ref}>
+      <NavBar className="hidden-from-mobile flex-item" />
+      {children}
+      <SideBarFooter />
+    </SideBarStyled>
+  );
+});
 
 export default SideBar;

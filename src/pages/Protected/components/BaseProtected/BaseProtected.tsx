@@ -5,7 +5,7 @@ import {
   ChatsAndFriendsProvider,
   MessagesProvider,
 } from '../../../../contexts';
-import { updateHeight } from '../../../../helpers';
+import { updateHeight, updateWidth } from '../../../../helpers';
 import { SideBarList } from './components';
 import { Dashboard } from './pages';
 import { BaseProtectedStyled } from './BaseProtected.styled';
@@ -13,7 +13,9 @@ import { BaseProtectedStyled } from './BaseProtected.styled';
 const BaseProtected = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
+  const [sideBarWidth, setSideBarWidth] = useState(0);
   const navbarRef = useRef<any>(null);
+  const sideBarRef = useRef<any>(null);
 
   const toggleDrawer = (newOpen: boolean, isSwitch?: boolean) => () => {
     if (isSwitch) {
@@ -36,11 +38,24 @@ const BaseProtected = () => {
     };
   }, []);
 
+  useLayoutEffect(() => {
+    updateWidth(sideBarRef, setSideBarWidth);
+    window.addEventListener('resize', () =>
+      updateWidth(sideBarRef, setSideBarWidth),
+    );
+
+    return () => {
+      window.removeEventListener('resize', () =>
+        updateWidth(sideBarRef, setSideBarWidth),
+      );
+    };
+  }, []);
+
   return (
     <ChatsAndFriendsProvider>
       <MessagesProvider>
         <BaseProtectedStyled>
-          <SideBar className="hidden-from-mobile">
+          <SideBar ref={sideBarRef} className="hidden-from-mobile">
             <SideBarList />
           </SideBar>
           <Drawer
@@ -50,11 +65,11 @@ const BaseProtected = () => {
             isMobile
             navbarHeight={navbarHeight}
           >
-            <SideBar className="mobile-sidebar">
+            <SideBar ref={sideBarRef} className="mobile-sidebar">
               <SideBarList toggleDrawer={toggleDrawer(false)} />
             </SideBar>
           </Drawer>
-          <Dashboard navbarHeight={navbarHeight} />
+          <Dashboard navbarHeight={navbarHeight} sideBarWidth={sideBarWidth} />
           <AppBar
             position="fixed"
             elevation={0}

@@ -34,7 +34,7 @@ const Chats = ({ loadingFallback }: any) => {
   const MessageQueue = new MessageQueueService();
   const navigate = useNavigate();
   const location = useLocation();
-  const [navbarHeight] = useOutletContext<any>();
+  const [navbarHeight, sideBarWidth] = useOutletContext<any>();
   const [searchParams, setSearchParams] = useSearchParams();
   const chatId =
     searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
@@ -279,6 +279,7 @@ const Chats = ({ loadingFallback }: any) => {
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
       message={message}
+      sideBarWidth={sideBarWidth}
     >
       <div className="app-bar-wrapper">
         <AppBar position="static" className="app-bar" ref={appBarRef}>

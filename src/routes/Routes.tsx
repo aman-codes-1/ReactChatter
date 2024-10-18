@@ -6,8 +6,7 @@ import { IRouteConfig } from './IRoutes';
 import { BaseProtected } from '../pages';
 
 const AppRoutes = () => {
-  const location = useLocation();
-  const { pathname } = location || {};
+  const { pathname } = useLocation();
   const { auth } = useAuth();
   const [defaultRoutes, setDefaultRoutes] = useState<ReactNode[]>([]);
   const [privateRoutes, setPrivateRoutes] = useState<ReactNode[]>([]);

@@ -33,7 +33,7 @@ import { ChatsStyled } from './Chats.styled';
 const Chats = ({ loadingFallback }: any) => {
   const MessageQueue = new MessageQueueService();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { search } = useLocation();
   const [navbarHeight, sideBarWidth] = useOutletContext<any>();
   const [searchParams, setSearchParams] = useSearchParams();
   const chatId =
@@ -101,14 +101,14 @@ const Chats = ({ loadingFallback }: any) => {
 
   useLayoutEffect(() => {
     try {
-      const isValid = validateSearchParams(location?.search);
+      const isValid = validateSearchParams(search);
       if (!isValid) {
         navigate('/');
       }
     } catch (error) {
       console.error('Error getting url:', error);
     }
-  }, [location, navigate]);
+  }, [search, navigate]);
 
   const fetchData = async (id: string, key: string, query: any) => {
     try {

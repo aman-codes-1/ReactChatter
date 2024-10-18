@@ -9,11 +9,13 @@ interface ButtonProps extends MuiButtonProps {
 }
 
 const Button = (props: ButtonProps) => {
-  const { wrapperClassName, className, ...rest } = props;
+  const { wrapperClassName, className, children, ...rest } = props;
 
   return (
     <ButtonStyled className={wrapperClassName}>
-      <MuiButton className={`btn ${className}`} {...rest} />
+      <MuiButton className={`btn ${className}`} {...rest}>
+        {children}
+      </MuiButton>
     </ButtonStyled>
   );
 };

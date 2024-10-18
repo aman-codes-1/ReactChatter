@@ -1,6 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
 import { List } from '@mui/material';
-import { checkScrollbar } from '../../../../helpers';
 import { useAuth } from '../../../../hooks';
 import { Button, ListItem } from '../../../../components';
 import { MainLayout } from '../MainLayout';
@@ -17,39 +15,9 @@ const FriendRequest = ({
   deleteBtnProps,
 }: any) => {
   const { auth: { _id = '' } = {} } = useAuth();
-  const [hasScrollbar, setHasScrollbar] = useState(false);
-  const listRef = useRef<any>(null);
 
   const isConfirmBtn = !!Object.keys(confirmBtnProps || {})?.length;
   const isDeleteBtn = !!Object.keys(deleteBtnProps || {})?.length;
-
-  useLayoutEffect(() => {
-    if (data?.length) {
-      checkScrollbar(listRef, setHasScrollbar);
-      window.addEventListener('resize', () =>
-        checkScrollbar(listRef, setHasScrollbar),
-      );
-    }
-
-    const listRefObserver = new MutationObserver(() =>
-      checkScrollbar(listRef, setHasScrollbar),
-    );
-    const listElement = listRef?.current;
-    if (listElement) {
-      listRefObserver?.observe(listElement, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-      });
-    }
-
-    return () => {
-      window.removeEventListener('resize', () =>
-        checkScrollbar(listRef, setHasScrollbar),
-      );
-      listRefObserver?.disconnect();
-    };
-  }, [data]);
 
   const renderItem = (obj: any, key: string) => {
     if (obj?.members?.length) {
@@ -63,11 +31,7 @@ const FriendRequest = ({
   };
 
   return (
-    <FriendRequestStyled
-      ref={listRef}
-      isConfirmBtn={isConfirmBtn}
-      hasScrollbar={hasScrollbar}
-    >
+    <FriendRequestStyled isConfirmBtn={isConfirmBtn}>
       <MainLayout
         data={data}
         loaderProps={{
@@ -84,7 +48,7 @@ const FriendRequest = ({
           <List disablePadding className="friend-request-list">
             {data?.map((obj: any, idx: number) => (
               <ListItem
-                key={obj?._id}
+                key={`${obj?._id}-${idx}`}
                 disableGutters
                 disableHover
                 btnProps={{
@@ -132,6 +96,7 @@ const FriendRequest = ({
                     ),
                     secondaryTypographyProps: {
                       fontSize: '0.975rem',
+                      component: 'div' as any,
                     },
                     className: 'friend-request-text-wrapper',
                   },

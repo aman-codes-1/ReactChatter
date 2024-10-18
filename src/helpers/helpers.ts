@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export const formatDate = (dateValue: string | number | Date) => {
   const date = new Date(dateValue);
   return date
@@ -111,32 +113,66 @@ export const scrollToSelected = (
   }
 };
 
-export const groupMessages = (msgs: any, _id: string) => {
-  if (!msgs && !msgs?.length) return [];
+export const groupMessages = (messages: any[] = [], _id: string) => {
+  if (!messages?.length) return [];
 
-  const groupedMessages = msgs
-    ?.reduce((acc: any, message: any) => {
-      const lastGroup = acc && acc?.length ? acc?.[acc.length - 1] : null;
-      const isSameSender = lastGroup
-        ? lastGroup?.[0]?.sender?._id === message?.sender?._id
-        : false;
-      if (isSameSender) {
-        lastGroup.push(message);
+  const groupedByDay = messages.reduce((acc: any, message: any) => {
+    const timestamp = message?.sender?.sentStatus?.timestamp;
+
+    if (timestamp) {
+      const messageDate = moment(timestamp);
+      let dateLabel: string;
+
+      if (messageDate.isSame(moment(), 'day')) {
+        dateLabel = 'Today';
+      } else if (messageDate.isSame(moment().subtract(1, 'days'), 'day')) {
+        dateLabel = 'Yesterday';
+      } else if (messageDate.isAfter(moment().subtract(1, 'week'))) {
+        dateLabel = messageDate.format('dddd');
+      } else if (messageDate.isAfter(moment().subtract(6, 'months'))) {
+        dateLabel = messageDate.format('ddd, D MMM');
       } else {
-        acc.push([message]);
+        dateLabel = messageDate.format('D MMM, YYYY');
       }
-      return acc;
-    }, [])
-    .map((msgGroups: any, idx: number) => ({
-      side: msgGroups?.[0]?.sender?._id === _id ? 'right' : 'left',
-      data: msgGroups,
-      groupDetails:
-        msgGroups?.[0]?.sender?._id === _id
-          ? msgGroups?.[0]?.sender
-          : msgGroups?.[idx]?.sender,
-    }));
 
-  return groupedMessages;
+      if (!acc[dateLabel]) {
+        acc[dateLabel] = [];
+      }
+
+      acc[dateLabel].push(message);
+    }
+
+    return acc;
+  }, {});
+
+  const flattenedMessages = Object.entries(groupedByDay).map(
+    ([dateLabel, messages]: any) => ({
+      dateLabel,
+      groups: messages
+        ?.reduce((acc: any, message: any) => {
+          const lastGroup = acc && acc?.length ? acc?.[acc?.length - 1] : null;
+          const isSameSender = lastGroup
+            ? lastGroup?.[0]?.sender?._id === message?.sender?._id
+            : false;
+          if (isSameSender) {
+            lastGroup.push(message);
+          } else {
+            acc.push([message]);
+          }
+          return acc;
+        }, [])
+        .map((msgGroups: any, idx: number) => ({
+          side: msgGroups?.[0]?.sender?._id === _id ? 'right' : 'left',
+          data: msgGroups,
+          groupDetails:
+            msgGroups?.[0]?.sender?._id === _id
+              ? msgGroups?.[0]?.sender
+              : msgGroups?.[idx]?.sender,
+        })),
+    }),
+  );
+
+  return flattenedMessages;
 };
 
 export const addQueuedMessageToLastGroup = (

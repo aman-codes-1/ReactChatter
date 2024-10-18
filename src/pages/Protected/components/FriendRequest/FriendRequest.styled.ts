@@ -1,9 +1,8 @@
-import { display, height, styled } from '@mui/system';
+import { styled } from '@mui/system';
 
 export const FriendRequestStyled = styled('div')<{
   isConfirmBtn: boolean;
-  hasScrollbar: boolean;
-}>(({ theme, isConfirmBtn, hasScrollbar }) => ({
+}>(({ theme, isConfirmBtn }) => ({
   '.friend-request-loader': {
     gap: '1.2rem',
     [theme.breakpoints.down('md')]: {
@@ -30,17 +29,11 @@ export const FriendRequestStyled = styled('div')<{
   },
   '.friend-request-list': {
     width: '400px',
-    maxWidth: hasScrollbar ? 'calc(100% - 1.5rem)' : '100%',
+    maxWidth: '100%',
   },
   '.friend-request-list-item-btn': {
     border: `1px solid ${theme.palette.grey[500]}`,
     borderRadius: '8px',
-    [theme.breakpoints.down('lg')]: {
-      marginRight: '1.7rem',
-    },
-    [theme.breakpoints.down('xs')]: {
-      marginRight: '1.25rem',
-    },
     '.MuiButtonBase-root': {
       gap: '1.2rem',
       [theme.breakpoints.down('md')]: {

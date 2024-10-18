@@ -363,7 +363,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
           <List dense disablePadding>
             {navLinks.map((navLink, idx) => (
               <ListItem
-                key={navLink?.title}
+                key={`${navLink?.title}-${idx}`}
                 btnProps={{
                   textProps: {
                     primary: navLink?.title || '',

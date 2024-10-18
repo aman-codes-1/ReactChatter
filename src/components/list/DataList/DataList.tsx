@@ -46,7 +46,7 @@ const DataList = ({
 
     if (member) {
       return (
-        <div key={`${JSON.stringify(obj)} ${idx}`}>
+        <div key={`${obj?._id}-${idx}`}>
           <ListItem
             disableGutters={disableGutters}
             ref={itemsRef ? (el) => (itemsRef.current[idx] = el) : null}

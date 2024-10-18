@@ -276,10 +276,8 @@ const Chats = ({ loadingFallback }: any) => {
   return (
     <ChatsStyled
       navbarHeight={navbarHeight}
-      appBarHeight={appBarHeight}
-      textFieldHeight={textFieldHeight}
-      message={message}
       sideBarWidth={sideBarWidth}
+      message={message}
     >
       <div className="app-bar-wrapper">
         <AppBar position="static" className="app-bar" ref={appBarRef}>

@@ -35,6 +35,7 @@ const SideBarFooter = ({ className }: any) => {
                 },
               },
               secondaryTypographyProps: {
+                fontSize: '0.75rem',
                 style: {
                   WebkitLineClamp: 1,
                 },

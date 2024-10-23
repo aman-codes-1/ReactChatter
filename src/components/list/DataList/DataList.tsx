@@ -62,7 +62,6 @@ const DataList = ({
                   },
                 },
                 secondaryTypographyProps: {
-                  fontSize: '0.875rem',
                   style: {
                     WebkitLineClamp,
                   },

@@ -10,7 +10,7 @@ export const SideBarStyled = styled('div')(({ theme }) => ({
   overflow: 'auto',
   [theme.breakpoints.up('sm')]: {
     '.flex-item:nth-last-of-type(1)': {
-      paddingTop: '0.75rem',
+      paddingTop: '1rem',
     },
   },
   [theme.breakpoints.down('xl')]: {

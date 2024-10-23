@@ -7,25 +7,25 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
   gap: '1rem',
   [theme.breakpoints.down('sm')]: {
     margin: 0,
-    padding: '0.7rem 1rem',
+    padding: '0.75rem 1rem',
     backgroundColor: theme.palette.grey[100],
   },
   '.nav-logo': {
     display: 'flex',
     alignItems: 'center',
     flex: '1 1 auto',
-    padding: '1.3rem 0rem 1.3rem 1.5rem',
+    padding: '1.375rem 0rem 1rem 1.5rem',
     [theme.breakpoints.down('sm')]: {
       flex: '0',
-      flexBasis: '5.85rem',
-      padding: '0.4rem 1rem',
+      flexBasis: '5.875rem',
+      padding: '0.375rem 1rem',
       borderRadius: '8px',
       justifyContent: 'center',
       backgroundColor: theme.palette.grey[400],
     },
     [theme.breakpoints.down('xs')]: {
       flexBasis: '0',
-      padding: '0.4rem 1.4rem',
+      padding: '0.375rem 1.375rem',
     },
   },
   '.nav-logo-svg': {
@@ -47,7 +47,7 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
     },
   },
   '.nav-menu-btn': {
-    padding: '0.4rem 1rem',
+    padding: '0.375rem 1rem',
     color: theme.palette.common.white,
     backgroundColor: `${theme.palette.action.active} !important`,
     [theme.breakpoints.up('sm')]: {

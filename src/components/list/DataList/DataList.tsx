@@ -56,13 +56,13 @@ const DataList = ({
                 primary: member?.memberDetails?.name,
                 secondary: member?.memberDetails?.email,
                 primaryTypographyProps: {
-                  fontSize: '1.08rem',
+                  fontSize: '1.0625rem',
                   style: {
                     WebkitLineClamp: 1,
                   },
                 },
                 secondaryTypographyProps: {
-                  fontSize: '0.85rem',
+                  fontSize: '0.875rem',
                   style: {
                     WebkitLineClamp,
                   },

@@ -22,15 +22,15 @@ export const HomeStyled = styled('div')(({ theme }) => ({
       textShadow: `0 1px 0 ${theme.palette.grey[50]}`,
       marginBottom: 8,
       [theme.breakpoints.down('sm')]: {
-        fontSize: '2.8125rem',
+        fontSize: '2.75rem',
       },
     },
     '.home-sub-heading': {
       margin: '8px 0px',
       lineHeight: '32px',
-      fontSize: '1.26rem',
+      fontSize: '1.25rem',
       [theme.breakpoints.down('sm')]: {
-        fontSize: '1.1875rem',
+        fontSize: '1.125rem',
       },
     },
     '.home-login-btn': {
@@ -55,7 +55,7 @@ export const HomeStyled = styled('div')(({ theme }) => ({
     margin: 'auto 0px 8px 0px',
     textAlign: 'center',
     '.home-footer-sub-heading': {
-      fontSize: '0.90625rem',
+      fontSize: '0.9125rem',
     },
   },
 }));

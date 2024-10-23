@@ -57,9 +57,9 @@ const SideBarFooter = ({ className }: any) => {
                 }
                 className="text-hidden"
                 sx={{
-                  minHeight: '3.25rem',
-                  minWidth: '3.25rem',
-                  ml: '1.7rem',
+                  minHeight: '52px',
+                  minWidth: '54px',
+                  ml: '1.75rem',
                 }}
                 disabled={isLoading}
               />

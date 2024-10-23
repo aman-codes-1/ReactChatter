@@ -3,7 +3,7 @@ import { styled } from '@mui/system';
 export const ButtonStyled = styled('div')(({ theme }) => ({
   '.btn': {
     textTransform: 'none',
-    fontWeight: 501,
+    fontWeight: 600,
   },
   '.text-hidden': {
     '.MuiButton-startIcon': {

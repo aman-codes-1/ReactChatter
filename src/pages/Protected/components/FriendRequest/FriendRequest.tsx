@@ -61,7 +61,7 @@ const FriendRequest = ({
                   textProps: {
                     primary: renderItem(obj, nameKey),
                     primaryTypographyProps: {
-                      fontSize: '1.08rem',
+                      fontSize: '1.125rem',
                     },
                     secondary: (
                       <>

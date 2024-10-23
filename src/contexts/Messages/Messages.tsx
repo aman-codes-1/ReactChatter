@@ -1,14 +1,21 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLazyQuery, useMutation, useSubscription } from '@apollo/client';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  useLazyQuery,
+  useMutation,
+  useQuery,
+  useSubscription,
+} from '@apollo/client';
 import {
   MESSAGES_QUERY,
   MESSAGE_QUEUED_QUERY,
+  MESSAGE_GROUPS_QUERY,
   CREATE_MESSAGE_MUTATION,
   UPDATE_MESSAGE_MUTATION,
+  MESSAGE_ADDED_SUBSCRIPTION,
   MESSAGE_UPDATED_SUBSCRIPTION,
 } from './gql';
-import { addQueuedMessagesToLastGroup, groupMessages } from '../../helpers';
+import { groupMessages, mergeByDateLabel } from '../../helpers';
 import { useAuth } from '../../hooks';
 import { MessageQueueService } from '../../services';
 import { ChatsAndFriendsContext } from '..';
@@ -18,11 +25,17 @@ export const MessagesContext = createContext<any>({});
 export const MessagesProvider = ({ children }: any) => {
   const MessageQueue = new MessageQueueService();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const chatId =
+    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
+  const friendId =
+    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const [loadingChatMessages, setLoadingChatMessages] = useState(true);
   const [loadingCreateMessage, setLoadingCreateMessage] = useState(false);
   const [loadingProcessNextMessage, setLoadingProcessNextMessage] =
     useState(false);
-  const [messageGroups, setMessageGroups] = useState<any[]>([]);
+  const [messageGroupsState, setMessageGroups] = useState<any[]>([]);
+  const [scrollToBottom, setScrollToBottom] = useState(false);
   const { auth: { _id = '' } = {} } = useAuth();
   const { createChat } = useContext(ChatsAndFriendsContext);
 
@@ -42,14 +55,41 @@ export const MessagesProvider = ({ children }: any) => {
   const [
     messagesQuery,
     {
-      data: { messages = [] } = {},
+      data: { messages: { edges: messages = [], pageInfo = {} } = {} } = {},
       loading: messagesLoading,
       error: messagesError,
       client: messagesClient,
       called: messagesCalled,
       subscribeToMore: subscribeMessagesToMore,
+      fetchMore: fetchMoreMessages,
     },
-  ] = useLazyQuery(MESSAGES_QUERY);
+  ] = useLazyQuery(MESSAGES_QUERY, {
+    fetchPolicy: 'no-cache',
+  });
+
+  const {
+    data: {
+      messageGroups: {
+        data: messageGroups = [],
+        pageInfo: messagesPageInfo = {},
+      } = {},
+    } = {},
+    loading: messageGroupsLoading,
+    error: messageGroupsError,
+    client: messageGroupsClient,
+    called: messageGroupsCalled,
+  } = useQuery(MESSAGE_GROUPS_QUERY, {
+    fetchPolicy: 'cache-only',
+    variables: { chatId },
+    skip: !chatId || !!friendId,
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const {
+    data: OnMessageAddedData,
+    loading: OnMessageAddedLoading,
+    error: OnMessageAddedError,
+  } = useSubscription(MESSAGE_ADDED_SUBSCRIPTION);
 
   const {
     data: OnMessageUpdatedData,
@@ -127,7 +167,6 @@ export const MessagesProvider = ({ children }: any) => {
   const fetchMessages = async (id: string) => {
     const res = await messagesQuery({
       variables: { chatId: id },
-      fetchPolicy: 'network-only',
     });
 
     const error = res?.error?.message;
@@ -170,58 +209,91 @@ export const MessagesProvider = ({ children }: any) => {
     }
   };
 
-  const getCombinedMessages = async (id: string, msgs: any[] = []) => {
-    if (!msgs?.length) {
-      setMessageGroups([]);
-      return;
+  const chunkArray = (array: any[], size: number) => {
+    const result = [];
+    for (let i = 0; i < array.length; i += size) {
+      result.push(array.slice(i, size + i));
     }
+    return result;
+  };
 
+  const getCombinedMessages = async (id: string, key: string, msgs?: any[]) => {
     try {
-      const queuedMessages = await getQueuedMessages(id, 'chatId');
+      const queuedMessages = await getQueuedMessages(id, key, !msgs);
 
-      const combinedMessages = queuedMessages?.length
-        ? msgs?.concat?.(queuedMessages)
-        : msgs;
+      let combinedMessages = [];
+
+      if (msgs?.length && queuedMessages?.length) {
+        combinedMessages = [...msgs, ...queuedMessages];
+      } else if (queuedMessages?.length) {
+        combinedMessages = queuedMessages;
+      } else if (msgs?.length) {
+        combinedMessages = msgs;
+      } else {
+        combinedMessages = [];
+      }
 
       if (combinedMessages?.length) {
-        const messageGroupsData = groupMessages(combinedMessages, _id);
-        setMessageGroups(messageGroupsData);
-      } else {
-        setMessageGroups([]);
+        const chunkedMessages = chunkArray(combinedMessages, 25);
+
+        for (const chunk of chunkedMessages) {
+          const groupedMessages = groupMessages(chunk, _id);
+          setMessageGroups((prevGroups) =>
+            mergeByDateLabel(prevGroups, groupedMessages),
+          );
+        }
+
+        if (key === 'chatId' && msgs) {
+          const groupedMessages = groupMessages(msgs, _id);
+          messageGroupsClient.writeQuery({
+            query: MESSAGE_GROUPS_QUERY,
+            data: {
+              messageGroups: groupedMessages,
+            },
+            variables: { chatId: id },
+          });
+        }
       }
     } catch (error: any) {
       throw new Error(error?.message);
     }
   };
 
-  const getChatMessagesWithQueue = async (id: string) => {
+  const getChatMessagesWithQueue = async (id: string, key: string) => {
     try {
-      const cachedMessages = await messagesClient?.readQuery({
-        query: MESSAGES_QUERY,
+      // const cachedMessages = await messagesClient.readQuery({
+      //   query: MESSAGES_QUERY,
+      //   variables: { chatId: id },
+      // });
+
+      // console.log(cachedMessages);
+
+      const cachedMessageGroups = await messageGroupsClient.readQuery({
+        query: MESSAGE_GROUPS_QUERY,
         variables: { chatId: id },
       });
 
-      const messages =
-        cachedMessages && cachedMessages?.messages
-          ? cachedMessages?.messages
-          : await fetchMessages(id);
+      if (!cachedMessageGroups) {
+        const fetchedMessages = await fetchMessages(id);
 
-      await getCombinedMessages(id, messages);
-    } catch (error: any) {
-      throw new Error(error);
-    }
-  };
-
-  const getFriendMessagesWithQueue = async (id: string) => {
-    try {
-      const queuedMessages = await getQueuedMessages(id, 'friendId', true);
-
-      if (queuedMessages?.length) {
-        setMessageGroups((prev: any) => {
-          const newGroups = addQueuedMessagesToLastGroup(prev, queuedMessages);
-          return newGroups;
-        });
+        if (fetchedMessages?.edges?.length) {
+          const groupedMessages = groupMessages(fetchedMessages?.edges, _id);
+          messageGroupsClient.writeQuery({
+            query: MESSAGE_GROUPS_QUERY,
+            data: {
+              messageGroups: {
+                data: groupedMessages,
+                pageInfo: fetchedMessages?.pageInfo,
+              },
+            },
+            variables: { chatId: id },
+          });
+        }
       }
+
+      setScrollToBottom((prev) => !prev);
+
+      // await getCombinedMessages(id, key, fetchedMessages);
     } catch (error: any) {
       throw new Error(error);
     }
@@ -233,11 +305,13 @@ export const MessagesProvider = ({ children }: any) => {
         // messages
         messagesQuery,
         messages,
+        pageInfo,
         messagesLoading,
         messagesError,
         messagesClient,
         messagesCalled,
         subscribeMessagesToMore,
+        fetchMoreMessages,
         // messageQueued
         messageQueuedQuery,
         messageQueued,
@@ -245,6 +319,17 @@ export const MessagesProvider = ({ children }: any) => {
         messageQueuedError,
         messageQueuedClient,
         messageQueuedCalled,
+        // messageGroups
+        messageGroups,
+        messagesPageInfo,
+        messageGroupsLoading,
+        messageGroupsError,
+        messageGroupsClient,
+        messageGroupsCalled,
+        // OnMessageAdded
+        OnMessageAddedData,
+        OnMessageAddedLoading,
+        OnMessageAddedError,
         // OnMessageUpdated
         OnMessageUpdatedData,
         OnMessageUpdatedLoading,
@@ -266,14 +351,16 @@ export const MessagesProvider = ({ children }: any) => {
         loadingCreateMessage,
         setLoadingCreateMessage,
         // messageGroups
-        messageGroups,
+        messageGroupsState,
         setMessageGroups,
+        // scrollToBottom
+        scrollToBottom,
+        setScrollToBottom,
         // getMessages
         fetchMessages,
         getQueuedMessages,
         getCombinedMessages,
         getChatMessagesWithQueue,
-        getFriendMessagesWithQueue,
       }}
     >
       {children}

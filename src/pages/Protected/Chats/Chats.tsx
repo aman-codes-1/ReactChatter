@@ -17,7 +17,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { useAuth } from '../../../hooks';
 import { ChatsAndFriendsContext, MessagesContext } from '../../../contexts';
 import {
-  addQueuedMessageToLastGroup,
+  groupQueuedMessage,
   handleKeyPress,
   setFocus,
   updateHeight,
@@ -27,7 +27,7 @@ import { ListItem } from '../../../components';
 import { MainLayoutLoader } from '../components';
 import { MessageQueueService } from '../../../services';
 import { MessageData } from '../../../contexts/Messages/IMessage';
-import ChatMessages from './ChatMessages';
+import ChatGroups from './ChatGroups';
 import { ChatsStyled } from './Chats.styled';
 
 const Chats = ({ loadingFallback }: any) => {
@@ -110,9 +110,9 @@ const Chats = ({ loadingFallback }: any) => {
     }
   }, [search, navigate]);
 
-  const fetchData = async (id: string, key: string, query: any) => {
+  const fetchData = async (fetchFunction: any, id: string, key: string) => {
     try {
-      const res = await query({
+      const res = await fetchFunction({
         variables: {
           [key]: id,
         },
@@ -136,11 +136,11 @@ const Chats = ({ loadingFallback }: any) => {
 
     const fetchQuery = async () => {
       if (chatId) {
-        await fetchData(chatId, 'chatId', chatQuery);
+        await fetchData(chatQuery, chatId, 'chatId');
       }
 
       if (friendId) {
-        await fetchData(friendId, 'friendId', friendQuery);
+        await fetchData(friendQuery, friendId, 'friendId');
       }
     };
 
@@ -163,8 +163,8 @@ const Chats = ({ loadingFallback }: any) => {
       queuedMessage?.friendId === friendId
     ) {
       setMessageGroups((prev: any) => {
-        const newGroups = addQueuedMessageToLastGroup(prev, queuedMessage);
-        return newGroups;
+        const updatedMessageGroups = groupQueuedMessage(prev, queuedMessage);
+        return updatedMessageGroups;
       });
 
       return queuedMessage;
@@ -297,10 +297,10 @@ const Chats = ({ loadingFallback }: any) => {
                       primary: selectedMember?.memberDetails?.name,
                       secondary: selectedMember?.memberDetails?.email,
                       primaryTypographyProps: {
-                        fontSize: '1.08rem',
+                        fontSize: '1.0625rem',
                       },
                       secondaryTypographyProps: {
-                        fontSize: '0.85rem',
+                        fontSize: '0.875rem',
                         style: {
                           WebkitLineClamp: 1,
                         },
@@ -317,10 +317,9 @@ const Chats = ({ loadingFallback }: any) => {
         </AppBar>
       </div>
       {loading ? null : (
-        <ChatMessages
+        <ChatGroups
           appBarHeight={appBarHeight}
           textFieldHeight={textFieldHeight}
-          message={message}
         />
       )}
       <div className="text-field-wrapper" ref={textFieldRef}>

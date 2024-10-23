@@ -1,6 +1,41 @@
 import { DocumentNode } from 'graphql';
 import { gql } from '../../__generated__/gql';
 
+const MESSAGES_QUERY = gql(/* GraphQL */ `
+  query messages($chatId: String!, $after: ID) {
+    messages(input: { chatId: $chatId }, limit: 25, after: $after) {
+      edges {
+        _id
+        chatId
+        queueId
+        message
+        sender {
+          _id
+          sentStatus {
+            isSent
+            timestamp
+          }
+        }
+        otherMembers {
+          _id
+          deliveredStatus {
+            isDelivered
+            timestamp
+          }
+          readStatus {
+            isRead
+            timestamp
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+`) as DocumentNode;
+
 const MESSAGE_QUEUED_QUERY = gql(/* GraphQL */ `
   query messageQueued($queueId: String!) {
     messageQueued(input: { queueId: $queueId }) {
@@ -9,30 +44,42 @@ const MESSAGE_QUEUED_QUERY = gql(/* GraphQL */ `
   }
 `) as DocumentNode;
 
-const MESSAGES_QUERY = gql(/* GraphQL */ `
-  query messages($chatId: String!) {
-    messages(input: { chatId: $chatId }, limit: 25, skip: 0) {
-      _id
-      chatId
-      queueId
-      message
-      sender {
-        _id
-        sentStatus {
-          isSent
-          timestamp
+const MESSAGE_GROUPS_QUERY = gql(/* GraphQL */ `
+  query messageGroups($chatId: String!) {
+    messageGroups(input: { chatId: $chatId }) {
+      data {
+        dateLabel
+        groups {
+          side
+          data {
+            _id
+            chatId
+            queueId
+            message
+            sender {
+              _id
+              sentStatus {
+                isSent
+                timestamp
+              }
+            }
+            otherMembers {
+              _id
+              deliveredStatus {
+                isDelivered
+                timestamp
+              }
+              readStatus {
+                isRead
+                timestamp
+              }
+            }
+          }
         }
       }
-      otherMembers {
-        _id
-        deliveredStatus {
-          isDelivered
-          timestamp
-        }
-        readStatus {
-          isRead
-          timestamp
-        }
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
   }
@@ -149,6 +196,7 @@ const MESSAGE_UPDATED_SUBSCRIPTION = gql(/* GraphQL */ `
 export {
   MESSAGES_QUERY,
   MESSAGE_QUEUED_QUERY,
+  MESSAGE_GROUPS_QUERY,
   CREATE_MESSAGE_MUTATION,
   UPDATE_MESSAGE_MUTATION,
   MESSAGE_ADDED_SUBSCRIPTION,

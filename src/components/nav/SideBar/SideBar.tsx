@@ -9,7 +9,7 @@ const SideBar = forwardRef((props: any, ref: any) => {
     <SideBarStyled className={className} ref={ref}>
       <NavBar className="hidden-from-mobile flex-item" />
       {children}
-      <SideBarFooter />
+      <SideBarFooter className="flex-item" />
     </SideBarStyled>
   );
 });

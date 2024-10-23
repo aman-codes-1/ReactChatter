@@ -48,8 +48,8 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
   } = useContext(ChatsAndFriendsContext);
   const {
     setLoadingChatMessages,
+    getCombinedMessages,
     getChatMessagesWithQueue,
-    getFriendMessagesWithQueue,
   } = useContext(MessagesContext);
   const [toggleChats, setToggleChats] = useState(!!chats?.length);
   const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
@@ -198,7 +198,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
       try {
         setLoadingQuery(false);
         setLoadingChatMessages(false);
-        await getChatMessagesWithQueue(chat?._id);
+        await getChatMessagesWithQueue(chat?._id, 'chatId');
         setSelectedFriend(undefined);
         setSelectedChat(chat);
         setSelectedMember(selectedMember);
@@ -221,7 +221,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
       try {
         setLoadingQuery(false);
         setLoadingChatMessages(false);
-        await getFriendMessagesWithQueue(friend?._id);
+        await getCombinedMessages(friend?._id, 'friendId');
         setSelectedChat(undefined);
         setSelectedFriend(friend);
         setSelectedMember(selectedMember);
@@ -243,11 +243,7 @@ const SideBarList = ({ toggleDrawer, className }: any) => {
   };
 
   return (
-    <SideBarListStyled
-      chats={chats}
-      toggleFriends={toggleFriends}
-      className={`flex-item ${className}`}
-    >
+    <SideBarListStyled chats={chats} className={`flex-item ${className}`}>
       {chats?.length ? (
         <>
           <ListItem

@@ -72,7 +72,7 @@ const ListItemButton = forwardRef((props: ListItemButtonProps, ref: any) => {
             {...textProps}
             primaryTypographyProps={{
               fontSize: '0.875rem',
-              fontWeight: 501,
+              fontWeight: 600,
               ...textProps?.primaryTypographyProps,
             }}
             secondaryTypographyProps={{

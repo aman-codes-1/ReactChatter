@@ -18,11 +18,18 @@ import {
   MessagesContext,
 } from '../../../contexts';
 import { MessageQueueService } from '../../../services';
-import { groupMessages, scrollIntoView } from '../../../helpers';
+import {
+  groupMessages,
+  groupNewMessageForOtherMember,
+  mergeByDateLabel,
+  scrollIntoView,
+  updateNewMessageInGroup,
+} from '../../../helpers';
 import ChatBubble from './ChatBubble';
-import { ChatMessagesStyled } from './Chats.styled';
+import { ChatGroupsStyled } from './Chats.styled';
+import { MESSAGE_GROUPS_QUERY } from '../../../contexts/Messages';
 
-const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
+const ChatGroups = ({ appBarHeight, textFieldHeight }: any) => {
   const MessageQueue = new MessageQueueService();
   const [navbarHeight] = useOutletContext<any>();
   const [searchParams] = useSearchParams();
@@ -31,26 +38,33 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
   const friendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const [isResize, setIsResize] = useState(false);
+  const [prevScrollTop, setPrevScrollTop] = useState(0);
+  const [hasFetched, setHasFetched] = useState(false);
   const { auth: { _id = '' } = {} } = useAuth();
   const { isListItemClicked } = useContext(ChatsAndFriendsContext);
   const {
     messagesClient,
     subscribeMessagesToMore,
+    fetchMoreMessages,
     loadingChatMessages,
     setLoadingChatMessages,
     messageGroups = [],
+    messagesPageInfo = {},
+    messageGroupsClient,
     setMessageGroups,
+    scrollToBottom,
+    getCombinedMessages,
     getChatMessagesWithQueue,
-    getFriendMessagesWithQueue,
   } = useContext(MessagesContext);
   const scrollRef = useRef<any>(null);
+  const scrollBottomRef = useRef<any>(null);
   const unsubscribeRef = useRef<() => void>();
 
   useLayoutEffect(() => {
     requestAnimationFrame(() => {
-      scrollIntoView(scrollRef);
+      scrollIntoView(scrollBottomRef);
     });
-  }, [messageGroups, isListItemClicked]);
+  }, [scrollToBottom]);
 
   useLayoutEffect(() => {
     const handleResize = () => {
@@ -90,33 +104,27 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
           : false;
 
         if (isOtherMember) {
-          const messages = prev?.messages?.length
-            ? [...prev.messages, OnMessageAddedMessage]
-            : [OnMessageAddedMessage];
+          // const messages = prev?.messages?.length
+          //   ? [...prev.messages, OnMessageAddedMessage]
+          //   : [OnMessageAddedMessage];
 
-          const messageGroupsData = groupMessages(messages, _id);
-          setMessageGroups(messageGroupsData);
+          // const groupedMessages = groupMessages(messages, _id);
+          // setMessageGroups(groupedMessages);
+          setMessageGroups((prev: any) => {
+            const updatedMessageGroups = groupNewMessageForOtherMember(
+              prev,
+              OnMessageAddedMessage,
+            );
+            return updatedMessageGroups;
+          });
         } else {
-          setMessageGroups((prevGroups: any) => {
-            if (!prevGroups?.length) return prevGroups;
-
-            const updatedGroups = prevGroups?.map((group: any) => {
-              const index = group?.data?.findIndex(
-                (item: any) => item?.id === OnMessageAddedQueueId,
-              );
-
-              if (index < 0) return group;
-
-              const dataCopy = [...group.data];
-              dataCopy[index] = OnMessageAddedMessage;
-
-              return {
-                ...group,
-                data: dataCopy,
-              };
-            });
-
-            return updatedGroups;
+          setMessageGroups((prev: any) => {
+            const updatedMessageGroups = updateNewMessageInGroup(
+              prev,
+              OnMessageAddedQueueId,
+              OnMessageAddedMessage,
+            );
+            return updatedMessageGroups;
           });
 
           await MessageQueue.deleteMessageFromQueue(OnMessageAddedQueueId);
@@ -165,9 +173,9 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
     };
   }, [chatId, subscribeMessagesToMore, updateQuery]);
 
-  const fetchData = async (id: string, fetchQuery: any) => {
+  const fetchData = async (fetchFunction: any, id: string, key: string) => {
     try {
-      await fetchQuery(id);
+      await fetchFunction(id, key);
     } catch (error: any) {
       console.error('Error fetching data:', error);
     } finally {
@@ -178,11 +186,11 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
   useEffect(() => {
     const fetchMessages = async () => {
       if (chatId) {
-        await fetchData(chatId, getChatMessagesWithQueue);
+        await fetchData(getChatMessagesWithQueue, chatId, 'chatId');
       }
 
       if (friendId) {
-        await fetchData(friendId, getFriendMessagesWithQueue);
+        await fetchData(getCombinedMessages, friendId, 'friendId');
       }
     };
 
@@ -193,16 +201,85 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
     return null;
   }
 
-  const IsNoMessages = !messageGroups?.length;
+  const handleScroll = async () => {
+    if (scrollRef?.current && messageGroups?.length) {
+      const currentScrollTop = scrollRef?.current?.scrollTop;
+      // const scrollHeight = scrollRef?.current?.scrollHeight;
+      const isScrollingUp = currentScrollTop < prevScrollTop;
+
+      const minScrollTop = 300;
+
+      if (
+        messagesPageInfo?.hasNextPage === true &&
+        currentScrollTop < minScrollTop &&
+        isScrollingUp &&
+        !hasFetched
+      ) {
+        setHasFetched(true);
+        // const currentScrollPos = scrollHeight - currentScrollTop;
+        // scrollRef.current.scrollTop = minScrollTop;
+
+        const moreMessages = await fetchMoreMessages({
+          variables: {
+            chatId,
+            after: messagesPageInfo?.endCursor,
+          },
+          updateQuery: (prev: any, { fetchMoreResult }: any) => {
+            if (!fetchMoreResult) return prev;
+            return {
+              messages: fetchMoreResult?.messages,
+            };
+          },
+        });
+
+        const newMessagesData = moreMessages?.data?.messages;
+        const newMessages = newMessagesData?.edges;
+        const newPageInfo = newMessagesData?.pageInfo;
+
+        if (newMessages?.length) {
+          const groupedNewMessages = groupMessages(newMessages, _id);
+          const updatedNewMessageGroups = mergeByDateLabel(
+            messageGroups,
+            groupedNewMessages,
+          );
+
+          messageGroupsClient.writeQuery({
+            query: MESSAGE_GROUPS_QUERY,
+            data: {
+              messageGroups: {
+                data: updatedNewMessageGroups,
+                pageInfo: newPageInfo,
+              },
+            },
+            variables: { chatId },
+          });
+        }
+
+        // setTimeout(() => {
+        //   if (scrollRef?.current) {
+        //     scrollRef.current.scrollTop =
+        //       scrollRef.current?.scrollHeight - currentScrollPos;
+        //   }
+        //   // setLoading(false);
+        // }, 0);
+      }
+
+      if (currentScrollTop >= minScrollTop) {
+        setHasFetched(false);
+      }
+
+      setPrevScrollTop(currentScrollTop);
+    }
+  };
 
   return (
-    <ChatMessagesStyled
+    <ChatGroupsStyled
       navbarHeight={navbarHeight}
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
     >
-      <div className="chat-container">
-        {IsNoMessages ? (
+      <div className="chat-container" ref={scrollRef} onScroll={handleScroll}>
+        {!messageGroups?.length ? (
           <div className="no-messages-wrapper">No Messages</div>
         ) : null}
         {messageGroups?.length ? (
@@ -275,12 +352,12 @@ const ChatMessages = ({ appBarHeight, textFieldHeight, message }: any) => {
                 </div>
               ))}
             </div>
-            <div ref={scrollRef} />
+            <div ref={scrollBottomRef} />
           </div>
         ) : null}
       </div>
-    </ChatMessagesStyled>
+    </ChatGroupsStyled>
   );
 };
 
-export default ChatMessages;
+export default ChatGroups;

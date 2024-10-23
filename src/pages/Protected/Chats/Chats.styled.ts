@@ -68,7 +68,7 @@ export const ChatsStyled = styled('div')<{
   },
 }));
 
-export const ChatMessagesStyled = styled('div')<{
+export const ChatGroupsStyled = styled('div')<{
   navbarHeight: number;
   appBarHeight: number;
   textFieldHeight: number;
@@ -100,9 +100,9 @@ export const ChatMessagesStyled = styled('div')<{
   },
   '.chat-grid': {
     display: 'grid',
-    margin: '0.8rem 0rem 1.45rem 0rem',
+    margin: '0.8rem 0rem 1.438rem 0rem',
     [theme.breakpoints.down('sm')]: {
-      margin: '0.8rem 0rem 1.1rem 0rem',
+      margin: '0.8rem 0rem 1.063rem 0rem',
     },
   },
   '.chat-group': {
@@ -152,7 +152,6 @@ export const ChatBubbleStyled = styled('div')(({ theme }) => ({
   '.msg-overflow': {
     display: 'flex',
     flexDirection: 'column',
-    // gap: '0.5rem',
   },
   '.msg-animation': {
     transition: 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out',

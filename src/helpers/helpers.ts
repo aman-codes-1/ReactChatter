@@ -113,27 +113,33 @@ export const scrollToSelected = (
   }
 };
 
+const getDateLabel = (timestamp: number) => {
+  const messageDate = moment(timestamp);
+  let dateLabel: string;
+
+  if (messageDate.isSame(moment(), 'day')) {
+    dateLabel = 'Today';
+  } else if (messageDate.isSame(moment().subtract(1, 'days'), 'day')) {
+    dateLabel = 'Yesterday';
+  } else if (messageDate.isAfter(moment().subtract(1, 'week'))) {
+    dateLabel = messageDate.format('dddd');
+  } else if (messageDate.isAfter(moment().subtract(6, 'months'))) {
+    dateLabel = messageDate.format('ddd, D MMM');
+  } else {
+    dateLabel = messageDate.format('D MMM, YYYY');
+  }
+
+  return dateLabel;
+};
+
 export const groupMessages = (messages: any[] = [], _id: string) => {
-  if (!messages?.length) return [];
+  if (!messages?.length) return messages;
 
   const groupedByDay = messages.reduce((acc: any, message: any) => {
     const timestamp = message?.sender?.sentStatus?.timestamp;
 
     if (timestamp) {
-      const messageDate = moment(timestamp);
-      let dateLabel: string;
-
-      if (messageDate.isSame(moment(), 'day')) {
-        dateLabel = 'Today';
-      } else if (messageDate.isSame(moment().subtract(1, 'days'), 'day')) {
-        dateLabel = 'Yesterday';
-      } else if (messageDate.isAfter(moment().subtract(1, 'week'))) {
-        dateLabel = messageDate.format('dddd');
-      } else if (messageDate.isAfter(moment().subtract(6, 'months'))) {
-        dateLabel = messageDate.format('ddd, D MMM');
-      } else {
-        dateLabel = messageDate.format('D MMM, YYYY');
-      }
+      const dateLabel = getDateLabel(timestamp);
 
       if (!acc[dateLabel]) {
         acc[dateLabel] = [];
@@ -175,42 +181,136 @@ export const groupMessages = (messages: any[] = [], _id: string) => {
   return flattenedMessages;
 };
 
-export const addQueuedMessageToLastGroup = (
-  prev: any[] = [],
-  queuedMessage: any,
-) => {
-  if (prev?.length) {
-    const lastIndex = prev.length - 1;
-    const lastGroup = prev[lastIndex];
+export const groupQueuedMessage = (prev: any[] = [], queuedMessage: any) => {
+  if (!prev?.length || !queuedMessage) return prev;
 
-    if (lastGroup.side === 'right') {
-      return [
-        ...prev.slice(0, lastIndex),
-        { ...lastGroup, data: [...lastGroup.data, queuedMessage] },
-      ];
-    }
-  }
+  const prevCopy = [...prev];
+
+  const queuedTimestamp = queuedMessage?.sender?.sentStatus?.timestamp;
+  const queuedDateLabel = getDateLabel(queuedTimestamp);
+
+  const groupIndex = prevCopy?.findIndex(
+    (el) => el?.dateLabel === queuedDateLabel,
+  );
 
   const newGroup = {
     side: 'right',
     data: [queuedMessage],
   };
 
-  return [...prev, newGroup];
-};
+  if (groupIndex < 0) {
+    const newGroupData = {
+      dateLabel: queuedDateLabel,
+      groups: [newGroup],
+    };
 
-export const addQueuedMessagesToLastGroup = (
-  prev: any[] = [],
-  queuedMessages: any[],
-) => {
-  const lastGroup = prev[prev.length - 1];
+    prevCopy.push(newGroupData);
+  } else {
+    const group = prev[groupIndex];
+    if (!group?.groups?.length) return prev;
 
-  if (lastGroup?.side === 'right') {
-    lastGroup.data = [...lastGroup.data, ...queuedMessages];
-    return [...prev];
+    const groupsCopy = [...group.groups];
+    const lastGroupIndex = groupsCopy?.length - 1;
+    const lastGroup = groupsCopy[lastGroupIndex];
+
+    if (lastGroup?.side === 'right') {
+      groupsCopy[lastGroupIndex] = {
+        ...lastGroup,
+        data: [...lastGroup.data, queuedMessage],
+      };
+    } else {
+      groupsCopy.push(newGroup);
+    }
+
+    const updatedGroup = { ...group, groups: groupsCopy };
+    prevCopy[groupIndex] = updatedGroup;
   }
 
-  return [...prev, { side: 'right', data: queuedMessages }];
+  return prevCopy;
+};
+
+export const groupNewMessageForOtherMember = (
+  prev: any[] = [],
+  queuedMessage: any,
+) => {};
+
+export const updateNewMessageInGroup = (
+  prev: any[] = [],
+  queueId: string,
+  newMessage: any,
+) => {
+  if (!prev?.length) return prev;
+
+  const updatedGroups = prev?.map((group: any) => {
+    if (!group?.groups?.length) return group;
+
+    const updatedSubGroups = group?.groups?.map((subGroup: any) => {
+      if (!subGroup?.data?.length) return subGroup;
+
+      const subGroupIndex = subGroup?.data?.findIndex(
+        (item: any) => item?.id === queueId,
+      );
+
+      if (subGroupIndex < 0) return subGroup;
+
+      const dataCopy = [...subGroup.data];
+      dataCopy[subGroupIndex] = newMessage;
+
+      return {
+        ...subGroup,
+        data: dataCopy,
+      };
+    });
+
+    return {
+      ...group,
+      groups: updatedSubGroups,
+    };
+  });
+
+  return updatedGroups;
+};
+
+export const mergeByDateLabel = (prevArray: any[], newArray: any[]) => {
+  // const map = new Map();
+
+  // newArray.forEach((item) => {
+  //   map.set(item.dateLabel, structuredClone(item));
+  // });
+
+  // prevArray.forEach((item) => {
+  //   if (map.has(item.dateLabel)) {
+  //     const existingItem = map.get(item.dateLabel);
+  //     existingItem.groups = [...existingItem.groups, ...item.groups];
+  //   } else {
+  //     map.set(item.dateLabel, structuredClone(item));
+  //   }
+  // });
+
+  // return Array.from(map.values());
+
+  const prevArrayFirstGroup = prevArray[0];
+  const newArrayLastIndex = newArray?.length - 1;
+  const newArrayLastGroup = newArray[newArrayLastIndex];
+
+  if (
+    prevArrayFirstGroup &&
+    newArrayLastGroup &&
+    prevArrayFirstGroup?.dateLabel === newArrayLastGroup?.dateLabel
+  ) {
+    const mergedFirstGroup = {
+      ...prevArrayFirstGroup,
+      groups: [...newArrayLastGroup.groups, ...prevArrayFirstGroup.groups],
+    };
+
+    return [
+      ...newArray.slice(0, newArrayLastIndex),
+      mergedFirstGroup,
+      ...prevArray.slice(1),
+    ];
+  }
+
+  return [...newArray, ...prevArray];
 };
 
 export const compareObjects = (first: any, second: any) => {

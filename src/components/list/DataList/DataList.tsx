@@ -57,6 +57,7 @@ const DataList = ({
                 secondary: member?.memberDetails?.email,
                 primaryTypographyProps: {
                   fontSize: '1.0625rem',
+                  // fontWeight: 600, // only when there are unread messages count
                   style: {
                     WebkitLineClamp: 1,
                   },

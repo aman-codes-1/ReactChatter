@@ -1,5 +1,4 @@
 import { forwardRef } from 'react';
-import { ListItem as MuiListItem } from '@mui/material';
 import { ListItemButton } from '..';
 import { ListItemProps } from './IListItem';
 import { ListItemStyled } from './ListItem.styled';
@@ -8,7 +7,6 @@ const ListItem = forwardRef<HTMLDivElement, ListItemProps>((props, ref) => {
   const {
     width = '',
     disableHover = false,
-    wrapperClassName,
     btnProps,
     children,
     sx,
@@ -21,14 +19,13 @@ const ListItem = forwardRef<HTMLDivElement, ListItemProps>((props, ref) => {
     <ListItemStyled
       width={width}
       disableHover={disableHover}
-      className={wrapperClassName}
+      {...rest}
+      sx={{ ...sx, cursor: 'default' }}
     >
-      <MuiListItem {...rest} sx={{ ...sx, cursor: 'default' }}>
-        {isListItemButton ? (
-          <ListItemButton disableHover={disableHover} ref={ref} {...btnProps} />
-        ) : null}
-        {children}
-      </MuiListItem>
+      {isListItemButton ? (
+        <ListItemButton disableHover={disableHover} ref={ref} {...btnProps} />
+      ) : null}
+      {children}
     </ListItemStyled>
   );
 });

@@ -1,6 +1,8 @@
-import { display, styled } from '@mui/system';
+import { styled } from '@mui/material';
 
-export const HomeStyled = styled('div')<{
+export const HomeStyled = styled('div', {
+  shouldForwardProp: (prop) => prop !== 'footerHeight',
+})<{
   footerHeight: number;
 }>(({ theme, footerHeight }) => ({
   backgroundImage: 'url(/assets/images/cool-background.svg)',

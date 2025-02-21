@@ -11,8 +11,6 @@ export interface ListItemButtonProps extends MuiListItemButtonProps {
   disableHover?: boolean;
   startIcon?: ReactNode;
   endIcon?: ReactNode;
-  wrapperClassName?: string;
-  wrapperChildren?: ReactNode;
   avatarProps?: AvatarProps;
   textProps?: ListItemTextProps;
 }

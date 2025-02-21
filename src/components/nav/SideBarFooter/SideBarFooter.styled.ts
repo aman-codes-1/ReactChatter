@@ -1,5 +1,5 @@
-import { styled } from '@mui/system';
+import { styled } from '@mui/material';
 
-export const SideBarFooterStyled = styled('div')(({ theme }) => ({
+export const SideBarFooterStyled = styled('div')(() => ({
   marginTop: 'auto',
 }));

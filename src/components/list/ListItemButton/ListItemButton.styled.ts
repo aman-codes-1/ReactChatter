@@ -1,6 +1,12 @@
-import { styled } from '@mui/system';
+import { ListItemButton, styled } from '@mui/material';
 
-export const ListItemButtonStyled = styled('div')<{
+export const ListItemButtonStyled = styled(ListItemButton, {
+  shouldForwardProp: (prop) =>
+    prop !== 'width' &&
+    prop !== 'disableHover' &&
+    prop !== 'primaryEllipsesLineClamp' &&
+    prop !== 'secondaryEllipsesLineClamp',
+})<{
   width: string;
   disableHover: boolean;
   primaryEllipsesLineClamp: any;
@@ -14,44 +20,42 @@ export const ListItemButtonStyled = styled('div')<{
     secondaryEllipsesLineClamp,
   }) => ({
     width: width || '100%',
+    borderRadius: '6px',
     cursor: disableHover ? 'default' : 'pointer',
-    '.list-item-btn': {
-      borderRadius: '8px',
-      '.MuiListItemText-root': {
-        wordBreak: 'break-word',
-        '.MuiListItemText-primary': {
-          color: theme.palette.text.primary,
-          wordBreak: 'break-all',
-          ...(primaryEllipsesLineClamp
-            ? {
-                display: '-webkit-box',
-                WebkitLineClamp: primaryEllipsesLineClamp,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }
-            : {}),
-        },
-        '.MuiListItemText-secondary': {
-          color: theme.palette.text.secondary,
-          wordBreak: 'break-all',
-          ...(secondaryEllipsesLineClamp
-            ? {
-                display: '-webkit-box',
-                WebkitLineClamp: secondaryEllipsesLineClamp,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }
-            : {}),
-        },
-      },
-    },
-    '.list-item-btn:hover': {
+    '&:hover': {
       backgroundColor: disableHover ? 'transparent' : theme.palette.grey[100],
       cursor: disableHover ? 'default' : 'pointer',
     },
-    '.MuiButtonBase-root.MuiListItemButton-root.Mui-selected': {
+    '.MuiListItemText-root': {
+      wordBreak: 'break-word',
+      '.MuiListItemText-primary': {
+        color: theme.palette.text.primary,
+        wordBreak: 'break-all',
+        ...(primaryEllipsesLineClamp
+          ? {
+              display: '-webkit-box',
+              WebkitLineClamp: primaryEllipsesLineClamp,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }
+          : {}),
+      },
+      '.MuiListItemText-secondary': {
+        color: theme.palette.text.secondary,
+        wordBreak: 'break-all',
+        ...(secondaryEllipsesLineClamp
+          ? {
+              display: '-webkit-box',
+              WebkitLineClamp: secondaryEllipsesLineClamp,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }
+          : {}),
+      },
+    },
+    '&.Mui-selected, &.Mui-selected:hover': {
       backgroundColor: theme.palette.primary.light,
       '.MuiListItemText-primary': {
         color: theme.palette.secondary.main,

@@ -4,6 +4,5 @@ import { ListItemButtonProps } from '../ListItemButton/IListItemButton';
 export interface ListItemProps extends MuiListItemProps {
   width?: string;
   disableHover?: boolean;
-  wrapperClassName?: string;
   btnProps?: ListItemButtonProps;
 }

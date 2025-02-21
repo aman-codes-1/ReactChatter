@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import {
   ListItemAvatar,
   ListItemButton as MuiListItemButton,
+  ListItemIcon,
   ListItemText,
 } from '@mui/material';
 import { Avatar } from '../..';
@@ -16,9 +17,6 @@ const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
       disableHover = false,
       startIcon,
       endIcon,
-      wrapperClassName,
-      wrapperChildren,
-      className,
       avatarProps,
       textProps,
       children,
@@ -56,47 +54,41 @@ const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
           textProps?.style?.WebkitLineClamp ||
           (textProps?.slotProps?.secondary as any)?.style?.WebkitLineClamp
         }
-        className={wrapperClassName}
+        disableRipple={disableHover}
+        disableTouchRipple={disableHover}
+        ref={ref}
+        {...rest}
       >
-        <MuiListItemButton
-          disableRipple={disableHover}
-          disableTouchRipple={disableHover}
-          className={`list-item-btn ${className}`}
-          ref={ref}
-          {...rest}
-        >
-          {isAvatar ? (
-            <ListItemAvatar
-              sx={{ cursor: disableHover ? 'default' : 'pointer' }}
-            >
-              {avatarProps?.children || renderAvatar()}
-            </ListItemAvatar>
-          ) : null}
-          {startIcon}
-          {isText ? (
-            <ListItemText
-              {...textProps}
-              slotProps={{
-                primary: {
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  ...textProps?.slotProps?.primary,
-                },
-                secondary: {
-                  fontWeight: 470,
-                  ...textProps?.slotProps?.secondary,
-                },
-              }}
-              sx={{
-                ...textProps?.sx,
-                cursor: disableHover ? 'default' : 'pointer',
-              }}
-            />
-          ) : null}
-          {endIcon}
-          {children}
-        </MuiListItemButton>
-        {wrapperChildren}
+        {isAvatar ? (
+          <ListItemAvatar sx={{ cursor: disableHover ? 'default' : 'pointer' }}>
+            {avatarProps?.children || renderAvatar()}
+          </ListItemAvatar>
+        ) : null}
+        {startIcon ? (
+          <ListItemIcon sx={{ minWidth: '2.25rem' }}>{startIcon}</ListItemIcon>
+        ) : null}
+        {isText ? (
+          <ListItemText
+            {...textProps}
+            slotProps={{
+              primary: {
+                fontSize: '1rem',
+                fontWeight: 500,
+                ...textProps?.slotProps?.primary,
+              },
+              secondary: {
+                fontWeight: 470,
+                ...textProps?.slotProps?.secondary,
+              },
+            }}
+            sx={{
+              ...textProps?.sx,
+              cursor: disableHover ? 'default' : 'pointer',
+            }}
+          />
+        ) : null}
+        {endIcon}
+        {children}
       </ListItemButtonStyled>
     );
   },

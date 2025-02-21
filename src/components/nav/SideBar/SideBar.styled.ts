@@ -1,4 +1,4 @@
-import { styled } from '@mui/system';
+import { styled } from '@mui/material';
 
 export const SideBarStyled = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -6,7 +6,7 @@ export const SideBarStyled = styled('div')(({ theme }) => ({
   width: '100%',
   maxWidth: '400px',
   height: '100dvh',
-  borderRight: `1px solid ${theme.palette.grey[300]}`,
+  borderRight: `1px solid ${theme.palette.grey[400]}`,
   overflow: 'auto',
   '.flex-item:nth-last-of-type(1)': {
     paddingTop: '1rem',
@@ -15,7 +15,7 @@ export const SideBarStyled = styled('div')(({ theme }) => ({
     maxWidth: '350px',
   },
   [theme.breakpoints.down('md')]: {
-    maxWidth: '320px',
+    maxWidth: '300px',
   },
   [theme.breakpoints.down('sm')]: {
     maxWidth: '100%',

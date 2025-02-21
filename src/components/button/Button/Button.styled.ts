@@ -1,32 +1,20 @@
-import { styled } from '@mui/system';
+import { Button, styled } from '@mui/material';
 
-export const ButtonStyled = styled('div')(({ theme }) => ({
-  '.btn': {
-    textTransform: 'none',
-    fontWeight: 600,
-  },
-  '.text-hidden': {
-    '.MuiButton-startIcon': {
-      margin: 0,
-    },
-    '.MuiButton-endIcon': {
-      margin: 0,
-    },
-    div: {
-      display: 'none',
-    },
-  },
-  '.text-hidden-xs': {
-    [theme.breakpoints.down('xs')]: {
-      '.MuiButton-startIcon': {
-        margin: 0,
-      },
-      '.MuiButton-endIcon': {
-        margin: 0,
-      },
-      div: {
-        display: 'none',
-      },
-    },
-  },
+export const ButtonStyled = styled(Button, {
+  shouldForwardProp: (prop) => prop !== 'hideText',
+})<{
+  hideText?: boolean;
+}>(({ theme, hideText }) => ({
+  textTransform: 'none',
+  fontWeight: 600,
+  ...(hideText
+    ? {
+        '.MuiButton-startIcon': {
+          margin: 0,
+        },
+        '.MuiButton-endIcon': {
+          margin: 0,
+        },
+      }
+    : {}),
 }));

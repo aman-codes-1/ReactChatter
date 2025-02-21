@@ -3,9 +3,9 @@ import { SuspenseWrapper } from '../components';
 import {
   AddFriend,
   Chats,
+  Dashboard,
   FriendRequests,
   Home,
-  RecentChats,
   SentRequests,
 } from '../pages';
 
@@ -32,8 +32,8 @@ export const routesConfig = (location: any) => [
     Element: () => (
       <SuspenseWrapper
         path="pages"
-        compName="RecentChats"
-        fallback={<RecentChats loadingRecentChats />}
+        compName="Dashboard"
+        fallback={<Dashboard />}
       />
     ),
   },
@@ -41,7 +41,11 @@ export const routesConfig = (location: any) => [
     type: 'private',
     path: '/chat',
     Element: () => (
-      <SuspenseWrapper path="pages" compName="Chats" fallback={<Chats />} />
+      <SuspenseWrapper
+        path="pages"
+        compName="Chats"
+        fallback={<Chats loadingChats />}
+      />
     ),
   },
   {

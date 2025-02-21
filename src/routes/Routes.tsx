@@ -1,15 +1,16 @@
 import { ReactNode, Suspense, useLayoutEffect, useState } from 'react';
 import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks';
-import { routesConfig } from './config';
-import { IRouteConfig } from './IRoutes';
-import { Dashboard } from '../pages';
 import {
   ApolloClientProvider,
   ChatsAndFriendsProvider,
+  DrawerProvider,
   WebSocketProvider,
 } from '../contexts';
 import { addObject } from '../helpers';
+import { routesConfig } from './config';
+import { IRouteConfig } from './IRoutes';
+import { BaseProtected } from '../pages';
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -56,7 +57,9 @@ const AppRoutes = () => {
               <ApolloClientProvider>
                 <WebSocketProvider>
                   <ChatsAndFriendsProvider>
-                    <Dashboard />
+                    <DrawerProvider>
+                      <BaseProtected />
+                    </DrawerProvider>
                   </ChatsAndFriendsProvider>
                 </WebSocketProvider>
               </ApolloClientProvider>

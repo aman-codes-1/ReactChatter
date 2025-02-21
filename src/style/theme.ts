@@ -3,40 +3,39 @@ import { createTheme } from '@mui/material/styles';
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#007aff',
       light: '#ecf7fc',
+      main: '#007aff',
       dark: '#0056b3',
-      contrastText: '#CCFFDD',
+      contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#4F46E5',
       light: '#eae9fc',
+      main: '#4F46E5',
       dark: '#251dc9',
     },
     info: {
-      main: '#0288d1',
       light: '#03a9f4',
-      contrastText: '#FFFFFF',
+      main: '#0288d1',
+      dark: '#01579b',
+      contrastText: '#CCFFDD',
     },
     warning: {
-      main: '#ed6c02',
       light: '#ff9800',
+      main: '#ed6c02',
       dark: '#e65100',
       contrastText: '#FFFFFF',
     },
     success: {
-      main: '#57AF47',
+      light: '#22c55e',
+      main: '#2e7d32',
+      dark: '#1b5e20',
       contrastText: '#f5fff5',
-      light: '#CCE8CD',
-      dark: '#388e3c',
-      900: '#2b702e',
     },
     error: {
-      main: '#a94442',
+      light: '#ef5350',
+      main: '#d32f2f',
+      dark: '#c62828',
       contrastText: '#f2dede',
-      light: '#FEE2E2',
-      dark: '#DC2626',
-      900: '#bd2020',
     },
     common: {
       black: '#000000',
@@ -46,9 +45,9 @@ export const theme = createTheme({
       50: 'rgba(255, 255, 255, 0.4)',
       100: '#F9FAFB',
       200: '#f5f5f5',
-      300: 'rgba(0, 0, 0, 0.12)',
-      400: '#e8eaf6',
-      500: '#e0e0e0',
+      300: '#e8eaf6',
+      400: 'rgba(0, 0, 0, 0.12)',
+      500: '#dbdcdc',
       600: '#9B9BA3',
       700: '#667781',
       800: '#71717A',
@@ -66,9 +65,6 @@ export const theme = createTheme({
       active: '#0F172B',
       hover: '#1E293B',
     },
-  },
-  shape: {
-    borderRadius: 4,
   },
   typography: {
     allVariants: {

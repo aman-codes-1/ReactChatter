@@ -373,13 +373,19 @@ export class MessageQueueService {
                     return;
                   }
 
-                  if (count === offset) {
-                    const message = cursor?.value;
-                    resolve({ message, cursor });
-                  } else {
+                  const message = cursor?.value;
+                  const isRetry =
+                    message?.sender?.retryStatus?.isRetry === true;
+
+                  if (!isRetry) {
+                    if (count === offset) {
+                      resolve({ message, cursor });
+                      return;
+                    }
                     count++;
-                    cursor?.continue?.();
                   }
+
+                  cursor.continue();
                 };
 
                 request.onerror = () => {
@@ -439,30 +445,32 @@ export class MessageQueueService {
   async removeCursorFromQueueAndRestart(cursor: any) {
     await cursor?.delete?.();
     this.setLoadingProcessNextMessage(false);
-    return this.processNextMessage(0);
+    return this.processNextMessage();
   }
 
   async removeFromQueueAndRestart(queueId: string) {
     await this.deleteMessageFromQueue(queueId);
-    return this.processNextMessage(0);
+    this.setLoadingProcessNextMessage(false);
+    return this.processNextMessage();
   }
 
   async shouldRetryAndProcessNext(
     queueId: string,
-    retryCount: number,
     isRetry: boolean,
+    sender: any,
     offset: number,
   ) {
-    if (retryCount < 2) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return this.processNextMessage(retryCount + 1, offset);
-    }
-
     if (!isRetry) {
-      await this.updateMessageToQueue(queueId, { isRetry: true });
+      await this.updateMessageToQueue(queueId, {
+        sender: {
+          ...sender,
+          retryStatus: { isRetry: true, timestamp: Date.now() },
+        },
+      });
     }
 
-    return this.processNextMessage(0, offset + 1);
+    this.setLoadingProcessNextMessage(false);
+    return this.processNextMessage(offset + 1);
   }
 
   async getNextMessageForProcessing(offset: number): Promise<any> {
@@ -470,7 +478,7 @@ export class MessageQueueService {
     return data;
   }
 
-  async processNextMessage(retryCount = 0, offset = 0): Promise<void> {
+  async processNextMessage(offset = 0): Promise<void> {
     const { message, cursor } =
       (await this.getNextMessageForProcessing(offset)) || {};
     if (!message) return;
@@ -481,13 +489,14 @@ export class MessageQueueService {
 
     if (!queueId) await this.removeCursorFromQueueAndRestart(cursor);
 
-    const { friendId, friendUserId } = getFriendId(this.chatIdToUse);
     const userId = sender?._id;
     const isRetry = sender?.retryStatus?.isRetry || false;
     const timestamp = Date.now();
     this.chatIdToUse = chatId || '';
-    this.friendIdToUse = friendId || '';
     this.isUpdated = false;
+
+    const { friendId, friendUserId } = getFriendId(this.chatIdToUse);
+    this.friendIdToUse = friendId || '';
 
     try {
       if (this.friendIdToUse && friendUserId) {
@@ -510,8 +519,8 @@ export class MessageQueueService {
         if (!createdChatId || !createdChatFriendId) {
           await this.shouldRetryAndProcessNext(
             queueId,
-            retryCount,
             isRetry,
+            sender,
             offset,
           );
         }
@@ -596,7 +605,7 @@ export class MessageQueueService {
         }
       }
 
-      if (this.chatIdToUse && !friendUserId) {
+      if (this.chatIdToUse) {
         const queuedMessageMessage = queuedMessage?.message;
         const queuedMessageSender = queuedMessage?.sender;
         const queuedMessageQueuedStatus = queuedMessageSender?.queuedStatus;
@@ -607,8 +616,8 @@ export class MessageQueueService {
 
         const newMessage = await this.createMessage?.({
           variables: {
-            userId,
             chatId: this.chatIdToUse,
+            userId,
             queueId,
             isQueued: queuedMessageQueuedStatusIsQueued,
             queuedTimestamp: queuedMessageQueuedStatusTimestamp,
@@ -625,8 +634,8 @@ export class MessageQueueService {
         if (!createdMessageId) {
           await this.shouldRetryAndProcessNext(
             queueId,
-            retryCount,
             isRetry,
+            sender,
             offset,
           );
         }
@@ -640,33 +649,25 @@ export class MessageQueueService {
       this.friendIdToUse = '';
       this.isUpdated = false;
 
-      await this.shouldRetryAndProcessNext(
-        queueId,
-        retryCount,
-        isRetry,
-        offset,
-      );
-    } catch (error: any) {
-      const errorMessage = error?.message || '';
-      const isDuplicateRecordFound = errorMessage?.includes?.('Duplicate');
-      const isChatNotFoundError = errorMessage?.includes?.('Chat not found');
-
-      if (isDuplicateRecordFound || isChatNotFoundError) {
-        await this.removeFromQueueAndRestart(queueId);
+      await this.shouldRetryAndProcessNext(queueId, isRetry, sender, offset);
+    } catch (err: any) {
+      const errorMessage = err?.message;
+      if (errorMessage) {
+        const isDuplicateRecordFound = errorMessage?.includes?.('Duplicate');
+        const isChatNotFoundError = errorMessage?.includes?.('Chat not found');
+        if (isDuplicateRecordFound || isChatNotFoundError) {
+          await this.removeFromQueueAndRestart(queueId);
+        }
       }
 
-      await this.shouldRetryAndProcessNext(
-        queueId,
-        retryCount,
-        isRetry,
-        offset,
-      );
+      await this.shouldRetryAndProcessNext(queueId, isRetry, sender, offset);
     } finally {
       this.setLoadingProcessNextMessage(false);
     }
   }
 
   async processQueue() {
+    this.setLoadingProcessNextMessage(false);
     await this.processNextMessage();
   }
 }

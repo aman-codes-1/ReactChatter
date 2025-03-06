@@ -1,51 +1,47 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { createContext, useEffect, useLayoutEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useApolloClient,
+  useLazyQuery,
   useMutation,
   useQuery,
   useSubscription,
 } from '@apollo/client';
-import { useAuth } from '../../hooks';
+import { useAuth, useClient, useSocket } from '../../hooks';
 import {
   addArray,
   addObject,
   addRequest,
   checkIsMemberExists,
-  deleteObject,
-  deleteRequest,
+  clickChat,
   findAndMoveToTop,
   findAndUpdate,
+  getChatType,
   getFriendId,
   getLastMessage,
   getMember,
+  removeObject,
+  removeRequest,
   sortByLastMessageTimestamp,
   sortByTimestamp,
+  toggleDrawer,
   uniqueQueuedMessages,
 } from '../../helpers';
 import { MessageQueueService } from '../../services';
 import {
-  ApolloClientContext,
-  CHATS_QUERY,
+  CACHED_MESSAGES_QUERY,
   CHAT_ADDED_SUBSCRIPTION,
-  CHAT_QUERY,
+  CHATS_QUERY,
   CHAT_UPDATED_SUBSCRIPTION,
   CREATE_CHAT_MUTATION,
   CREATE_MESSAGE_MUTATION,
   CREATE_REQUEST_MUTATION,
   FRIEND_ADDED_SUBSCRIPTION,
-  FRIEND_QUERY,
-  CACHED_MESSAGES_QUERY,
-  MESSAGES_QUERY,
+  FRIENDS_QUERY,
+  FRIENDS_SORTED_QUERY,
   MESSAGE_ADDED_SUBSCRIPTION,
   MESSAGE_UPDATED_SUBSCRIPTION,
-  OTHER_FRIENDS_QUERY,
+  MESSAGES_QUERY,
   PENDING_REQUESTS_QUERY,
   REQUEST_ADDED_SUBSCRIPTION,
   REQUEST_UPDATED_SUBSCRIPTION,
@@ -60,7 +56,6 @@ export const ChatsAndFriendsContext = createContext<any>({});
 export const ChatsAndFriendsProvider = ({ children }: any) => {
   const client = useApolloClient();
   const MessageQueue = new MessageQueueService();
-  const { pathname } = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const chatId =
@@ -68,9 +63,10 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
   const fullFriendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const { friendId } = getFriendId(fullFriendId);
+  const [isHomeButtonClicked, setIsHomeButtonClicked] = useState(false);
   const [isListItemClicked, setIsListItemClicked] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<any>();
-  const [selectedChatDetails, setSelectedChatDetails] = useState<any>();
+  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const [selectedChatDetails, setSelectedChatDetails] = useState<any>(null);
   const [loadingCreateMessage, setLoadingCreateMessage] = useState(false);
   const [loadingProcessNextMessage, setLoadingProcessNextMessage] =
     useState(false);
@@ -79,72 +75,22 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
   const [isRefetchingMessages, setIsRefetchingMessages] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(true);
   const [isFetchingChats, setIsFetchingChats] = useState(true);
-  const [isFetchingOtherFriends, setIsFetchingOtherFriends] = useState(true);
-  const [isHomeButtonClicked, setIsHomeButtonClicked] = useState(false);
+  const [isFetchingFriends, setIsFetchingFriends] = useState(true);
+  const [isFetchingChats2, setIsFetchingChats2] = useState(true);
+  const [isFetchingFriends2, setIsFetchingFriends2] = useState(true);
+  const [currentChats, setCurrentChats] = useState<any>([]);
+  const [currentFriends, setCurrentFriends] = useState<any>([]);
+  const [toggleChats, setToggleChats] = useState(false);
+  const [toggleFriends, setToggleFriends] = useState(false);
+  const [isChatsVisible, setIsChatsVisible] = useState(false);
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
+  const [isNewChatDrawerOpen, setIsNewChatDrawerOpen] = useState(false);
+  const [isMessageDrawerOpen, setIsMessageDrawerOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const { auth: { _id = '' } = {} } = useAuth();
-  const { isWsConnected } = useContext(ApolloClientContext);
-
-  const {
-    data: chat,
-    loading: chatLoading,
-    error: chatError,
-    client: chatClient,
-    called: chatCalled,
-  } = useQuery(CHAT_QUERY, {
-    fetchPolicy: 'no-cache',
-    variables: {
-      chatId,
-    },
-    skip: !chatId || !!friendId || !!selectedChat || !!selectedChatDetails,
-    notifyOnNetworkStatusChange: true,
-    onCompleted: (data) => {
-      const item = data?.chat;
-      const isPrivateChat = item?.type === 'private';
-      const isGroupChat = item?.type === 'group';
-      if (isPrivateChat) {
-        const { otherMember } = getMember(item?.members, _id);
-        setSelectedChat(item);
-        setSelectedChatDetails(otherMember);
-      }
-      if (isGroupChat) {
-        setSelectedChat(item);
-        setSelectedChatDetails(item?.groupDetails);
-      }
-    },
-    onError: () => {
-      navigate('/');
-    },
-  });
-
-  const {
-    data: friend,
-    loading: friendLoading,
-    error: friendError,
-    client: friendClient,
-    called: friendCalled,
-  } = useQuery(FRIEND_QUERY, {
-    fetchPolicy: 'no-cache',
-    variables: {
-      friendId,
-      userId: _id,
-    },
-    skip: !friendId || !!chatId || !!selectedChat || !!selectedChatDetails,
-    notifyOnNetworkStatusChange: true,
-    onCompleted: (data) => {
-      const item = data?.friend;
-      const itemHasChats = item?.hasChats;
-      if (itemHasChats) {
-        navigate('/');
-      } else {
-        const { otherMember } = getMember(item?.members, _id);
-        setSelectedChat(item);
-        setSelectedChatDetails(otherMember);
-      }
-    },
-    onError: () => {
-      navigate('/');
-    },
-  });
+  const { isWsConnected, isNetworkError } = useClient();
+  const { socket } = useSocket();
+  const prevPathname = `${location?.pathname}${location?.search}`;
 
   const {
     data: {
@@ -184,9 +130,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         const fetchedQueuedMessages =
           (await getQueuedMessages(chatId, edges, pageInfo)) || [];
         const updatedData = addArray(fetchedQueuedMessages, edges);
-        if (updatedData?.length) {
-          edges = sortByTimestamp(updatedData);
-        }
+        edges = sortByTimestamp(updatedData);
         cachedMessagesClient.writeQuery({
           query: CACHED_MESSAGES_QUERY,
           data: {
@@ -248,11 +192,11 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         if (res?.isUpdated) {
           const updatedChats = res?.data;
           if (updatedChats?.length) {
-            const sortedData = sortByLastMessageTimestamp(updatedChats);
+            const sortedChatsData = sortByLastMessageTimestamp(updatedChats);
             chatsClient.writeQuery({
               query: CHATS_QUERY,
               data: {
-                chats: sortedData,
+                chats: sortedChatsData,
               },
               variables: { userId: _id },
             });
@@ -260,66 +204,70 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         }
       }
       setIsFetchingChats(false);
+      setIsFetchingChats2(false);
     },
     onError: () => {
       setIsFetchingChats(false);
+      setIsFetchingChats2(false);
+      setIsFetchingFriends(false);
+      setIsFetchingFriends2(false);
     },
   });
 
   const {
-    data: { otherFriends = [] } = {},
-    loading: otherFriendsLoading,
-    error: otherFriendsError,
-    client: otherFriendsClient,
-    called: otherFriendsCalled,
-    subscribeToMore: subscribeOtherFriendsToMore,
-    refetch: refetchOtherFriends,
-  } = useQuery(OTHER_FRIENDS_QUERY, {
+    data: { friends = [] } = {},
+    loading: friendsLoading,
+    error: friendsError,
+    client: friendsClient,
+    called: friendsCalled,
+    subscribeToMore: subscribeFriendsToMore,
+    refetch: refetchFriends,
+  } = useQuery(FRIENDS_QUERY, {
     variables: {
       userId: _id,
     },
     notifyOnNetworkStatusChange: true,
     onCompleted: async (data) => {
-      const otherFriendsData = data?.otherFriends;
-      if (otherFriendsData?.length) {
+      const friendsData = data?.friends;
+      if (friendsData?.length) {
         const res = await MessageQueue.getLastQueuedMessageByData(
-          otherFriendsData,
+          friendsData,
           'friend',
           _id,
         );
         if (res?.isUpdated) {
-          const updatedOtherFriends = res?.data;
-          if (updatedOtherFriends?.length) {
-            const dataWithLastMessage = updatedOtherFriends?.filter(
+          const updatedFriends = res?.data;
+          if (updatedFriends?.length) {
+            const dataWithLastMessage = updatedFriends?.filter(
               (el: any) => el?.lastMessage,
             );
             if (dataWithLastMessage?.length) {
-              chatsClient.cache.modify({
-                fields: {
-                  [`chats({"input":{"userId":"${_id}"}})`](existingData: any) {
-                    const updatedData = addArray(
-                      dataWithLastMessage,
-                      existingData,
-                    );
-                    if (updatedData?.length) {
-                      const sortedData =
-                        sortByLastMessageTimestamp(updatedData);
-                      return sortedData;
-                    }
-                    return existingData;
-                  },
-                },
+              const chatsQuery = await chatsClient.readQuery({
+                query: CHATS_QUERY,
+                variables: { userId: _id },
               });
-              const dataWithoutLastMessage = updatedOtherFriends?.filter(
+              const updatedData = addArray(
+                dataWithLastMessage,
+                chatsQuery?.chats || [],
+              );
+              const sortedChatsData = sortByLastMessageTimestamp(updatedData);
+              chatsClient.writeQuery({
+                query: CHATS_QUERY,
+                data: {
+                  chats: sortedChatsData,
+                },
+                variables: { userId: _id },
+              });
+              const dataWithoutLastMessage = updatedFriends?.filter(
                 (el: any) => !el?.lastMessage,
               );
-              const sortedData = sortByLastMessageTimestamp(
+              const sortedFriendsData = sortByLastMessageTimestamp(
                 dataWithoutLastMessage,
               );
-              otherFriendsClient.writeQuery({
-                query: OTHER_FRIENDS_QUERY,
+              friendsClient.writeQuery({
+                query: FRIENDS_QUERY,
                 data: {
-                  otherFriends: sortedData,
+                  friends: sortedFriendsData,
                 },
                 variables: { userId: _id },
               });
@@ -327,11 +275,27 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
           }
         }
       }
-      setIsFetchingOtherFriends(false);
+      setIsFetchingFriends(false);
+      setIsFetchingFriends2(false);
     },
     onError: () => {
-      setIsFetchingOtherFriends(false);
+      setIsFetchingChats(false);
+      setIsFetchingChats2(false);
+      setIsFetchingFriends(false);
+      setIsFetchingFriends2(false);
     },
+  });
+
+  const [
+    friendsSortedQuery,
+    {
+      data: { friendsSorted = [] } = {},
+      loading: friendsSortedLoading,
+      error: friendsSortedError,
+      client: friendsSortedClient,
+    },
+  ] = useLazyQuery(FRIENDS_SORTED_QUERY, {
+    fetchPolicy: 'network-only',
   });
 
   const {
@@ -350,7 +314,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     variables: {
       userId: _id,
     },
-    notifyOnNetworkStatusChange: true,
   });
 
   const {
@@ -369,7 +332,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     variables: {
       userId: _id,
     },
-    notifyOnNetworkStatusChange: true,
   });
 
   const {
@@ -433,18 +395,14 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
             edges = data;
           } else {
             const updatedData = addObject(OnMessageAddedMessage, edges);
-            if (updatedData?.length) {
-              edges = sortByTimestamp(updatedData);
-            }
+            edges = sortByTimestamp(updatedData);
           }
           isWrite = true;
         }
 
         if (isReceiverExists) {
           const updatedData = addObject(OnMessageAddedMessage, edges);
-          if (updatedData?.length) {
-            edges = sortByTimestamp(updatedData);
-          }
+          edges = sortByTimestamp(updatedData);
           isWrite = true;
           isWriteChats = true;
         }
@@ -540,9 +498,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
           edges = data;
         } else {
           const updatedData = addObject(OnMessageUpdatedMessage, edges);
-          if (updatedData?.length) {
-            edges = sortByTimestamp(updatedData);
-          }
+          edges = sortByTimestamp(updatedData);
         }
 
         cachedMessagesClient.writeQuery({
@@ -559,7 +515,13 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         });
 
         if (isReceiverExists) {
-          // to do: update chat with unread message count
+          if (
+            OnMessageUpdatedChatId &&
+            chatId &&
+            OnMessageUpdatedChatId === chatId
+          ) {
+            markAllMessagesAsRead(OnMessageUpdatedChatId);
+          }
         }
       }
     },
@@ -576,7 +538,8 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       const OnChatAddedChat = OnChatAddedData?.chat;
       const OnChatAddedChatId = OnChatAddedChat?._id;
       const OnChatAddedMembers = OnChatAddedChat?.members;
-      const isChatAddedPrivate = OnChatAddedChat?.type === 'private';
+      const { isPrivateChat: isChatAddedPrivate } =
+        getChatType(OnChatAddedChat);
 
       const { isCurrentMember, isOtherMember } = checkIsMemberExists(
         OnChatAddedMembers,
@@ -589,12 +552,12 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
           OnChatAddedFriendIds?.forEach((OnChatAddedFriendId: string) => {
             if (isChatAddedPrivate) {
               if (isOtherMember) {
-                otherFriendsClient.cache.modify({
+                friendsClient.cache.modify({
                   fields: {
-                    [`otherFriends({"input":{"userId":"${_id}"}})`](
+                    [`friends({"input":{"userId":"${_id}"}})`](
                       existingData: any,
                     ) {
-                      const data = deleteObject(
+                      const data = removeObject(
                         OnChatAddedFriendId,
                         existingData,
                       );
@@ -602,6 +565,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
                     },
                   },
                 });
+
                 chatsClient.cache.modify({
                   fields: {
                     [`chats({"input":{"userId":"${_id}"}})`](
@@ -616,15 +580,13 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
                     },
                   },
                 });
-              }
 
-              if (
-                OnChatAddedFriendId &&
-                friendId &&
-                OnChatAddedChatId &&
-                OnChatAddedFriendId === friendId
-              ) {
-                if (isOtherMember) {
+                if (
+                  OnChatAddedFriendId &&
+                  friendId &&
+                  OnChatAddedChatId &&
+                  OnChatAddedFriendId === friendId
+                ) {
                   setSearchParams(
                     (params) => {
                       params.set('id', OnChatAddedChatId);
@@ -634,9 +596,6 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
                     { replace: true },
                   );
                 }
-                const { otherMember } = getMember(OnChatAddedMembers, _id);
-                setSelectedChat(OnChatAddedChat);
-                setSelectedChatDetails(otherMember);
               }
             }
           });
@@ -700,9 +659,9 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       );
 
       if (isCurrentMember || isOtherMember) {
-        otherFriendsClient.cache.modify({
+        friendsClient.cache.modify({
           fields: {
-            [`otherFriends({"input":{"userId":"${_id}"}})`](existingData: any) {
+            [`friends({"input":{"userId":"${_id}"}})`](existingData: any) {
               const data = addObject(OnFriendAddedFriend, existingData, true);
               return data;
             },
@@ -762,6 +721,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     onData: (res) => {
       const OnRequestUpdatedData = res?.data?.data?.OnRequestUpdated;
       const OnRequestUpdatedRequest = OnRequestUpdatedData?.request;
+      const OnRequestUpdatedRequestId = OnRequestUpdatedRequest?._id;
       const OnRequestUpdatedMembers = OnRequestUpdatedRequest?.members;
 
       const { isCurrentMember, isOtherMember } = checkIsMemberExists(
@@ -774,7 +734,10 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         sentRequestsClient.cache.modify({
           fields: {
             [`sentRequests({"input":{"userId":"${_id}"}})`](existingData: any) {
-              const data = deleteRequest(OnRequestUpdatedRequest, existingData);
+              const data = removeRequest(
+                OnRequestUpdatedRequestId,
+                existingData,
+              );
               return data;
             },
           },
@@ -787,7 +750,10 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
             [`pendingRequests({"input":{"userId":"${_id}"}})`](
               existingData: any,
             ) {
-              const data = deleteRequest(OnRequestUpdatedRequest, existingData);
+              const data = removeRequest(
+                OnRequestUpdatedRequestId,
+                existingData,
+              );
               return data;
             },
           },
@@ -853,11 +819,86 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
   ] = useMutation(UPDATE_REQUEST_MUTATION);
 
   useLayoutEffect(() => {
-    if (!pathname?.includes('/chat')) {
-      setSelectedChat(undefined);
-      setSelectedChatDetails(undefined);
+    if (isNetworkError || isFetchingChats2 || isFetchingFriends2) return;
+    setToggleChats(!!chats?.length);
+    setCurrentChats(chats);
+  }, [isNetworkError, chats, isFetchingChats2, isFetchingFriends2]);
+
+  useLayoutEffect(() => {
+    if (isNetworkError || isFetchingChats2 || isFetchingFriends2) return;
+    setToggleFriends(!!friends?.length);
+    setCurrentFriends(friends);
+  }, [isNetworkError, friends, isFetchingChats2, isFetchingFriends2]);
+
+  useLayoutEffect(() => {
+    const setStates = async () => {
+      if (loadingCreateMessage || loadingProcessNextMessage) return;
+
+      if (chatId || friendId) {
+        let isFound = false;
+        let Chat;
+        let ChatDetails;
+
+        if (currentChats?.length) {
+          const currentChat = currentChats?.find(
+            (chat: any) =>
+              chat?._id && (chat?._id === chatId || chat?._id === friendId),
+          );
+          if (currentChat) {
+            isFound = true;
+            Chat = currentChat;
+            const isGroupChat = Chat?.type === 'group';
+            if (isGroupChat) {
+              ChatDetails = Chat?.groupDetails;
+            } else {
+              const { otherMember } = getMember(Chat?.members, _id);
+              ChatDetails = otherMember;
+            }
+          }
+        }
+
+        if (!isFound && currentFriends?.length) {
+          const currentFriend = currentFriends?.find(
+            (friend: any) => friend?._id === friendId,
+          );
+          if (currentFriend) {
+            Chat = currentFriend;
+            if (Chat?.hasChats) {
+              navigate('/');
+              await fetchAll();
+            } else {
+              const { otherMember } = getMember(Chat?.members, _id);
+              ChatDetails = otherMember;
+            }
+          }
+        }
+
+        setSelectedChat(Chat);
+        setSelectedChatDetails(ChatDetails);
+      }
+
+      if (!chatId && !friendId) {
+        setSelectedChat(null);
+        setSelectedChatDetails(null);
+        setSelectedMessage(null);
+      }
+    };
+
+    setStates();
+  }, [
+    loadingCreateMessage,
+    loadingProcessNextMessage,
+    chatId,
+    friendId,
+    currentChats,
+    currentFriends,
+  ]);
+
+  useLayoutEffect(() => {
+    if (isChatsVisible && chatId) {
+      markAllMessagesAsRead(chatId);
     }
-  }, [pathname]);
+  }, [isListItemClicked, isChatsVisible, chatId]);
 
   useEffect(() => {
     const messageQueueService = new MessageQueueService(
@@ -923,12 +964,12 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       const res = await refetchMessages({ chatId: id });
       return res;
     } catch (err: any) {
-      const error = err?.message;
-      if (error) {
-        if (error?.includes('Chat not found')) {
+      const errorMessage = err?.message || '';
+      if (errorMessage) {
+        if (errorMessage?.includes('Chat not found')) {
           navigate('/');
         }
-        throw new Error(error);
+        throw new Error(errorMessage);
       }
     }
   };
@@ -1013,9 +1054,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
 
         if (uniqueMessages?.length) {
           const updatedData = addArray(uniqueMessages, edges);
-          if (updatedData?.length) {
-            edges = sortByTimestamp(updatedData);
-          }
+          edges = sortByTimestamp(updatedData);
           scrollPosition = 0;
           isWrite = true;
         }
@@ -1034,8 +1073,8 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
                 'lastMessage',
               );
               if (isFoundAndUpdated && data?.length) {
-                const sortedData = sortByLastMessageTimestamp(data);
-                return sortedData;
+                const sortedChatsData = sortByLastMessageTimestamp(data);
+                return sortedChatsData;
               }
               return existingData;
             },
@@ -1061,39 +1100,99 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       } else {
         setScrollToPosition((prev) => !prev);
       }
-    } catch (error: any) {
-      throw new Error(error);
+    } catch (err: any) {
+      throw new Error(err);
     }
   };
 
   const fetchAll = async () => {
-    if (isFetchingChats || isFetchingOtherFriends) return;
-    setIsFetchingChats(true);
-    setIsFetchingOtherFriends(true);
-    await client.clearStore();
-    await refetchChats();
-    await refetchOtherFriends();
-    await Promise.allSettled([refetchPendingRequests(), refetchSentRequests()]);
+    if (isFetchingChats2 || isFetchingFriends2) return;
+    if (isNetworkError) {
+      setIsFetchingChats(true);
+      setIsFetchingFriends(true);
+    }
+    setIsFetchingChats2(true);
+    setIsFetchingFriends2(true);
+    try {
+      await client.clearStore();
+      await refetchChats();
+      await refetchFriends();
+      await Promise.allSettled([
+        refetchPendingRequests(),
+        refetchSentRequests(),
+      ]);
+    } catch (err) {
+      console.error('Error refetching:', err);
+    }
+  };
+
+  const markAllMessagesAsRead = async (id: string) => {
+    chatsClient.cache.modify({
+      fields: {
+        [`chats({"input":{"userId":"${_id}"}})`](existingData: any) {
+          const {
+            isFoundAndUpdated: isFoundAndUpdatedMembers,
+            data: membersData,
+          } = findAndUpdate(
+            _id,
+            '_id',
+            selectedChat?.members,
+            null,
+            'unreadMessagesCount',
+          );
+          if (isFoundAndUpdatedMembers && membersData?.length) {
+            const { isFoundAndUpdated, data } = findAndUpdate(
+              id,
+              '_id',
+              existingData,
+              membersData,
+              'members',
+            );
+            if (isFoundAndUpdated && data?.length) {
+              return data;
+            }
+            return existingData;
+          }
+          return existingData;
+        },
+      },
+    });
+
+    socket?.emit('markMessagesAsRead', {
+      chatId: id,
+      userId: _id,
+    });
+  };
+
+  const closeAllDrawers = () => {
+    toggleDrawer(setIsMenuDrawerOpen);
+    toggleDrawer(setIsNewChatDrawerOpen);
+    toggleDrawer(setIsMessageDrawerOpen);
+  };
+
+  const handleClickChat = async (
+    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    chat: any,
+    chatDetails: any,
+  ) => {
+    await clickChat(
+      chat,
+      chatDetails,
+      setIsListItemClicked,
+      setSelectedChat,
+      setSelectedChatDetails,
+      getChatMessagesWithQueue,
+      navigate,
+      prevPathname,
+      fetchAll,
+    );
+    closeAllDrawers();
   };
 
   return (
     <ChatsAndFriendsContext.Provider
       value={{
         // query
-        // chat
-        chat,
-        chatLoading,
-        chatError,
-        chatClient,
-        chatCalled,
-        // friend
-        friend,
-        friendLoading,
-        friendError,
-        friendClient,
-        friendCalled,
-        // cachedMessages
-        cachedMessagesClient,
         // messages
         messages,
         messagesPageInfo,
@@ -1105,6 +1204,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         subscribeMessagesToMore,
         fetchMoreMessages,
         refetchMessages,
+        cachedMessagesClient,
         // userOnlineStatus
         userOnlineStatus,
         userOnlineStatusLoading,
@@ -1119,14 +1219,20 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         chatsCalled,
         subscribeChatsToMore,
         refetchChats,
-        // otherFriends
-        otherFriends,
-        otherFriendsLoading,
-        otherFriendsError,
-        otherFriendsClient,
-        otherFriendsCalled,
-        subscribeOtherFriendsToMore,
-        refetchOtherFriends,
+        // friends
+        friends,
+        friendsLoading,
+        friendsError,
+        friendsClient,
+        friendsCalled,
+        subscribeFriendsToMore,
+        refetchFriends,
+        // friendsSorted
+        friendsSortedQuery,
+        friendsSorted,
+        friendsSortedLoading,
+        friendsSortedError,
+        friendsSortedClient,
         // pendingRequests
         pendingRequests,
         pendingRequestsCount,
@@ -1201,6 +1307,9 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         updateRequestError,
 
         // state
+        // isHomeButtonClicked
+        isHomeButtonClicked,
+        setIsHomeButtonClicked,
         // isListItemClicked
         isListItemClicked,
         setIsListItemClicked,
@@ -1231,18 +1340,51 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         // isFetchingChats
         isFetchingChats,
         setIsFetchingChats,
-        // isFetchingOtherFriends
-        isFetchingOtherFriends,
-        setIsFetchingOtherFriends,
-        // isHomeButtonClicked
-        isHomeButtonClicked,
-        setIsHomeButtonClicked,
+        // isFetchingFriends
+        isFetchingFriends,
+        setIsFetchingFriends,
+        // isFetchingChats2
+        isFetchingChats2,
+        setIsFetchingChats2,
+        // isFetchingFriends2
+        isFetchingFriends2,
+        setIsFetchingFriends2,
+        // currentChats
+        currentChats,
+        setCurrentChats,
+        // currentFriends
+        currentFriends,
+        setCurrentFriends,
+        // toggleChats
+        toggleChats,
+        setToggleChats,
+        // toggleFriends
+        toggleFriends,
+        setToggleFriends,
+        // isChatsVisible
+        isChatsVisible,
+        setIsChatsVisible,
+        // isMenuDrawerOpen
+        isMenuDrawerOpen,
+        setIsMenuDrawerOpen,
+        // isNewChatDrawerOpen
+        isNewChatDrawerOpen,
+        setIsNewChatDrawerOpen,
+        // isMessageDrawerOpen
+        isMessageDrawerOpen,
+        setIsMessageDrawerOpen,
+        // selectedMessage
+        selectedMessage,
+        setSelectedMessage,
 
         // function
         fetchMessages,
         getQueuedMessages,
         getChatMessagesWithQueue,
         fetchAll,
+        markAllMessagesAsRead,
+        closeAllDrawers,
+        handleClickChat,
       }}
     >
       {children}

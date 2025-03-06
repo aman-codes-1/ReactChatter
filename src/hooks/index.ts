@@ -1,5 +1,6 @@
 export { useApi } from './useApi';
 export { useAuth } from './useAuth';
+export { useClient } from './useClient';
 export { useIntersectionObserver } from './useIntersectionObserver';
 export { useResize } from './useResize';
 export { useScrollAware } from './useScrollAware';

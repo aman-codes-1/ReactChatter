@@ -1,23 +1,22 @@
-import { styled } from '@mui/system';
+import { styled } from '@mui/material';
 
-export const SuccessErrorMessageStyled = styled('div')<{
-  wrapperHeight: number;
-}>(({ theme, wrapperHeight }) => ({
-  '.success-error-message-wrapper': {
-    marginTop: '0.5rem',
-    width: '100%',
-    display: 'flex',
-    alignItems: wrapperHeight > 24 ? 'flex-start' : 'center',
-    gap: '0.5rem',
-    '.success-error-message': {
-      fontSize: '0.875rem',
-      wordBreak: 'break-word',
-    },
-    '.error-dark': {
-      color: theme.palette.error.dark,
-    },
-    '.success-dark': {
-      color: theme.palette.success.dark,
-    },
+export const SuccessErrorMessageStyled = styled('div', {
+  shouldForwardProp: (prop) => prop !== 'height',
+})<{
+  height: number;
+}>(({ theme, height }) => ({
+  width: '100%',
+  display: 'flex',
+  alignItems: height > 24 ? 'flex-start' : 'center',
+  gap: '0.5rem',
+  '.message': {
+    fontSize: '0.875rem',
+    wordBreak: 'break-word',
+  },
+  '.error': {
+    color: theme.palette.error.main,
+  },
+  '.success': {
+    color: theme.palette.success.main,
   },
 }));

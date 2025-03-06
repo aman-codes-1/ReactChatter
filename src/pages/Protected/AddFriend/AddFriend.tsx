@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { TextField, Typography } from '@mui/material';
+import { TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { MainLayout, SuccessErrorMessage } from '../../../components';
 import { useAuth, useTimeout } from '../../../hooks';
@@ -13,7 +13,7 @@ import { ChatsAndFriendsContext } from '../../../contexts';
 import { handleKeyPress, regex, setFocus } from '../../../helpers';
 import { AddFriendStyled } from './AddFriend.styled';
 
-const AddFriend = () => {
+const AddFriend = ({ disableHeading }: any) => {
   const [email, setEmail] = useState('');
   const [disabled, setDisabled] = useState(false);
   const [validation, setValidation] = useState({
@@ -25,15 +25,22 @@ const AddFriend = () => {
     type: '',
   });
   const { auth: { _id = '', email: Email = '' } = {} } = useAuth();
-  const [isTimeoutRunning, setIsTimeoutRunning] = useTimeout(() => {
-    setIsTimeoutRunning(false);
-  }, 4000);
+  const [isShortTimeoutRunning, setIsShortTimeoutRunning] = useTimeout(
+    () => setIsShortTimeoutRunning(false),
+    3000,
+  );
+  const [isLongTimeoutRunning, setIsLongTimeoutRunning] = useTimeout(
+    () => setIsLongTimeoutRunning(false),
+    5000,
+  );
   const { createRequest, createRequestLoading, isListItemClicked } = useContext(
     ChatsAndFriendsContext,
   );
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const msgRef = useRef<HTMLDivElement | null>(null);
 
   const resetStates = () => {
+    setEmail('');
     setState({
       message: '',
       type: '',
@@ -76,11 +83,13 @@ const AddFriend = () => {
         isRequired: true,
         isNotValid: false,
       };
+      setIsShortTimeoutRunning(true);
     } else if (email && !validateEmail.test(email?.toLowerCase())) {
       validationCheck = {
         isRequired: false,
         isNotValid: true,
       };
+      setIsShortTimeoutRunning(true);
     } else {
       validationCheck = {
         isRequired: false,
@@ -88,7 +97,6 @@ const AddFriend = () => {
       };
     }
     setValidation(validationCheck);
-    setIsTimeoutRunning(true);
     return validationCheck;
   };
 
@@ -115,7 +123,7 @@ const AddFriend = () => {
           type: 'success',
         });
         setEmail('');
-        setIsTimeoutRunning(true);
+        setIsLongTimeoutRunning(true);
       }
     } catch (err: any) {
       setState({
@@ -124,7 +132,7 @@ const AddFriend = () => {
           'Something went wrong. Please try again.',
         type: 'error',
       });
-      setIsTimeoutRunning(true);
+      setIsLongTimeoutRunning(true);
     }
   };
 
@@ -133,10 +141,11 @@ const AddFriend = () => {
 
   return (
     <AddFriendStyled>
-      <MainLayout heading="Add Friend" disableLoader onlyChildren>
-        <Typography className="add-friend-heading" fontWeight={600}>
-          Add friend by email
-        </Typography>
+      <MainLayout
+        heading={disableHeading ? '' : 'Add Friend'}
+        description="Add friend by email"
+        disablePadding={disableHeading}
+      >
         <div className="add-friend-email-wrapper">
           <div className="add-friend-text-field-wrapper">
             <TextField
@@ -153,18 +162,26 @@ const AddFriend = () => {
               onKeyUp={(_: any) => handleKeyPress(_, handleClickAdd)}
               onChange={handleChangeEmail}
               inputRef={inputRef}
+              error={(isRequired || isNotValid) && isShortTimeoutRunning}
+              type="email"
+              required
             />
-            {isRequired && isTimeoutRunning ? (
-              <SuccessErrorMessage message="Email is required" type="error" />
-            ) : null}
-            {isNotValid && isTimeoutRunning ? (
+            {isRequired && isShortTimeoutRunning ? (
               <SuccessErrorMessage
+                ref={msgRef}
+                message="Email is required"
+                type="error"
+              />
+            ) : null}
+            {isNotValid && isShortTimeoutRunning ? (
+              <SuccessErrorMessage
+                ref={msgRef}
                 message="Please enter a valid email"
                 type="error"
               />
             ) : null}
-            {message && isTimeoutRunning ? (
-              <SuccessErrorMessage message={message} type={type} />
+            {message && (isShortTimeoutRunning || isLongTimeoutRunning) ? (
+              <SuccessErrorMessage ref={msgRef} message={message} type={type} />
             ) : null}
           </div>
           <div className="add-friend-email-btn-wrapper">

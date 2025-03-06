@@ -1,4 +1,4 @@
-import { useContext, useLayoutEffect, useState } from 'react';
+import { useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge, List } from '@mui/material';
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
@@ -6,34 +6,30 @@ import Face4OutlinedIcon from '@mui/icons-material/Face4Outlined';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { DataList, ListItem } from '../../../components';
-import { clickChat } from '../../../helpers';
-import { ChatsAndFriendsContext, DrawerContext } from '../..';
-import { SideBarListStyled } from './SideBarList.styled';
+import { DataList, ListItem } from '../../..';
+import { getBadgeWidth } from '../../../../helpers';
+import { ChatsAndFriendsContext } from '../../../../contexts';
+import { MenuListStyled } from './MenuList.styled';
 
-const SideBarList = ({ className }: any) => {
+const MenuList = ({ className }: any) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const selectedOverviewLink = pathname?.split?.('/')?.[1];
   const {
-    chats = [],
-    otherFriends = [],
     pendingRequestsCount = 0,
     sentRequestsCount = 0,
     setIsListItemClicked,
-    selectedChat,
-    setSelectedChat,
-    setSelectedChatDetails,
     isFetchingChats,
-    isFetchingOtherFriends,
-    getChatMessagesWithQueue,
-    fetchAll,
+    isFetchingFriends,
+    currentChats = [],
+    currentFriends = [],
+    toggleChats,
+    setToggleChats,
+    toggleFriends,
+    setToggleFriends,
+    closeAllDrawers,
+    handleClickChat,
   } = useContext(ChatsAndFriendsContext);
-  const { toggleDrawer } = useContext(DrawerContext);
-  const [toggleChats, setToggleChats] = useState(!!chats?.length);
-  const [toggleFriends, setToggleFriends] = useState(!!otherFriends?.length);
-  const [currentChats, setCurrentChats] = useState(chats);
-  const [currentOtherFriends, setCurrentOtherFriends] = useState(otherFriends);
   const prevPathname = `${location?.pathname}${location?.search}`;
 
   const navLinks = [
@@ -56,18 +52,6 @@ const SideBarList = ({ className }: any) => {
     },
   ];
 
-  useLayoutEffect(() => {
-    setToggleChats(!!chats?.length);
-    if (isFetchingChats || isFetchingOtherFriends) return;
-    setCurrentChats(chats);
-  }, [chats, isFetchingChats, isFetchingOtherFriends]);
-
-  useLayoutEffect(() => {
-    setToggleFriends(!!otherFriends?.length);
-    if (isFetchingChats || isFetchingOtherFriends) return;
-    setCurrentOtherFriends(otherFriends);
-  }, [otherFriends, isFetchingChats, isFetchingOtherFriends]);
-
   const handleToggle = (
     _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     setToggle: any,
@@ -75,43 +59,24 @@ const SideBarList = ({ className }: any) => {
     setToggle((prev: boolean) => !prev);
   };
 
-  const handleClickChat = async (
-    _: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    item: any,
-    chatDetails: any,
-  ) => {
-    await clickChat(
-      item,
-      chatDetails,
-      getChatMessagesWithQueue,
-      setIsListItemClicked,
-      setSelectedChat,
-      setSelectedChatDetails,
-      navigate,
-      prevPathname,
-      fetchAll,
-      toggleDrawer,
-    );
-  };
-
   const handleClickOverviewItem = (
     _: React.MouseEvent<HTMLDivElement, MouseEvent>,
     link: string,
   ) => {
     setIsListItemClicked((prev: boolean) => !prev);
-    toggleDrawer();
+    closeAllDrawers();
     if (prevPathname !== link) {
       navigate(link);
     }
   };
 
-  const isLoaded = !isFetchingChats && !isFetchingOtherFriends;
+  const isLoaded = !isFetchingChats && !isFetchingFriends;
   const showChats = isLoaded && !!currentChats?.length;
-  const showOtherFriends = isLoaded && !!currentOtherFriends?.length;
-  const bothNotVisible = !showChats && !showOtherFriends;
+  const showFriends = isLoaded && !!currentFriends?.length;
+  const bothNotVisible = !showChats && !showFriends;
 
   return (
-    <SideBarListStyled className={className}>
+    <MenuListStyled className={className}>
       {showChats ? (
         <>
           <ListItem
@@ -141,15 +106,14 @@ const SideBarList = ({ className }: any) => {
             <DataList
               dense
               data={currentChats}
-              selectedChat={selectedChat}
-              handleClickListItem={handleClickChat}
               className="flex-list-item margin-bottom"
               scrollDependencies={[toggleChats, toggleFriends]}
+              handleClickListItem={handleClickChat}
             />
           ) : null}
         </>
       ) : null}
-      {showOtherFriends ? (
+      {showFriends ? (
         <>
           <ListItem
             dense
@@ -178,76 +142,75 @@ const SideBarList = ({ className }: any) => {
             <>
               <DataList
                 dense
-                data={currentOtherFriends}
-                selectedChat={selectedChat}
-                handleClickListItem={handleClickChat}
+                data={currentFriends}
                 className="flex-list-item margin-bottom"
                 scrollDependencies={[toggleChats, toggleFriends]}
+                handleClickListItem={handleClickChat}
               />
             </>
           ) : null}
         </>
       ) : null}
-      {navLinks?.length ? (
-        <>
-          <ListItem
-            dense
-            sx={bothNotVisible ? { pt: 0 } : {}}
-            disableHover
-            btnProps={{
-              textProps: {
-                primary: 'Overview',
-                slotProps: {
-                  primary: {
-                    className: 'default-heading',
-                    style: {
-                      WebkitLineClamp: 1,
-                    },
+      <>
+        <ListItem
+          dense
+          sx={bothNotVisible ? { pt: 0 } : {}}
+          disableHover
+          btnProps={{
+            textProps: {
+              primary: 'Overview',
+              slotProps: {
+                primary: {
+                  className: 'default-heading',
+                  style: {
+                    WebkitLineClamp: 1,
                   },
                 },
               },
-            }}
-          />
-          <List dense disablePadding className="flex-list-item">
-            {navLinks.map((navLink, idx) => (
-              <ListItem
-                key={navLink?.title}
-                btnProps={{
-                  textProps: {
-                    primary: navLink?.title || '',
-                    slotProps: {
-                      primary: {
-                        fontSize: '0.875rem',
-                        style: {
-                          WebkitLineClamp: 1,
-                        },
+            },
+          }}
+        />
+        <List dense disablePadding className="flex-list-item">
+          {navLinks?.map((navLink, idx) => (
+            <ListItem
+              key={navLink?.title}
+              btnProps={{
+                textProps: {
+                  primary: navLink?.title || '',
+                  slotProps: {
+                    primary: {
+                      fontSize: '0.875rem',
+                      style: {
+                        WebkitLineClamp: 1,
                       },
                     },
                   },
-                  startIcon: navLink?.icon,
-                  endIcon: (
-                    <Badge
-                      badgeContent={navLink?.count}
-                      color="secondary"
-                      overlap="circular"
-                      sx={{ mr: '0.5rem' }}
-                    />
+                },
+                startIcon: navLink?.icon,
+                endIcon: (
+                  <Badge
+                    badgeContent={navLink?.count}
+                    color="secondary"
+                    max={999}
+                    sx={{
+                      left: `-${getBadgeWidth(navLink?.count)}px`,
+                    }}
+                  />
+                ),
+                selected:
+                  idx ===
+                  navLinks?.findIndex(
+                    (el) =>
+                      selectedOverviewLink === el?.link?.split?.('/')?.[1],
                   ),
-                  selected:
-                    idx ===
-                    navLinks.findIndex(
-                      (el) =>
-                        selectedOverviewLink === el?.link?.split?.('/')?.[1],
-                    ),
-                  onClick: (_) => handleClickOverviewItem(_, navLink?.link),
-                }}
-              />
-            ))}
-          </List>
-        </>
-      ) : null}
-    </SideBarListStyled>
+                onClick: (_) => handleClickOverviewItem(_, navLink?.link),
+              }}
+            />
+          ))}
+        </List>
+      </>
+    </MenuListStyled>
   );
 };
 
-export default SideBarList;
+export default MenuList;

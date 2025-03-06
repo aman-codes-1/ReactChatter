@@ -1,6 +1,6 @@
-import { styled } from '@mui/system';
+import { styled } from '@mui/material';
 
-export const SideBarListStyled = styled('div')(({ theme }) => ({
+export const MenuListStyled = styled('div')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   overflow: 'auto',
@@ -30,7 +30,6 @@ export const SideBarListStyled = styled('div')(({ theme }) => ({
     cursor: 'default',
   },
   '.list-item-icon': {
-    marginRight: '1rem',
     padding: '0.17rem',
     fontSize: '1.25rem',
     color: theme.palette.text.secondary,

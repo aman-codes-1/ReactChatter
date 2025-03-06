@@ -1,10 +1,10 @@
 import { List } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { Button, ListItem } from '../..';
-import { useApi, useAuth } from '../../../hooks';
-import { SideBarFooterStyled } from './SideBarFooter.styled';
+import { Button, ListItem } from '../../..';
+import { useApi, useAuth } from '../../../../hooks';
+import { MenuFooterStyled } from './MenuFooter.styled';
 
-const SideBarFooter = ({ className }: any) => {
+const MenuFooter = ({ className }: any) => {
   const { auth: { name = '', email = '', picture = '' } = {} } = useAuth();
   const { callLogout } = useApi();
 
@@ -13,7 +13,7 @@ const SideBarFooter = ({ className }: any) => {
   };
 
   return (
-    <SideBarFooterStyled className={className}>
+    <MenuFooterStyled className={className}>
       <List dense>
         <ListItem
           disablePadding
@@ -33,6 +33,7 @@ const SideBarFooter = ({ className }: any) => {
               },
             },
             avatarProps: {
+              name,
               src: picture,
             },
             endIcon: (
@@ -41,7 +42,7 @@ const SideBarFooter = ({ className }: any) => {
                 variant="outlined"
                 onClick={handleLogout}
                 startIcon={<LogoutIcon fontSize="small" />}
-                className="text-hidden"
+                textHidden
                 sx={{
                   minHeight: '52px',
                   minWidth: '54px',
@@ -52,8 +53,8 @@ const SideBarFooter = ({ className }: any) => {
           }}
         />
       </List>
-    </SideBarFooterStyled>
+    </MenuFooterStyled>
   );
 };
 
-export default SideBarFooter;
+export default MenuFooter;

@@ -22,14 +22,14 @@ const Button = (props: ButtonProps) => {
     mdTextHidden,
     ...rest
   } = props;
-  const isExtraSmallScreen = useMediaQuery(theme.breakpoints.down('xs'));
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const isMediumScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallest = useMediaQuery(theme.breakpoints.down('xs'));
+  const isExtraSmallOrBelow = useMediaQuery(theme.breakpoints.down('sm'));
+  const isSmallOrBelow = useMediaQuery(theme.breakpoints.down('md'));
   const hideText =
     textHidden ||
-    (xsTextHidden && isExtraSmallScreen) ||
-    (smTextHidden && isSmallScreen) ||
-    (mdTextHidden && isMediumScreen);
+    (xsTextHidden && isSmallest) ||
+    (smTextHidden && isExtraSmallOrBelow) ||
+    (mdTextHidden && isSmallOrBelow);
 
   return (
     <ButtonStyled hideText={hideText} {...rest}>

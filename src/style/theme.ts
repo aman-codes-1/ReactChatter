@@ -60,6 +60,7 @@ export const theme = createTheme({
     },
     background: {
       default: '#FFFFFF',
+      paper: '#FFFFFF',
     },
     action: {
       active: '#0F172B',

@@ -1,4 +1,3 @@
 export { Drawer } from './Drawer';
-export { NavBar } from './NavBar';
-export { SideBar } from './SideBar';
-export { SideBarFooter } from './SideBarFooter';
+export { Menu, MenuFooter, MenuList } from './Menu';
+export { MobileNavBar, NavBar } from './NavBar';

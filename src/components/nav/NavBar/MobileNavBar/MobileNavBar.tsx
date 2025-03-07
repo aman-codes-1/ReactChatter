@@ -21,8 +21,12 @@ const MobileNavBar = forwardRef<HTMLDivElement, any>((props, ref) => {
   return (
     <MobileNavBarStyled>
       <div className="mobile-navbar-wrapper" ref={ref}>
-        <AppBar position="static" elevation={0} className="mobile-navbar">
-          <Toolbar disableGutters>
+        <AppBar position="static" className="mobile-navbar-app-bar">
+          <Toolbar
+            variant="dense"
+            disableGutters
+            className="mobile-navbar-tool-bar"
+          >
             <NavBar />
           </Toolbar>
         </AppBar>

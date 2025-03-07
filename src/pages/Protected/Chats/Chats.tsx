@@ -533,7 +533,7 @@ const Chats = ({ loadingChats }: any) => {
             open={isExtraLargeOrAbove ? isMessageDrawerOpen : false}
             drawerWidth={isExtraLargeOrAbove ? getDrawerWidth() : 0}
           >
-            <div className="app-bar-wrapper">
+            <div className="top-app-bar-wrapper">
               <ChatsAppBarStyled
                 position="static"
                 className="app-bar"
@@ -541,12 +541,12 @@ const Chats = ({ loadingChats }: any) => {
                 drawerWidth={isExtraLargeOrAbove ? getDrawerWidth() : 0}
                 ref={appBarRef}
               >
-                <Toolbar className="tool-bar">
+                <Toolbar className="top-app-bar-tool-bar">
                   <div className="top-app-bar">
                     {isExtraSmallOrBelow ? (
                       <IconButton
                         size="small"
-                        className="top-bar-back-btn"
+                        className="top-app-bar-back-btn"
                         onClick={handleClickBack}
                       >
                         <ArrowBackIosNewIcon />
@@ -593,10 +593,10 @@ const Chats = ({ loadingChats }: any) => {
                 textFieldHeight={textFieldHeight}
               />
             )}
-            <div className="text-field-wrapper">
+            <div className="text-field-app-bar-wrapper">
               <ChatsAppBarStyled
                 position="static"
-                className="app-bar text-field-app-bar"
+                className="text-field-app-bar app-bar"
                 open={isExtraLargeOrAbove ? isMessageDrawerOpen : false}
                 drawerWidth={isExtraLargeOrAbove ? getDrawerWidth() : 0}
                 ref={textFieldRef}

@@ -29,7 +29,7 @@ export const ChatsStyled = styled('div', {
   '.chats-main-layout-error': {
     marginTop: '0.6875rem',
   },
-  '.app-bar-wrapper': {
+  '.top-app-bar-wrapper': {
     position: 'fixed',
     width: `calc(100% - ${menuWidth || 0}px)`,
     top: 0,
@@ -43,7 +43,7 @@ export const ChatsStyled = styled('div', {
     justifyContent: 'center',
     backgroundColor: theme.palette.primary.light,
   },
-  '.tool-bar': {
+  '.top-app-bar-tool-bar': {
     [theme.breakpoints.down('sm')]: {
       paddingLeft: 5,
     },
@@ -57,10 +57,10 @@ export const ChatsStyled = styled('div', {
       gap: '0.75rem',
     },
   },
-  '.top-bar-back-btn': {
+  '.top-app-bar-back-btn': {
     marginLeft: '0.25rem',
   },
-  '.text-field-wrapper': {
+  '.text-field-app-bar-wrapper': {
     position: 'fixed',
     width: `calc(100% - ${menuWidth || 0}px)`,
     top: 'auto',

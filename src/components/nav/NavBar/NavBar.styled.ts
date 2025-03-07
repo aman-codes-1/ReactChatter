@@ -9,7 +9,8 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
   paddingRight: '1rem',
   marginBottom: '-0.5rem',
   [theme.breakpoints.down('sm')]: {
-    padding: '0.75rem 1rem',
+    padding: 0,
+    margin: 0,
   },
   '.nav-logo': {
     display: 'flex',

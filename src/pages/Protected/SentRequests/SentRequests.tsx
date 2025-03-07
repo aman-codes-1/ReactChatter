@@ -4,7 +4,6 @@ import { useAuth, useSnackbar } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
 
 const SentRequests = () => {
-  const { openSnackbar } = useSnackbar();
   const {
     sentRequests = [],
     sentRequestsLoading,
@@ -13,6 +12,7 @@ const SentRequests = () => {
     updateRequestLoading,
   } = useContext(ChatsAndFriendsContext);
   const { auth: { _id = '' } = {} } = useAuth();
+  const { openSnackbar } = useSnackbar();
 
   const handleClickRequest = async (
     _: MouseEventHandler,
@@ -40,9 +40,12 @@ const SentRequests = () => {
     <FriendRequest
       mainLayoutProps={{
         heading: 'Sent Requests',
-        defaultText: "You haven't sent any friend requests.",
-        loading: sentRequestsLoading,
+        description: sentRequests?.length
+          ? ''
+          : "You haven't sent any friend requests.",
+        loadingData: sentRequestsLoading,
         error: sentRequestsError?.graphQLErrors?.[0]?.message,
+        data: sentRequests,
       }}
       data={sentRequests}
       nameKey="name"

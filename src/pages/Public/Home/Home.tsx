@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { Link as MuiLink, Typography } from '@mui/material';
+import { Link, Typography } from '@mui/material';
 import { useAuth, useSnackbar } from '../../../hooks';
 import { decrypt, getCurrentYear, login, updateHeight } from '../../../helpers';
 import { HomeStyled } from './Home.styled';
@@ -22,15 +22,13 @@ const Home = ({ loadingHome }: any) => {
   const footerRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
-    updateHeight(footerRef, setFooterHeight);
-    window.addEventListener('resize', () =>
-      updateHeight(footerRef, setFooterHeight),
-    );
+    const update = () => updateHeight(footerRef, setFooterHeight);
+    update();
+
+    window.addEventListener('resize', update);
 
     return () => {
-      window.removeEventListener('resize', () =>
-        updateHeight(footerRef, setFooterHeight),
-      );
+      window.removeEventListener('resize', update);
     };
   }, []);
 
@@ -91,7 +89,6 @@ const Home = ({ loadingHome }: any) => {
           <GoogleLogin
             ux_mode="redirect"
             shape="pill"
-            // useOneTap
             click_listener={handleLogin}
             onSuccess={handleLogin}
           />
@@ -100,7 +97,7 @@ const Home = ({ loadingHome }: any) => {
       <div className="home-footer" ref={footerRef}>
         <Typography className="home-footer-sub-heading" fontWeight={400}>
           Made with ❤️ by{' '}
-          <MuiLink
+          <Link
             href="https://www.linkedin.com/in/aman-jain-4b24b8111/"
             target="_blank"
             rel="noreferrer"
@@ -108,9 +105,9 @@ const Home = ({ loadingHome }: any) => {
             color="black"
           >
             <strong>Aman Jain</strong>
-          </MuiLink>
+          </Link>
           {' | '}
-          <MuiLink
+          <Link
             href="https://github.com/aman-codes-1/ReactChatter"
             target="_blank"
             rel="noreferrer"
@@ -118,11 +115,11 @@ const Home = ({ loadingHome }: any) => {
             color="black"
           >
             <strong>Source Code</strong>
-          </MuiLink>
+          </Link>
         </Typography>
         <Typography className="home-footer-sub-heading" fontWeight={400}>
           &copy; {getCurrentYear()} by{' '}
-          <MuiLink
+          <Link
             href="https://bold.pro/my/aman-codes"
             target="_blank"
             rel="noreferrer"
@@ -130,7 +127,7 @@ const Home = ({ loadingHome }: any) => {
             color="black"
           >
             <strong>Aman.codes</strong>
-          </MuiLink>{' '}
+          </Link>{' '}
           All rights reserved.
         </Typography>
       </div>

@@ -49,7 +49,7 @@ export const DrawerProvider = ({ children }: any) => {
     } else if (isBetweenMediumAndLarge) {
       maxWidth = 350;
     } else if (isBetweenExtraSmallAndMedium) {
-      maxWidth = 325;
+      maxWidth = 330;
     }
 
     return maxWidth;

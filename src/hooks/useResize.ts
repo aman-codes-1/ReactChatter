@@ -11,9 +11,9 @@ export const useResize = () => {
   );
 
   useLayoutEffect(() => {
-    function handleResize() {
+    const handleResize = () => {
       setWindowDimensions(getWindowDimensions());
-    }
+    };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);

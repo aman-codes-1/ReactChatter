@@ -1,28 +1,33 @@
 import { useContext, useState } from 'react';
-import { GetStarted, NewChat, RecentChats } from './components';
-import { useTimeout } from '../../../hooks';
+import { MainLayout } from '../../../components';
+import { useClient, useTimeout } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
+import { GetStarted, NewChat, RecentChats } from '.';
 
 const Dashboard = () => {
   const activeStep = localStorage.getItem('activeStep');
   const [isStepper, setIsStepper] = useState(!!activeStep);
   const {
+    pendingRequestsLoading,
     sentRequestsLoading,
     isFetchingChats,
-    isFetchingOtherFriends,
+    isFetchingFriends,
     currentChats = [],
-    currentOtherFriends = [],
+    currentFriends = [],
   } = useContext(ChatsAndFriendsContext);
   const [isStepperTimeoutRunning, setIsStepperTimeoutRunning] = useTimeout(
     () => setIsStepperTimeoutRunning(false),
     2000,
   );
+  const { isNetworkError } = useClient();
 
   const renderDashboard = () => {
-    if (
+    if (isNetworkError) {
+      return <MainLayout heading="Server Error" />;
+    } else if (
       isStepper ||
       isStepperTimeoutRunning ||
-      (!currentChats?.length && !currentOtherFriends?.length)
+      (!currentChats?.length && !currentFriends?.length)
     ) {
       return (
         <GetStarted
@@ -30,19 +35,30 @@ const Dashboard = () => {
           setIsStepperTimeoutRunning={setIsStepperTimeoutRunning}
         />
       );
-    } else if (!currentChats?.length && currentOtherFriends?.length) {
+    } else if (!currentChats?.length && currentFriends?.length) {
       return <NewChat />;
     } else {
       return <RecentChats />;
     }
   };
 
-  // to do: loader skeleton on MainLayout heading and subHeading
-
   const loading =
-    isFetchingChats || isFetchingOtherFriends || sentRequestsLoading;
+    !isNetworkError &&
+    (isFetchingChats ||
+      isFetchingFriends ||
+      pendingRequestsLoading ||
+      sentRequestsLoading);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <MainLayout
+        loading={loading}
+        loadingProps={{ disableDescription: true }}
+        loadingData={loading}
+        loadingDataProps={{ dataCount: 5 }}
+      />
+    );
+  }
 
   return <>{renderDashboard()}</>;
 };

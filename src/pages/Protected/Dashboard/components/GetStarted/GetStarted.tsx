@@ -1,5 +1,6 @@
-import { useContext, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
 import {
+  ButtonProps,
   Step,
   StepContent,
   StepLabel,
@@ -20,15 +21,15 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
   const numStep = checkIfNumber(storedStep) ? Number(storedStep) : 0;
   const [activeStep, setActiveStep] = useState(numStep);
   const {
-    currentChats = [],
-    currentOtherFriends = [],
+    pendingRequests = [],
+    pendingRequestsCount = 0,
     sentRequests = [],
     sentRequestsCount = 0,
     updateRequest,
     updateRequestLoading,
     setIsListItemClicked,
-    isFetchingChats,
-    isFetchingOtherFriends,
+    currentChats = [],
+    currentFriends = [],
   } = useContext(ChatsAndFriendsContext);
   const [isCopyTimeoutRunning, setIsCopyTimeoutRunning] = useTimeout(
     () => setIsCopyTimeoutRunning(false),
@@ -36,6 +37,7 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
   );
   const { auth: { _id = '', given_name = '' } = {} } = useAuth();
   const { openSnackbar } = useSnackbar();
+  const msgRef = useRef<HTMLDivElement | null>(null);
 
   const handleClickCopy = (_: any) => {
     navigator.clipboard
@@ -54,12 +56,15 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
     isCopyTimeoutRunning,
     theme,
     currentChats,
-    currentOtherFriends,
+    currentFriends,
+    pendingRequests,
+    pendingRequestsCount,
     sentRequests,
     sentRequestsCount,
     updateRequest,
     updateRequestLoading,
     _id,
+    msgRef,
     openSnackbar,
   );
   const stepsLastIndex = steps?.length - 1;
@@ -74,7 +79,9 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
                 <StepLabel
                   optional={
                     index === stepsLastIndex ? (
-                      <Typography variant="caption">Last step</Typography>
+                      <Typography variant="caption">
+                        or Continue chatting
+                      </Typography>
                     ) : null
                   }
                 >
@@ -83,19 +90,12 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
                 <StepContent
                   slotProps={{ transition: { unmountOnExit: false } }}
                 >
-                  <Typography
-                    component={
-                      typeof step?.description === 'string' ? 'p' : 'div'
-                    }
-                    className="get-started-description"
-                  >
-                    {step?.description}
-                  </Typography>
+                  {step?.component}
                   <div className="get-started-btn-wrapper">
                     {step?.actions?.map((action) => (
                       <Button
                         key={action?.label}
-                        variant={action?.variant}
+                        variant={action?.variant as ButtonProps['variant']}
                         onClick={(_: any) =>
                           action?.handler(
                             _,

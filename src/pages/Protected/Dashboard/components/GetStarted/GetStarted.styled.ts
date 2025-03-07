@@ -2,8 +2,14 @@ import { styled } from '@mui/material';
 
 export const GetStartedStyled = styled('div')(({ theme }) => ({
   '.get-started-wrapper': {
-    maxWidth: '424px',
+    maxWidth: '550px',
     overflow: 'auto',
+  },
+  '.MuiStepContent-last': {
+    paddingLeft: 0,
+    '@media(min-width: 0px) and (max-width: 749px)': {
+      marginLeft: 0,
+    },
   },
   '.get-started-btn-wrapper': {
     display: 'flex',
@@ -23,13 +29,6 @@ export const GetStartedStyled = styled('div')(({ theme }) => ({
     '@media(min-width: 0px) and (max-width: 294px)': {
       width: '100%',
     },
-  },
-  '.get-started-add-friend-main-layout': {
-    height: 'auto',
-    padding: 0,
-  },
-  '.get-started-margin-top': {
-    marginTop: '10px',
   },
   '.get-started-email-heading': {
     fontSize: '0.875rem',
@@ -102,7 +101,9 @@ export const GetStartedStyled = styled('div')(({ theme }) => ({
     fontSize: '2rem',
   },
   '.get-started-alert': {
-    marginTop: '10px',
     borderRadius: '6px',
+  },
+  '.get-started-margin-top': {
+    marginTop: '0.625rem',
   },
 }));

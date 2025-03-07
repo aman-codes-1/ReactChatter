@@ -1,47 +1,50 @@
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { circularProgressClasses } from '@mui/material/CircularProgress';
 import { ILoaderProps } from './ILoaderProps';
 
-const Loader = ({ message, center, height, width, color }: ILoaderProps) => (
-  <Grid
-    container
-    justifyContent="center"
-    alignItems="center"
-    direction="column"
-    sx={{ minHeight: center ? '80vh' : height || '25vh' }}
-    spacing={0}
-    width={width || '100%'}
-  >
-    <Box sx={{ position: 'relative' }}>
-      <CircularProgress
-        variant="determinate"
-        sx={{
-          color: (theme) =>
-            theme.palette.grey[theme.palette.mode === 'light' ? 200 : 800],
-        }}
-        size={25}
-        thickness={4}
-        value={100}
-      />
-      <CircularProgress
-        variant="indeterminate"
-        disableShrink
-        sx={{
-          color: color || ((theme) => theme.palette.primary.main),
-          animationDuration: '550ms',
-          position: 'absolute',
-          left: 0,
-          [`& .${circularProgressClasses.circle}`]: {
-            strokeLinecap: 'round',
-          },
-        }}
-        size={25}
-        thickness={4}
-      />
-    </Box>
-    {message && <Typography pt={1}>{message}</Typography>}
-  </Grid>
-);
+const Loader = ({ message, center, height, width, color }: ILoaderProps) => {
+  const theme = useTheme();
+
+  return (
+    <Grid
+      container
+      justifyContent="center"
+      alignItems="center"
+      direction="column"
+      sx={{ minHeight: center ? '80vh' : height || '25vh' }}
+      spacing={0}
+      width={width || '100%'}
+    >
+      <Box sx={{ position: 'relative' }}>
+        <CircularProgress
+          variant="determinate"
+          sx={{
+            color: theme.palette.grey[200],
+          }}
+          size={25}
+          thickness={4}
+          value={100}
+        />
+        <CircularProgress
+          variant="indeterminate"
+          disableShrink
+          sx={{
+            color: color || theme.palette.primary.main,
+            animationDuration: '550ms',
+            position: 'absolute',
+            left: 0,
+            [`& .${circularProgressClasses.circle}`]: {
+              strokeLinecap: 'round',
+            },
+          }}
+          size={25}
+          thickness={4}
+        />
+      </Box>
+      {message && <Typography pt={1}>{message}</Typography>}
+    </Grid>
+  );
+};
 
 export default Loader;

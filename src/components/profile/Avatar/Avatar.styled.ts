@@ -1,3 +1,5 @@
-import { styled } from '@mui/system';
+import { Avatar, styled } from '@mui/material';
 
-export const AvatarStyled = styled('div')(() => ({}));
+export const AvatarStyled = styled(Avatar, {
+  shouldForwardProp: (prop) => prop !== 'loading',
+})(() => ({}));

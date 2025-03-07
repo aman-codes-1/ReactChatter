@@ -1,24 +1,28 @@
-import {
-  Avatar as MuiAvatar,
-  AvatarProps as MuiAvatarProps,
-} from '@mui/material';
+import { AvatarProps as MuiAvatarProps } from '@mui/material';
 import { AvatarStyled } from './Avatar.styled';
 
 interface AvatarProps extends MuiAvatarProps {
-  wrapperClassName?: string;
+  name?: string;
 }
 
 const Avatar = (props: AvatarProps) => {
-  const { wrapperClassName, children, ...rest } = props;
+  const { name = '', slotProps, ...rest } = props;
+
+  const nameFirstLetter =
+    !rest?.src && name && typeof name === 'string'
+      ? name?.substring(0, 1).toUpperCase()
+      : '';
 
   return (
-    <AvatarStyled className={wrapperClassName}>
-      <MuiAvatar
-        slotProps={{ img: { referrerPolicy: 'no-referrer' } }}
-        {...rest}
-      >
-        {children}
-      </MuiAvatar>
+    <AvatarStyled
+      {...rest}
+      alt={name}
+      slotProps={{
+        ...slotProps,
+        img: { ...slotProps?.img, referrerPolicy: 'no-referrer' },
+      }}
+    >
+      {nameFirstLetter || null}
     </AvatarStyled>
   );
 };

@@ -40,7 +40,6 @@ const AddFriend = ({ disableHeading }: any) => {
   const msgRef = useRef<HTMLDivElement | null>(null);
 
   const resetStates = () => {
-    setEmail('');
     setState({
       message: '',
       type: '',
@@ -53,6 +52,7 @@ const AddFriend = ({ disableHeading }: any) => {
 
   useLayoutEffect(() => {
     setFocus(inputRef);
+    setEmail('');
     resetStates();
   }, [isListItemClicked]);
 

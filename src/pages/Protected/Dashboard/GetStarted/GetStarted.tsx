@@ -101,6 +101,7 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
                           action?.handler(
                             _,
                             index,
+                            _id,
                             setIsListItemClicked,
                             setActiveStep,
                             setIsStepper,

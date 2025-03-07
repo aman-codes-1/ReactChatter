@@ -1,11 +1,14 @@
 import { useContext, useState } from 'react';
 import { MainLayout } from '../../../components';
-import { useClient, useTimeout } from '../../../hooks';
+import { useAuth, useClient, useTimeout } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
 import { GetStarted, NewChat, RecentChats } from '.';
 
 const Dashboard = () => {
-  const activeStep = localStorage.getItem('activeStep');
+  const { auth: { _id = '' } = {} } = useAuth();
+  const getStartedProgress = localStorage.getItem('getStartedProgress');
+  const progressData = getStartedProgress ? JSON.parse(getStartedProgress) : {};
+  const activeStep = progressData[_id]?.activeStep;
   const [isStepper, setIsStepper] = useState(!!activeStep);
   const {
     pendingRequestsLoading,

@@ -24,6 +24,7 @@ export const email = 'aman.codes0@gmail.com';
 const handleContinue = (
   _: any,
   idx: number,
+  _id: string,
   setIsListItemClicked: any,
   setActiveStep: any,
   setIsStepper: any,
@@ -39,7 +40,10 @@ const handleContinue = (
       setIsStepperTimeoutRunning(true);
       setIsStepper(false);
     } else {
-      localStorage.setItem('activeStep', String(val));
+      localStorage.setItem(
+        'getStartedProgress',
+        JSON.stringify({ _id, activeStep: String(val) }),
+      );
     }
     return val;
   });
@@ -48,6 +52,7 @@ const handleContinue = (
 const handleBack = (
   _: any,
   idx: number,
+  _id: string,
   setIsListItemClicked: any,
   setActiveStep: any,
 ) => {
@@ -56,7 +61,10 @@ const handleBack = (
   }
   setActiveStep((prevActiveStep: number) => {
     const val = prevActiveStep - 1;
-    localStorage.setItem('activeStep', String(val));
+    localStorage.setItem(
+      'getStartedProgress',
+      JSON.stringify({ _id, activeStep: String(val) }),
+    );
     return val;
   });
 };

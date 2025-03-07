@@ -1,9 +1,15 @@
 import { ReactNode } from 'react';
 import {
-  AvatarProps,
+  AvatarProps as MuiAvatarProps,
   ListItemButtonProps as MuiListItemButtonProps,
   ListItemTextProps,
 } from '@mui/material';
+
+interface AvatarProps extends MuiAvatarProps {
+  name?: string;
+  loading?: boolean;
+  badge?: any;
+}
 
 export interface ListItemButtonProps extends MuiListItemButtonProps {
   width?: string;

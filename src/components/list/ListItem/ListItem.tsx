@@ -30,6 +30,4 @@ const ListItem = forwardRef<HTMLDivElement, ListItemProps>((props, ref) => {
   );
 });
 
-ListItem.displayName = 'ListItem';
-
 export default ListItem;

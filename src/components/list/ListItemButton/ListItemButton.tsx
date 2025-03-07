@@ -1,13 +1,30 @@
 import { forwardRef } from 'react';
 import {
+  Badge,
   ListItemAvatar,
-  ListItemButton as MuiListItemButton,
   ListItemIcon,
   ListItemText,
+  Skeleton,
+  styled,
 } from '@mui/material';
 import { Avatar } from '../..';
 import { ListItemButtonProps } from './IListItemButton';
 import { ListItemButtonStyled } from './ListItemButton.styled';
+
+const StyledBadge = styled(Badge, {
+  shouldForwardProp: (prop) => prop !== 'backgroundColor',
+})<{ backgroundColor: string }>(({ theme, backgroundColor }) => ({
+  '& .MuiBadge-badge': {
+    backgroundColor,
+    color: theme.palette.common.white,
+    boxShadow: `0 0 0 2px ${theme.palette.background.default}`,
+    minWidth: '0',
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    bottom: '6.5px',
+  },
+}));
 
 const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
   (props, ref) => {
@@ -22,24 +39,30 @@ const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
       children,
       ...rest
     } = props;
-    const name = (textProps?.primary as string) || '';
     const isAvatar = !!Object.keys(avatarProps || {})?.length;
     const isText = !!Object.keys(textProps || {})?.length;
 
     const renderAvatar = () => {
-      if (name?.length && avatarProps?.src?.length) {
-        return <Avatar alt={name} {...avatarProps} />;
+      if (avatarProps?.loading) {
+        return (
+          <Skeleton variant="circular">
+            <Avatar {...avatarProps} />
+          </Skeleton>
+        );
+      } else if (avatarProps?.badge) {
+        return (
+          <StyledBadge
+            backgroundColor={avatarProps?.badge?.backgroundColor}
+            overlap="circular"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            badgeContent={avatarProps?.badge?.content}
+          >
+            <Avatar {...avatarProps} />
+          </StyledBadge>
+        );
+      } else {
+        return <Avatar {...avatarProps} />;
       }
-
-      const nameFirstLetter = name?.length
-        ? name?.substring(0, 1).toUpperCase()
-        : '';
-
-      return (
-        <Avatar alt={nameFirstLetter} src="" {...avatarProps}>
-          {nameFirstLetter}
-        </Avatar>
-      );
     };
 
     return (
@@ -61,7 +84,7 @@ const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
       >
         {isAvatar ? (
           <ListItemAvatar sx={{ cursor: disableHover ? 'default' : 'pointer' }}>
-            {avatarProps?.children || renderAvatar()}
+            {renderAvatar()}
           </ListItemAvatar>
         ) : null}
         {startIcon ? (
@@ -93,7 +116,5 @@ const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
     );
   },
 );
-
-ListItemButton.displayName = 'ListItemButton';
 
 export default ListItemButton;

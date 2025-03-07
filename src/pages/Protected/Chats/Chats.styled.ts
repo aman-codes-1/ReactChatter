@@ -321,7 +321,7 @@ export const ChatBubbleStyled = styled('div', {
   },
   '.msg-content': {
     wordBreak: 'break-all',
-    fontSize: '0.938rem',
+    fontSize: '0.9375rem',
   },
   '.msg-content-left': {
     color: theme.palette.text.primary,

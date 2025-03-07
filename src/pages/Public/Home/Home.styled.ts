@@ -65,7 +65,7 @@ export const HomeStyled = styled('div', {
     marginBottom: '0.5rem',
     textAlign: 'center',
     '.home-footer-sub-heading': {
-      fontSize: '0.9125rem',
+      fontSize: '0.9375rem',
     },
   },
 }));

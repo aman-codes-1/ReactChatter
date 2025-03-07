@@ -9,7 +9,7 @@ export const MenuListStyled = styled('div')(({ theme }) => ({
     marginTop: '1rem',
   },
   '.default-heading': {
-    fontSize: '0.8125rem',
+    fontSize: '0.875rem',
     fontWeight: 700,
   },
   '.heading': {

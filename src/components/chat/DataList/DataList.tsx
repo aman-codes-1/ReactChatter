@@ -1,21 +1,40 @@
-import { RefObject, useContext, useLayoutEffect, useRef } from 'react';
+import {
+  Fragment,
+  RefObject,
+  useContext,
+  useLayoutEffect,
+  useRef,
+} from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Badge, Divider, List, useTheme } from '@mui/material';
 import { ListItem, MessageStatus } from '../..';
 import { useAuth } from '../../../hooks';
 import { ChatsAndFriendsContext } from '../../../contexts';
-import { getMember, scrollToSelected } from '../../../helpers';
+import {
+  checkMessageStatus,
+  getBadgeWidth,
+  getChatDetails,
+  getFriendId,
+  getMember,
+  scrollTo,
+} from '../../../helpers';
 
 const DataList = ({
   dense = false,
   disableGutters = false,
   dividerVariant,
   data,
-  selectedChat,
   handleClickListItem,
   className,
   scrollDependencies = [],
 }: any) => {
   const theme = useTheme();
+  const [searchParams] = useSearchParams();
+  const chatId =
+    searchParams.get('type') === 'chat' ? searchParams.get('id') : null;
+  const fullFriendId =
+    searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
+  const { friendId } = getFriendId(fullFriendId);
   const { auth: { _id = '' } = {} } = useAuth();
   const { isHomeButtonClicked } = useContext(ChatsAndFriendsContext);
   const listRef = useRef<HTMLUListElement | null>(null);
@@ -28,30 +47,26 @@ const DataList = ({
   }, [isHomeButtonClicked]);
 
   useLayoutEffect(() => {
-    const scrollSelected = () => {
-      if (
-        listRef?.current &&
-        listItemsRef?.current?.length &&
-        data?.length &&
-        selectedChat
-      ) {
-        scrollToSelected(listRef, listItemsRef, data, selectedChat);
+    const scrollToSelected = () => {
+      if (listRef?.current && listItemsRef?.current?.length && data?.length) {
+        scrollTo(listRef, listItemsRef, data, chatId || friendId);
       }
     };
 
-    scrollSelected();
+    scrollToSelected();
 
-    window.addEventListener('resize', scrollSelected);
+    window.addEventListener('resize', scrollToSelected);
 
     return () => {
-      window.removeEventListener('resize', scrollSelected);
+      window.removeEventListener('resize', scrollToSelected);
     };
-  }, [data, selectedChat, ...scrollDependencies]);
+  }, [data, chatId, friendId, ...scrollDependencies]);
 
-  const renderSecondary = (item: any, chatDetails: any) => {
-    const msg = item?.lastMessage;
+  const renderSecondary = (chat: any, chatDetails: any) => {
+    const msg = chat?.lastMessage;
     let isComponent = false;
     let component = null;
+    const messageStatus = checkMessageStatus(msg, chat);
 
     if (msg) {
       isComponent = true;
@@ -64,7 +79,7 @@ const DataList = ({
           }}
         >
           {msg?.sender?._id && msg?.sender?._id === _id ? (
-            <MessageStatus msg={msg} selectedChat={item} />
+            <MessageStatus messageStatus={messageStatus} />
           ) : null}
           <span
             style={{
@@ -96,27 +111,14 @@ const DataList = ({
     handleClick: any,
     itemsRef: RefObject<HTMLDivElement[] | null[]>,
   ) => {
-    const isPrivateChat = item?.type === 'private';
-    const isGroupChat = item?.type === 'group';
-    const isFriend = item?.type === 'friend';
-
     const { currentMember, otherMember } = getMember(item?.members, _id);
-
-    let chatDetails: any;
-
-    if (isPrivateChat || isFriend) {
-      chatDetails = otherMember;
-    }
-
-    if (isGroupChat) {
-      chatDetails = item?.groupDetails;
-    }
-
-    const { isComponent, component } = renderSecondary(item, chatDetails);
+    const { chatDetails } = getChatDetails(item, otherMember, _id);
 
     if (chatDetails) {
+      const { isComponent, component } = renderSecondary(item, chatDetails);
+
       return (
-        <div key={item?._id}>
+        <Fragment key={item?._id}>
           <ListItem
             disableGutters={disableGutters}
             ref={(el) => {
@@ -130,7 +132,7 @@ const DataList = ({
                 secondary: component,
                 slotProps: {
                   primary: {
-                    ...(otherMember?.unreadMessagesCount // to do
+                    ...(currentMember?.unreadMessagesCount
                       ? {
                           fontWeight: 600,
                         }
@@ -138,7 +140,7 @@ const DataList = ({
                   },
                   secondary: {
                     ...(isComponent ? { component: 'div' as any } : {}),
-                    ...(otherMember?.unreadMessagesCount // to do
+                    ...(currentMember?.unreadMessagesCount
                       ? {
                           fontWeight: 700,
                           style: {
@@ -153,14 +155,17 @@ const DataList = ({
                 },
               },
               avatarProps: {
+                name: chatDetails?.name,
                 src: chatDetails?.picture,
               },
               endIcon: (
                 <Badge
                   badgeContent={currentMember?.unreadMessagesCount}
                   color="secondary"
-                  overlap="circular"
-                  sx={{ mr: '0.5rem' }}
+                  max={999}
+                  sx={{
+                    left: `-${getBadgeWidth(currentMember?.unreadMessagesCount)}px`,
+                  }}
                 />
               ),
               onClick: (_: any) => handleClick(_, item, chatDetails),
@@ -175,7 +180,7 @@ const DataList = ({
               disableGutters ? { ml: '5px', mr: '5px' } : { ml: 2.5, mr: 2.5 }
             }
           />
-        </div>
+        </Fragment>
       );
     }
 
@@ -196,7 +201,7 @@ const DataList = ({
         renderList(
           item,
           idx,
-          item?._id && selectedChat?._id && item?._id === selectedChat?._id,
+          item?._id && (item?._id === chatId || item?._id === friendId),
           handleClickListItem,
           listItemsRef,
         ),

@@ -1,88 +1,164 @@
-import { createContext, useLayoutEffect, useRef, useState } from 'react';
-import { AppBar } from '@mui/material';
-import { Drawer, NavBar, SideBar } from '../../components';
-import { updateHeight, updateWidth } from '../../helpers';
-import { SideBarList } from './SideBarList';
-import { DrawerStyled } from './Drawer.styled';
+import { createContext, useContext, useRef, useState } from 'react';
+import { IconButton, useMediaQuery, useTheme } from '@mui/material';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import {
+  DataList,
+  Drawer,
+  ListItem,
+  Menu,
+  MobileNavBar,
+} from '../../components';
+import { useAuth } from '../../hooks';
+import { toggleDrawer } from '../../helpers';
+import { ChatsAndFriendsContext, FRIENDS_SORTED_QUERY } from '..';
+import { DrawerMainStyled } from './Drawer.styled';
 
 export const DrawerContext = createContext<any>({});
 
 export const DrawerProvider = ({ children }: any) => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [navbarHeight, setNavbarHeight] = useState(0);
-  const [sideBarWidth, setSideBarWidth] = useState(0);
-  const navbarRef = useRef<HTMLElement | null>(null);
-  const sideBarRef = useRef<HTMLDivElement | null>(null);
+  const theme = useTheme();
+  const [navBarHeight, setNavBarHeight] = useState(0);
+  const [menuWidth, setMenuWidth] = useState(0);
+  const { auth: { _id = '' } = {} } = useAuth();
+  const {
+    friendsSorted = [],
+    friendsSortedClient,
+    isMenuDrawerOpen,
+    setIsMenuDrawerOpen,
+    isNewChatDrawerOpen,
+    setIsNewChatDrawerOpen,
+    handleClickChat,
+  } = useContext(ChatsAndFriendsContext);
+  const navBarRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const isExtraSmallOrBelow = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMediumOrAbove = useMediaQuery(theme.breakpoints.up('sm'));
+  const isExtraLargeOrAbove = useMediaQuery(theme.breakpoints.up('lg'));
+  const isBetweenMediumAndLarge = useMediaQuery(
+    theme.breakpoints.between('md', 'lg'),
+  );
+  const isBetweenExtraSmallAndMedium = useMediaQuery(
+    theme.breakpoints.between('xs', 'md'),
+  );
 
-  useLayoutEffect(() => {
-    updateHeight(navbarRef, setNavbarHeight);
-    window.addEventListener('resize', () =>
-      updateHeight(navbarRef, setNavbarHeight),
-    );
+  const getDrawerWidth = () => {
+    let maxWidth = 0;
 
-    return () => {
-      window.removeEventListener('resize', () =>
-        updateHeight(navbarRef, setNavbarHeight),
-      );
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    updateWidth(sideBarRef, setSideBarWidth);
-    window.addEventListener('resize', () =>
-      updateWidth(sideBarRef, setSideBarWidth),
-    );
-
-    return () => {
-      window.removeEventListener('resize', () =>
-        updateWidth(sideBarRef, setSideBarWidth),
-      );
-    };
-  }, []);
-
-  const toggleDrawer = (isSwitch?: boolean, value?: boolean) => {
-    if (isSwitch) {
-      setIsDrawerOpen((prev) => !prev);
-    } else {
-      setIsDrawerOpen(!!value);
+    if (isExtraLargeOrAbove) {
+      maxWidth = 400;
+    } else if (isBetweenMediumAndLarge) {
+      maxWidth = 350;
+    } else if (isBetweenExtraSmallAndMedium) {
+      maxWidth = 300;
     }
+
+    return maxWidth;
+  };
+
+  const clearSortedFriendsCache = () => {
+    friendsSortedClient.cache.evict({
+      fieldName: 'friendsSorted',
+      args: { input: { userId: _id } },
+    });
+    friendsSortedClient.cache.gc();
+    friendsSortedClient.writeQuery({
+      query: FRIENDS_SORTED_QUERY,
+      data: {
+        friendsSorted: [],
+      },
+      variables: { userId: _id },
+    });
+  };
+
+  const handleClickCloseNewChat = () => {
+    toggleDrawer(setIsNewChatDrawerOpen);
+    setTimeout(() => {
+      clearSortedFriendsCache();
+    }, 200);
+  };
+
+  const handleClickCloseMenu = () => {
+    toggleDrawer(setIsMenuDrawerOpen);
   };
 
   return (
     <DrawerContext.Provider
       value={{
-        isDrawerOpen,
-        setIsDrawerOpen,
-        sideBarWidth,
-        navbarHeight,
-        toggleDrawer,
+        navBarHeight,
+        setNavBarHeight,
+        menuWidth,
+        setMenuWidth,
+        getDrawerWidth,
       }}
     >
-      <DrawerStyled>
-        <SideBar ref={sideBarRef} className="hidden-from-mobile">
-          <SideBarList className="flex-item" />
-        </SideBar>
-        <Drawer
-          isOpen={isDrawerOpen}
+      {isExtraSmallOrBelow ? (
+        <Menu
+          open={isMenuDrawerOpen}
+          onClose={handleClickCloseMenu}
           anchor="right"
-          onClose={() => toggleDrawer()}
-          isMobile
-          navbarHeight={navbarHeight}
+        />
+      ) : null}
+      <div style={{ display: 'flex' }}>
+        {isMediumOrAbove ? (
+          <Menu
+            open
+            variant="permanent"
+            ref={menuRef}
+            setMenuWidth={setMenuWidth}
+          />
+        ) : null}
+        <Drawer
+          open={isNewChatDrawerOpen}
+          onClose={handleClickCloseNewChat}
+          variant={isMediumOrAbove ? 'persistent' : 'temporary'}
         >
-          <SideBar ref={sideBarRef} className="mobile-sidebar">
-            <SideBarList className="flex-item" />
-          </SideBar>
+          <div style={{ marginTop: '1rem' }}>
+            <ListItem
+              dense
+              disableHover
+              sx={{
+                pt: 0,
+                pb: 0,
+              }}
+              btnProps={{
+                sx: {
+                  gap: '1.125rem',
+                  ml: '-0.125rem',
+                },
+                textProps: {
+                  primary: 'New Chat',
+                  slotProps: {
+                    primary: {
+                      sx: {
+                        fontWeight: 600,
+                      },
+                      style: {
+                        WebkitLineClamp: 1,
+                      },
+                    },
+                  },
+                },
+                startIcon: isMediumOrAbove ? (
+                  <IconButton onClick={handleClickCloseNewChat}>
+                    <ArrowBackRoundedIcon />
+                  </IconButton>
+                ) : null,
+              }}
+            />
+            <DataList
+              dense
+              data={friendsSorted}
+              handleClickListItem={handleClickChat}
+            />
+          </div>
         </Drawer>
-        {children}
-        <AppBar
-          position="fixed"
-          elevation={0}
-          className="hidden-from-web mobile-navbar"
-          ref={navbarRef}
-        >
-          <NavBar />
-        </AppBar>
-      </DrawerStyled>
+        <DrawerMainStyled drawerWidth={isMediumOrAbove ? getDrawerWidth() : 0}>
+          {children}
+        </DrawerMainStyled>
+      </div>
+      {isExtraSmallOrBelow ? (
+        <MobileNavBar ref={navBarRef} setNavBarHeight={setNavBarHeight} />
+      ) : null}
     </DrawerContext.Provider>
   );
 };

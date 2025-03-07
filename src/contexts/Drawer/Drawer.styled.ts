@@ -1,24 +1,14 @@
-import { styled } from '@mui/system';
+import { styled } from '@mui/material';
 
-export const DrawerStyled = styled('div')(({ theme }: any) => ({
-  display: 'flex',
-  width: '100%',
-  height: '100dvh',
-  [theme.breakpoints.up('sm')]: {
-    '.hidden-from-web': {
-      display: 'none',
-    },
-  },
-  [theme.breakpoints.down('sm')]: {
-    display: 'block',
-    '.mobile-navbar': {
-      borderTop: `1px solid ${theme.palette.grey[400]}`,
-      top: 'auto',
-      bottom: 0,
-      zIndex: theme.zIndex.drawer + 1,
-    },
-    '.hidden-from-mobile': {
-      display: 'none',
-    },
-  },
+export const DrawerMainStyled = styled('main', {
+  shouldForwardProp: (prop) => prop !== 'drawerWidth',
+})<{
+  drawerWidth: number;
+}>(({ theme, drawerWidth }) => ({
+  flexGrow: 1,
+  transition: theme.transitions.create('margin', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  marginLeft: `-${drawerWidth || 0}px`,
 }));

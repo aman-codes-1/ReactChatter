@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 
 const ReactErrorFallback = ({ error, resetErrorBoundary }: any) => (
@@ -12,7 +12,7 @@ const ReactErrorFallback = ({ error, resetErrorBoundary }: any) => (
 const ErrorBoundary = ({ children }: any) => {
   const [globalError, setGlobalError] = useState<any>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handleGlobalError = (
       message: any,
       source: any,

@@ -19,6 +19,7 @@ const InfiniteScroll = ({
         loadMore?.(containerRef);
       }
     },
+    undefined,
     [hasMore],
     { root: containerRef?.current, threshold: 0.1 },
   );

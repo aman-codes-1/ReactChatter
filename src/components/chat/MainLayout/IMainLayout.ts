@@ -2,12 +2,16 @@ import { ReactNode } from 'react';
 
 export type MainLayoutProps = {
   heading?: string;
-  defaultText?: string;
+  description?: string;
+  disableDescription?: boolean;
   loading?: boolean;
-  loaderProps?: any;
-  disableLoader?: boolean;
+  loadingProps?: any;
+  loadingData?: boolean;
+  loadingDataProps?: any;
   data?: any;
   error?: string;
-  onlyChildren?: boolean;
+  disablePadding?: boolean;
+  onError?: () => void;
+  className?: string;
   children?: ReactNode;
 };

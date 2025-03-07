@@ -1,25 +1,42 @@
-import { styled } from '@mui/system';
+import { List, styled } from '@mui/material';
 
-export const MainLayoutStyled = styled('div')<{ navbarHeight: number }>(
-  ({ theme, navbarHeight }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '3.8rem 4.5rem',
-    height: '100dvh',
-    overflow: 'auto',
-    [theme.breakpoints.down('md')]: {
-      padding: '2.5rem 3rem',
-    },
-    [theme.breakpoints.down('sm')]: {
-      height: `calc(100dvh - ${navbarHeight || 0}px)`,
-    },
-    [theme.breakpoints.down('xs')]: {
-      padding: '2.5rem 2rem',
-    },
+export const MainLayoutStyled = styled('div', {
+  shouldForwardProp: (prop) =>
+    prop !== 'navBarHeight' &&
+    prop !== 'disablePadding' &&
+    prop !== 'isHeading',
+})<{ navBarHeight: number; disablePadding: boolean; isHeading: boolean }>(
+  ({ theme, navBarHeight, disablePadding, isHeading }) => ({
+    width: '100%',
+    ...(isHeading
+      ? {
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100dvh',
+          overflow: 'auto',
+          [theme.breakpoints.down('sm')]: {
+            height: `calc(100dvh - ${navBarHeight || 0}px)`,
+          },
+        }
+      : {}),
+    ...(disablePadding
+      ? {}
+      : {
+          padding: '3.5rem 4.5rem 2rem 4.5rem',
+          [theme.breakpoints.between('sm', 'md')]: {
+            padding: '2.5rem 3rem 2.5rem 3rem',
+          },
+          [theme.breakpoints.between('xs', 'sm')]: {
+            padding: '2.5rem 3rem 0rem 3rem',
+          },
+          [theme.breakpoints.down('xs')]: {
+            padding: '2rem 2rem 0rem 2rem',
+          },
+        }),
     '.main-layout-heading': {
       fontSize: '3rem',
+      marginBottom: '2.5rem',
       lineHeight: 1,
-      marginBottom: '2rem',
       color: theme.palette.text.primary,
       [theme.breakpoints.down('sm')]: {
         marginBottom: '1.75rem',
@@ -29,15 +46,26 @@ export const MainLayoutStyled = styled('div')<{ navbarHeight: number }>(
         fontSize: '2.5rem',
       },
     },
-    '.main-layout-default-text': {
+    '.main-layout-heading-skeleton': {
+      width: '100%',
+      maxWidth: '280px',
+    },
+    '.main-layout-description-skeleton': {
+      width: '100%',
+      maxWidth: '360px',
+      marginTop: '3rem',
+    },
+    '.main-layout-description': {
       fontSize: '0.875rem',
-      marginTop: '0.5rem',
       color: theme.palette.text.secondary,
+    },
+    '.main-layout-margin-top': {
+      marginTop: '0.5rem',
     },
   }),
 );
 
-export const MainLayoutLoaderStyled = styled('div')(() => ({
+export const MainLayoutLoaderStyled = styled(List)(() => ({
   width: '100%',
   overflow: 'auto',
   '.primary-skeleton': {
@@ -45,9 +73,5 @@ export const MainLayoutLoaderStyled = styled('div')(() => ({
   },
   '.secondary-skeleton': {
     maxWidth: '230px',
-  },
-  '.avatar-skeleton': {
-    width: 40,
-    height: 40,
   },
 }));

@@ -1,21 +1,22 @@
-import { createContext, useEffect, useRef } from 'react';
+import { createContext, useLayoutEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../../hooks';
 
-export const WebSocketContext = createContext<any>({});
+export const WebSocketContext = createContext<{ socket: Socket | null }>({
+  socket: null,
+});
 
 export const WebSocketProvider = ({ children }: any) => {
   const { auth } = useAuth();
-  const socket = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const isHiddenOrBlurredRef = useRef<boolean | null>(false);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateOnlineStatus = (isOnline: boolean) => {
-    if (!socket.current) return;
-    if (isOnline && !socket?.current?.connected) {
-      socket?.current?.connect();
-    } else if (!isOnline && socket?.current?.connected) {
-      socket?.current?.disconnect();
+    if (isOnline && !socket?.connected) {
+      socket?.connect();
+    } else if (!isOnline && socket?.connected) {
+      socket?.disconnect();
     }
   };
 
@@ -40,16 +41,37 @@ export const WebSocketProvider = ({ children }: any) => {
     updateOnlineStatus(true);
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!auth?.isLoggedIn) {
+      setSocket(null);
+      return;
+    }
+
     const serverUri = `${process.env.REACT_APP_PROXY_URI}`;
     if (!serverUri) {
       console.error('Missing REACT_APP_PROXY_URI environment variable');
       return;
     }
-    socket.current = io(serverUri, {
+
+    const newSocket = io(serverUri, {
       auth,
       transports: ['websocket'],
     });
+
+    setSocket(newSocket);
+
+    newSocket.on('connect_error', () => {
+      newSocket.disconnect();
+      setSocket(null);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [auth?.isLoggedIn]);
+
+  useLayoutEffect(() => {
+    if (!socket) return;
 
     const handleOnline = () => updateOnlineStatus(true);
     const handleOffline = () => updateOnlineStatus(false);
@@ -108,10 +130,10 @@ export const WebSocketProvider = ({ children }: any) => {
       clearInactivityTimer();
       handleOffline();
     };
-  }, [auth?.isLoggedIn]);
+  }, [socket]);
 
   return (
-    <WebSocketContext.Provider value={{ socket: socket?.current }}>
+    <WebSocketContext.Provider value={{ socket }}>
       {children}
     </WebSocketContext.Provider>
   );

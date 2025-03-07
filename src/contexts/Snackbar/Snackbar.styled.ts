@@ -1,4 +1,4 @@
-import { styled } from '@mui/system';
+import { styled } from '@mui/material';
 
 export const SnackbarStyled = styled('div')(({ theme }) => ({
   '.snackbar': {
@@ -8,13 +8,14 @@ export const SnackbarStyled = styled('div')(({ theme }) => ({
     height: '100dvh',
     top: '0px',
     '.snackbar-wrapper': {
-      width: '430px',
+      width: '100%',
+      maxWidth: '430px',
       padding: '22px',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: '8px',
+      borderRadius: '6px',
       minHeight: '130px',
       textAlign: 'center',
       '.close-btn': {
@@ -55,13 +56,13 @@ export const SnackbarStyled = styled('div')(({ theme }) => ({
         backgroundColor: `${theme.palette.error.dark} !important`,
       },
       '.error-submit-btn:hover': {
-        backgroundColor: `${theme.palette.error[900]} !important`,
+        backgroundColor: `${theme.palette.error.dark} !important`,
       },
       '.success-submit-btn': {
         backgroundColor: `${theme.palette.success.dark} !important`,
       },
       '.success-submit-btn:hover': {
-        backgroundColor: `${theme.palette.success[900]} !important`,
+        backgroundColor: `${theme.palette.success.dark} !important`,
       },
     },
   },

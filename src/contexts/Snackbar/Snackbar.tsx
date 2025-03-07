@@ -8,7 +8,6 @@ import {
 } from 'react';
 import {
   AlertColor,
-  Button,
   IconButton,
   Paper,
   Snackbar,
@@ -16,6 +15,7 @@ import {
 } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { Button } from '../../components';
 import { SnackbarStyled } from './Snackbar.styled';
 
 type Props = {

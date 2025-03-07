@@ -6,6 +6,18 @@ import { CACHED_MESSAGES_QUERY, MessageData, Receiver } from '../contexts';
 
 moment.locale(navigator.language);
 
+export const toggleDrawer = (
+  setIsOpen: any,
+  isSwitch?: boolean,
+  value?: boolean,
+) => {
+  if (isSwitch) {
+    setIsOpen((prev: boolean) => !prev);
+  } else {
+    setIsOpen(!!value);
+  }
+};
+
 export const login = async (token: string, setAuth: any) => {
   const decoded = jwtDecode(token);
   if (Object.keys(decoded || {})?.length) {
@@ -20,12 +32,14 @@ export const getMember = (members: any[], _id: string) => {
   let currentMember;
   let otherMember;
 
-  for (const member of members) {
-    if (member?._id) {
-      if (member?._id === _id) {
-        currentMember = member;
-      } else if (member?._id !== _id) {
-        otherMember = member;
+  if (members?.length) {
+    for (const member of members) {
+      if (member?._id) {
+        if (member?._id === _id) {
+          currentMember = member;
+        } else if (member?._id !== _id) {
+          otherMember = member;
+        }
       }
     }
   }
@@ -33,34 +47,52 @@ export const getMember = (members: any[], _id: string) => {
   return { currentMember, otherMember };
 };
 
+export const getChatType = (chat: any) => {
+  const isPrivateChat = chat?.type === 'private';
+  const isGroupChat = chat?.type === 'group';
+  const type = isPrivateChat || isGroupChat ? 'chat' : chat?.type;
+  return { isPrivateChat, isGroupChat, type };
+};
+
+export const getChatDetails = (chat: any, otherMember: any, _id: string) => {
+  const { isPrivateChat, isGroupChat, type } = getChatType(chat);
+  let chatDetails: any;
+
+  if (isGroupChat) {
+    chatDetails = chat?.groupDetails;
+  } else {
+    chatDetails = otherMember;
+  }
+
+  return { isPrivateChat, isGroupChat, type, chatDetails };
+};
+
 export const clickChat = async (
-  item: any,
+  chat: any,
   chatDetails: any,
-  getChatMessagesWithQueue: any,
   setIsListItemClicked: any,
   setSelectedChat: any,
   setSelectedChatDetails: any,
+  getChatMessagesWithQueue: any,
   navigate: any,
   prevPathname: string,
   fetchAll: any,
-  toggleDrawer: any,
 ) => {
-  setIsListItemClicked((prev: boolean) => !prev);
+  setSelectedChat(chat);
+  setSelectedChatDetails(chatDetails);
   let skipFinally = false;
-  let route = '';
+  let route = '/';
 
   try {
-    const id = item?._id;
-    const type =
-      item?.type === 'private' || item?.type === 'group' ? 'chat' : item?.type;
+    const id = chat?._id;
+    const { type } = getChatType(chat);
     const userId = chatDetails?._id;
     if (type === 'chat') {
       await getChatMessagesWithQueue(id, type);
       route = `/chat?id=${id}&type=${type}`;
     }
     if (type === 'friend') {
-      if (item?.hasChats) {
-        toggleDrawer();
+      if (chat?.hasChats) {
         navigate('/');
         await fetchAll();
         skipFinally = true;
@@ -70,24 +102,27 @@ export const clickChat = async (
       await getChatMessagesWithQueue(fullFriendId, 'friend');
       route = `/chat?id=${fullFriendId}&type=${type}`;
     }
-  } catch (error: any) {
-    console.error('Error fetching messages:', error);
+  } catch (err: any) {
+    console.error('Error fetching messages:', err);
   } finally {
     if (!skipFinally) {
-      setSelectedChat(item);
-      setSelectedChatDetails(chatDetails);
-      toggleDrawer();
       if (prevPathname !== route) {
         navigate(route);
       }
+      setIsListItemClicked((prev: boolean) => !prev);
     }
   }
 };
 
 export const getFriendId = (str: string | null) => {
-  const ids = str?.split?.('-');
-  const friendId = ids?.[0] || '';
-  const friendUserId = ids?.[1] || '';
+  let friendId = '';
+  let friendUserId = '';
+  const isValid = str?.includes('-');
+  if (isValid) {
+    const ids = str?.split?.('-');
+    friendId = ids?.[0] || '';
+    friendUserId = ids?.[1] || '';
+  }
   return { friendId, friendUserId };
 };
 
@@ -100,28 +135,40 @@ export const setFocus = (ref: RefObject<HTMLInputElement>) => {
   }
 };
 
-export const updateHeight = (ref: RefObject<HTMLElement>, setHeight: any) => {
+export const updateHeight = (ref: any, setHeight: any, delay = false) => {
   const listElement = ref?.current;
   if (listElement) {
-    setHeight(listElement?.clientHeight);
+    if (delay) {
+      requestAnimationFrame(() => {
+        setHeight(listElement?.clientHeight);
+      });
+    } else {
+      setHeight(listElement?.clientHeight);
+    }
   }
 };
 
-export const updateWidth = (ref: any, setHeight: any) => {
+export const updateWidth = (ref: any, setWidth: any, delay = false) => {
   const listElement = ref?.current;
   if (listElement) {
-    setHeight(listElement?.clientWidth);
+    if (delay) {
+      requestAnimationFrame(() => {
+        setWidth(listElement?.clientWidth);
+      });
+    } else {
+      setWidth(listElement?.clientWidth);
+    }
   }
 };
 
-export const scrollToSelected = (
+export const scrollTo = (
   ref: any,
   itemsRef: any,
   listItems: any[],
-  selectedItem: any,
+  id: string,
 ) => {
   const selectedItemIndex = listItems?.findIndex(
-    (item) => item?._id && selectedItem?._id && item?._id === selectedItem?._id,
+    (item) => item?._id && id && item?._id === id,
   );
   const listElement = ref?.current;
   const itemElement = itemsRef?.current?.[selectedItemIndex];
@@ -135,10 +182,6 @@ export const scrollToSelected = (
     const scrollPos = topPos - listHeight / 2 + itemHeight / 2;
     listElement?.scrollTo({ top: scrollPos, behavior: 'smooth' });
   }
-};
-
-export const filterDataById = (data: any[], targetId: string) => {
-  return data?.filter((el: any) => el?._id && targetId && el?._id !== targetId);
 };
 
 export const addRequest = (OnRequestAddedRequest: any, existingData: any) => {
@@ -157,14 +200,14 @@ export const addRequest = (OnRequestAddedRequest: any, existingData: any) => {
   };
 };
 
-export const deleteRequest = (
-  OnRequestUpdatedRequest: any,
+export const removeRequest = (
+  OnRequestUpdatedRequestId: any,
   existingData: any,
 ) => {
   let data = existingData?.data;
   let totalCount = existingData?.totalCount;
-  if (OnRequestUpdatedRequest && data?.length && totalCount) {
-    data = filterDataById(data, OnRequestUpdatedRequest?._id);
+  if (data?.length && totalCount) {
+    data = removeObject(OnRequestUpdatedRequestId, data);
     totalCount = totalCount - 1;
   }
   return {
@@ -201,10 +244,10 @@ export const addArray = (arrToAdd: any, existingData: any) => {
   return data;
 };
 
-export const deleteObject = (id: string, existingData: any) => {
+export const removeObject = (id: string, existingData: any) => {
   let data = existingData;
-  if (id && data?.length) {
-    data = filterDataById(data, id);
+  if (data?.length) {
+    data = data?.filter((el: any) => el?._id && id && el?._id !== id);
   }
   return data;
 };
@@ -293,67 +336,18 @@ export const getSender = (members: any[], timestamp: number, _id: string) => {
 
 export const getReceivers = (members: any[], _id: string) => {
   if (members?.length) {
-    const filteredMembers = filterDataById(members, _id);
-    if (filteredMembers?.length) {
-      const receivers = filteredMembers?.map((member: any) => {
-        const { hasAdded, ...rest } = member || {};
-        return {
-          ...rest,
-          deliveredStatus: null,
-          readStatus: null,
-        };
-      });
-      return receivers;
-    }
-    return [];
+    const updatedMembers = removeObject(_id, members);
+    const receivers = updatedMembers?.map((member: any) => {
+      const { hasAdded, ...rest } = member || {};
+      return {
+        ...rest,
+        deliveredStatus: null,
+        readStatus: null,
+      };
+    });
+    return receivers;
   }
   return [];
-};
-
-export const addUpdateChat = (
-  chatsClient: any,
-  _id: string,
-  id: string,
-  key: string,
-  dataToUpdate: any,
-  updateKey?: string,
-  isMoveToTop?: boolean,
-) => {
-  let isChatAdded = false;
-  let isChatUpdated = false;
-
-  chatsClient.cache.modify({
-    fields: {
-      [`chats({"input":{"userId":"${_id}"}})`](existingData: any) {
-        const { isFoundAndUpdated, data } = findAndUpdate(
-          id,
-          key,
-          existingData,
-          dataToUpdate,
-          updateKey,
-        );
-        if (isFoundAndUpdated && data?.length) {
-          isChatUpdated = true;
-          if (isMoveToTop) {
-            const updatedData = findAndMoveToTop(id, key, data);
-            return updatedData;
-          }
-          return data;
-        }
-        if (!isFoundAndUpdated) {
-          const newData = addObject(dataToUpdate, existingData, true);
-          isChatAdded = true;
-          return newData;
-        }
-        return existingData;
-      },
-    },
-  });
-
-  return {
-    isChatAdded,
-    isChatUpdated,
-  };
 };
 
 export const renderMessage = async (
@@ -409,6 +403,63 @@ export const renderMessage = async (
   return { isRendered };
 };
 
+export const addUpdateChat = (
+  chatsClient: any,
+  _id: string,
+  id: string,
+  key: string,
+  dataToUpdate: any,
+  updateKey?: string,
+  isMoveToTop?: boolean,
+) => {
+  let isChatAdded = false;
+  let isChatUpdated = false;
+
+  chatsClient.cache.modify({
+    fields: {
+      [`chats({"input":{"userId":"${_id}"}})`](existingData: any) {
+        const { isFoundAndUpdated, data } = findAndUpdate(
+          id,
+          key,
+          existingData,
+          dataToUpdate,
+          updateKey,
+        );
+        if (isFoundAndUpdated && data?.length) {
+          isChatUpdated = true;
+          if (isMoveToTop) {
+            const updatedData = findAndMoveToTop(id, key, data);
+            return updatedData;
+          }
+          return data;
+        }
+        if (!isFoundAndUpdated) {
+          const newData = addObject(dataToUpdate, existingData, true);
+          isChatAdded = true;
+          return newData;
+        }
+        return existingData;
+      },
+    },
+  });
+
+  return {
+    isChatAdded,
+    isChatUpdated,
+  };
+};
+
+export const deleteFriend = (friendsClient: any, _id: string, id: string) => {
+  friendsClient.cache.modify({
+    fields: {
+      [`friends({"input":{"userId":"${_id}"}})`](existingData: any) {
+        const data = removeObject(id, existingData);
+        return data;
+      },
+    },
+  });
+};
+
 export const deleteFriendsCachedMessages = (
   cachedMessagesClient: any,
   id: string,
@@ -418,21 +469,6 @@ export const deleteFriendsCachedMessages = (
     args: { input: { chatId: id } },
   });
   cachedMessagesClient.cache.gc();
-};
-
-export const deleteFriend = (
-  otherFriendsClient: any,
-  _id: string,
-  id: string,
-) => {
-  otherFriendsClient.cache.modify({
-    fields: {
-      [`otherFriends({"input":{"userId":"${_id}"}})`](existingData: any) {
-        const data = deleteObject(id, existingData);
-        return data;
-      },
-    },
-  });
 };
 
 export const checkIsMemberExists = (
@@ -457,42 +493,46 @@ export const checkIsMemberExists = (
   return { isCurrentMember, isOtherMember };
 };
 
-export const checkMessageStatus = (msg: MessageData, selectedChat: any) => {
-  let isQueued;
-  let isSent;
-  let isDelivered;
-  let isRead;
+export const checkMessageStatus = (msg: MessageData, chat: any) => {
+  let isDelivered: boolean | undefined;
+  let isRead: boolean | undefined;
+  let deliveredTimestamp: number | undefined;
+  let readTimestamp: number | undefined;
 
   const sender = msg?.sender;
   const queuedStatus = sender?.queuedStatus;
-  isQueued = queuedStatus?.isQueued;
+  const isQueued = queuedStatus?.isQueued;
   const sentStatus = sender?.sentStatus;
-  isSent = sentStatus?.isSent;
+  const isSent = sentStatus?.isSent;
+  const retryStatus = sender?.retryStatus;
+  const isRetry = retryStatus?.isRetry;
+  const { isPrivateChat } = getChatType(chat);
 
-  if (selectedChat?.type === 'private') {
+  if (isPrivateChat) {
     const receiver = msg?.receivers?.[0];
     const deliveredStatus = receiver?.deliveredStatus;
     isDelivered = deliveredStatus?.isDelivered;
+    deliveredTimestamp = deliveredStatus?.timestamp;
     const readStatus = receiver?.readStatus;
     isRead = readStatus?.isRead;
+    readTimestamp = readStatus?.timestamp;
   }
 
-  if (selectedChat?.type === 'group') {
+  if (chat?.type === 'group') {
     isDelivered = msg?.receivers?.every(
       (el: Receiver) => el?.deliveredStatus?.isDelivered,
     );
     isRead = msg?.receivers?.every((el: Receiver) => el?.readStatus?.isRead);
   }
 
-  isDelivered = isDelivered && !isRead;
-  isSent = isSent && !isDelivered && !isRead;
-  isQueued = isQueued && !isSent && !isDelivered && !isRead;
-
   return {
     isQueued,
     isSent,
+    isRetry,
     isDelivered,
     isRead,
+    deliveredTimestamp,
+    readTimestamp,
   };
 };
 
@@ -560,49 +600,87 @@ export const getOnlineStatus = (isOnline: boolean) => {
   };
 };
 
+export const getDate = (
+  timestamp: number,
+  dateTimeFormatOptions: Intl.DateTimeFormatOptions,
+) => {
+  const date = new Date(timestamp);
+  const browserLocale = navigator.language || 'en-US';
+  const dateLabel = date.toLocaleDateString(
+    browserLocale,
+    dateTimeFormatOptions,
+  );
+
+  return dateLabel;
+};
+
 export const getDateLabel = (timestamp: number) => {
-  const messageDate = moment(timestamp);
   let dateLabel: string;
+  const time = moment(timestamp);
 
-  if (messageDate.isSame(moment(), 'day')) {
+  if (time.isSame(moment(), 'day')) {
     dateLabel = 'Today';
-  } else if (messageDate.isSame(moment().subtract(1, 'days'), 'day')) {
+  } else if (time.isSame(moment().subtract(1, 'days'), 'day')) {
     dateLabel = 'Yesterday';
-  } else if (messageDate.isAfter(moment().subtract(1, 'week'))) {
-    dateLabel = messageDate.format('dddd');
-  } else if (messageDate.isAfter(moment().subtract(6, 'months'))) {
-    dateLabel = messageDate.format('ddd, D MMM');
+  } else if (time.isAfter(moment().subtract(6, 'days'))) {
+    dateLabel = time.format('dddd');
+  } else if (time.isAfter(moment().subtract(6, 'months'))) {
+    dateLabel = time.format('ddd, D MMM');
   } else {
-    dateLabel = messageDate.format('D MMM YYYY');
+    dateLabel = time.format('D MMM YYYY');
   }
 
   return dateLabel;
 };
 
-export const getDateLabel2 = (timestamp: number) => {
-  const messageDate = moment(timestamp);
+export const getDateLabel2 = (
+  timestamp: number,
+  disableWeekDays: boolean = false,
+  dateTimeFormatOptions: Intl.DateTimeFormatOptions,
+) => {
   let dateLabel: string;
+  const time = moment(timestamp);
 
-  if (messageDate.isSame(moment(), 'day')) {
+  if (time.isSame(moment(), 'day')) {
     dateLabel = 'today';
-  } else if (messageDate.isSame(moment().subtract(1, 'days'), 'day')) {
+  } else if (time.isSame(moment().subtract(1, 'days'), 'day')) {
     dateLabel = 'yesterday';
-  } else if (messageDate.isAfter(moment().subtract(1, 'week'))) {
-    dateLabel = messageDate.format('ddd');
+  } else if (time.isAfter(moment().subtract(1, 'week')) && !disableWeekDays) {
+    dateLabel = time.format('ddd');
   } else {
-    const date = new Date(timestamp);
-    const browserLocale = navigator.language || 'en-US';
-    dateLabel = date.toLocaleDateString(browserLocale, {
-      day: 'numeric',
-      month: 'numeric',
-      year: '2-digit',
-    });
+    dateLabel = getDate(timestamp, dateTimeFormatOptions);
   }
 
   return dateLabel;
 };
 
-export const getCurrentYear = () => new Date().getFullYear();
+export const getDateFromNow = (timestamp: number) => {
+  let dateLabel: string;
+  const time = moment(timestamp);
+
+  moment.updateLocale('en', {
+    relativeTime: {
+      h: '1 hour',
+      dd: (number) => {
+        if (number < 7) return `${number} days`;
+        const weeks = Math.floor(number / 7);
+        return weeks === 1 ? '1 week' : `${weeks} weeks`;
+      },
+      M: '1 month',
+      y: '1 year',
+    },
+  });
+
+  if (time.isAfter(moment().subtract(13, 'hours'))) {
+    dateLabel = time.fromNow();
+  } else if (time.isSame(moment().subtract(1, 'day'), 'day')) {
+    dateLabel = 'Yesterday';
+  } else {
+    dateLabel = time.fromNow();
+  }
+
+  return dateLabel;
+};
 
 export const getTime = (timestamp: number) => {
   const date = new Date(timestamp);
@@ -615,6 +693,23 @@ export const getTime = (timestamp: number) => {
     })
     .toUpperCase();
   return time;
+};
+
+export const getCurrentYear = () => new Date().getFullYear();
+
+export const getBadgeWidth = (navLinkCount: number = 0) => {
+  const navLinkLength = String(navLinkCount)?.length;
+  let val = 0;
+  if (navLinkLength === 1) {
+    val = 10;
+  } else if (navLinkLength === 2) {
+    val = 7;
+  } else if (navLinkLength === 3) {
+    val = 6;
+  } else {
+    val = 5.5;
+  }
+  return navLinkLength * val;
 };
 
 export const compareObjects = (first: any, second: any) => {
@@ -656,6 +751,8 @@ export const checkKeys = (uniqueKeys: any[], item: any) => {
   return value;
 };
 
+export const checkIfNumber = (val: any) => (val ? !Number.isNaN(val) : false);
+
 export const debounce = (func: any, delay: number) => {
   let timeoutId: any;
   return (...args: any) => {
@@ -696,9 +793,9 @@ const decodeBase64ToUint8Array = (data: string) => {
     return new Uint8Array(
       Array.from(binaryString).map((char) => char.charCodeAt(0)),
     );
-  } catch (error) {
-    console.error('Failed to decode Base64 string:', error);
-    throw error;
+  } catch (err) {
+    console.error('Failed to decode Base64 string:', err);
+    throw err;
   }
 };
 
@@ -754,6 +851,5 @@ export const regex = {
 };
 
 export const apiRoutes = {
-  // Authentication
   AuthLogout: '/api/auth/logout',
 };

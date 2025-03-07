@@ -1,15 +1,25 @@
 import { DependencyList, useLayoutEffect, useRef } from 'react';
 
 export const useIntersectionObserver = <T extends HTMLElement>(
-  callback: () => void,
+  onVisible: () => void = () => {},
+  onHidden: () => void = () => {},
   deps: DependencyList,
   initValues?: IntersectionObserverInit,
 ) => {
   const nodeRef = useRef<T | null>(null);
 
   useLayoutEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries?.[0].isIntersecting) callback();
+    if (!nodeRef?.current) {
+      onHidden?.();
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        onVisible?.();
+      } else {
+        onHidden?.();
+      }
     }, initValues);
 
     if (nodeRef?.current) {
@@ -17,9 +27,11 @@ export const useIntersectionObserver = <T extends HTMLElement>(
     }
 
     return () => {
-      observer?.disconnect();
+      if (nodeRef?.current) {
+        observer?.unobserve(nodeRef?.current);
+      }
     };
-  }, [...deps, callback, nodeRef?.current]);
+  }, [...deps, onVisible, onHidden, nodeRef?.current]);
 
   return nodeRef;
 };

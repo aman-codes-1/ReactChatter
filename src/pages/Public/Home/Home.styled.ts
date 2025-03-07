@@ -31,6 +31,7 @@ export const HomeStyled = styled('div', {
     },
     '.home-heading': {
       fontSize: '3.625rem',
+      fontWeight: 700,
       color: theme.palette.common.white,
       textShadow: `0 1px 0 ${theme.palette.grey[50]}`,
       [theme.breakpoints.down('sm')]: {
@@ -38,8 +39,9 @@ export const HomeStyled = styled('div', {
       },
     },
     '.home-sub-heading': {
-      lineHeight: '32px',
       fontSize: '1.25rem',
+      fontWeight: 700,
+      lineHeight: '32px',
       [theme.breakpoints.down('sm')]: {
         fontSize: '1.125rem',
       },
@@ -66,6 +68,7 @@ export const HomeStyled = styled('div', {
     textAlign: 'center',
     '.home-footer-sub-heading': {
       fontSize: '0.9375rem',
+      fontWeight: 400,
     },
   },
 }));

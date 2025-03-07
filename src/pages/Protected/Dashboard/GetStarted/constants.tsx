@@ -269,7 +269,10 @@ export const stepsData = (
               color="primary"
               className="get-started-no-friends-icon"
             />
-            <Typography fontWeight={600} fontSize="0.9375rem" align="center">
+            <Typography
+              align="center"
+              className="get-started-no-friends-heading"
+            >
               No friends to show
             </Typography>
             <Alert

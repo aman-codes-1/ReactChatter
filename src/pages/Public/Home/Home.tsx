@@ -76,10 +76,8 @@ const Home = ({ loadingHome }: any) => {
   return (
     <HomeStyled footerHeight={footerHeight}>
       <div className="home-header">
-        <Typography className="home-heading" fontWeight={700}>
-          ReactChatter
-        </Typography>
-        <Typography className="home-sub-heading" fontWeight={700}>
+        <Typography className="home-heading">ReactChatter</Typography>
+        <Typography className="home-sub-heading">
           A simple real-time chat application built using
           <br />
           React.js v18, Material UI, Typescript, Nest.js, and GraphQL
@@ -95,7 +93,7 @@ const Home = ({ loadingHome }: any) => {
         </div>
       </div>
       <div className="home-footer" ref={footerRef}>
-        <Typography className="home-footer-sub-heading" fontWeight={400}>
+        <Typography className="home-footer-sub-heading">
           Made with ❤️ by{' '}
           <Link
             href="https://www.linkedin.com/in/aman-jain-4b24b8111/"
@@ -117,7 +115,7 @@ const Home = ({ loadingHome }: any) => {
             <strong>Source Code</strong>
           </Link>
         </Typography>
-        <Typography className="home-footer-sub-heading" fontWeight={400}>
+        <Typography className="home-footer-sub-heading">
           &copy; {getCurrentYear()} by{' '}
           <Link
             href="https://bold.pro/my/aman-codes"

@@ -446,32 +446,26 @@ const Chats = ({ loadingChats }: any) => {
                   <div
                     className={`chat-drawer-details-item ${item?.isVisible && item?.timestamp ? 'chat-drawer-details-item-2' : ''}`}
                   >
-                    <div className="chat-drawer-details-heading">
+                    <div className="chat-drawer-details-heading-wrapper">
                       <MessageStatus messageStatus={item?.messageStatus} />
                       <Typography fontWeight={500}>{item?.title}</Typography>
                     </div>
                     <div className="chat-drawer-details-content">
                       {item?.isVisible && item?.timestamp ? (
                         <>
-                          <Typography
-                            fontWeight={450}
-                            className="chat-drawer-content-date"
-                          >
+                          <Typography className="chat-drawer-content-date">
                             {getDateLabel2(item?.timestamp, true, {
                               day: '2-digit',
                               month: '2-digit',
                               year: '2-digit',
                             })}
                           </Typography>
-                          <Typography
-                            fontWeight={500}
-                            className="chat-drawer-content-time"
-                          >
+                          <Typography className="chat-drawer-content-time">
                             {getTime(item?.timestamp)}
                           </Typography>
                         </>
                       ) : (
-                        <Typography fontSize="0.875rem">
+                        <Typography className="chat-drawer-content-no-data">
                           &#x26AC;&#x26AC;&#x26AC;
                         </Typography>
                       )}
@@ -496,9 +490,7 @@ const Chats = ({ loadingChats }: any) => {
               <CloseRoundedIcon />
             </IconButton>
           ) : null}
-          <Typography fontWeight={600} className="chat-drawer-heading">
-            Message Info
-          </Typography>
+          <Typography className="chat-drawer-heading">Message Info</Typography>
         </div>
         <Divider />
         <div className="chat-drawer-msg-wrapper">

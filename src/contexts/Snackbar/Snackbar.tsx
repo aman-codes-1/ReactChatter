@@ -99,15 +99,10 @@ export const SnackbarProvider = ({ children }: Props) => {
               className={`title ${
                 type === 'error' ? 'error-dark' : 'success-dark'
               }`}
-              fontWeight={600}
             >
               {title}
             </Typography>
-            {message && (
-              <Typography className="message" fontWeight={400}>
-                {message}
-              </Typography>
-            )}
+            {message && <Typography className="message">{message}</Typography>}
             <Button
               className={`submit-btn ${
                 type === 'error' ? 'error-submit-btn' : 'success-submit-btn'

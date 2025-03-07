@@ -35,6 +35,7 @@ export const MainLayoutStyled = styled('div', {
         }),
     '.main-layout-heading': {
       fontSize: '3rem',
+      fontWeight: 700,
       marginBottom: '2.5rem',
       lineHeight: 1,
       color: theme.palette.text.primary,
@@ -57,6 +58,7 @@ export const MainLayoutStyled = styled('div', {
     },
     '.main-layout-description': {
       fontSize: '0.875rem',
+      fontWeight: 600,
       color: theme.palette.text.secondary,
     },
     '.main-layout-margin-top': {

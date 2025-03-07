@@ -129,7 +129,6 @@ const ChatBubble = ({
           <Typography
             component="span"
             className={`msg-content msg-content-${side}`}
-            fontWeight={470}
             ref={messageRef}
           >
             {msg?.message}
@@ -142,7 +141,6 @@ const ChatBubble = ({
             <Typography
               variant="caption"
               whiteSpace="nowrap"
-              fontWeight={500}
               className={`msg-timestamp-text msg-timestamp-text-${side}`}
             >
               {getTime(timestamp)}

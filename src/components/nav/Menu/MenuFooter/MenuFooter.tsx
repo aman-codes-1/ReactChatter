@@ -24,6 +24,9 @@ const MenuFooter = ({ className }: any) => {
               primary: name,
               secondary: email,
               slotProps: {
+                primary: {
+                  fontSize: '0.9375rem',
+                },
                 secondary: {
                   fontSize: '0.75rem',
                 },

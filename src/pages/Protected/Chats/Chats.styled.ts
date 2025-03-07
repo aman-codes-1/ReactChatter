@@ -113,6 +113,7 @@ export const ChatDrawerStyled = styled('div')(({ theme }) => ({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '4.3rem',
+    fontWeight: 600,
     textAlign: 'center',
   },
   '.chat-drawer-msg-wrapper': {
@@ -145,7 +146,7 @@ export const ChatDrawerStyled = styled('div')(({ theme }) => ({
       alignItems: 'unset',
     },
   },
-  '.chat-drawer-details-heading': {
+  '.chat-drawer-details-heading-wrapper': {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
@@ -166,13 +167,18 @@ export const ChatDrawerStyled = styled('div')(({ theme }) => ({
     },
   },
   '.chat-drawer-content-date': {
-    fontSize: '13.5px',
+    fontSize: '0.875rem',
+    fontWeight: 450,
     color: theme.palette.text.secondary,
     textAlign: 'right',
   },
   '.chat-drawer-content-time': {
-    fontSize: '14.5px',
+    fontSize: '0.9375rem',
+    fontWeight: 500,
     textAlign: 'right',
+  },
+  '.chat-drawer-content-no-data': {
+    fontSize: '0.875rem',
   },
 }));
 
@@ -320,8 +326,9 @@ export const ChatBubbleStyled = styled('div', {
     borderBottomRightRadius: 16,
   },
   '.msg-content': {
-    wordBreak: 'break-all',
     fontSize: '0.9375rem',
+    fontWeight: 470,
+    wordBreak: 'break-all',
   },
   '.msg-content-left': {
     color: theme.palette.text.primary,
@@ -347,6 +354,7 @@ export const ChatBubbleStyled = styled('div', {
   },
   '.msg-timestamp-text': {
     fontSize: '0.688rem',
+    fontWeight: 500,
   },
   '.msg-timestamp-text-left': {
     color: theme.palette.text.secondary,

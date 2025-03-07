@@ -11,6 +11,7 @@ export const SuccessErrorMessageStyled = styled('div', {
   gap: '0.5rem',
   '.message': {
     fontSize: '0.875rem',
+    fontWeight: 600,
     wordBreak: 'break-word',
   },
   '.error': {

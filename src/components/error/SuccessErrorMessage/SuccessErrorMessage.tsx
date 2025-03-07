@@ -34,7 +34,6 @@ const SuccessErrorMessage = forwardRef<
       )}
       <Typography
         className={`message ${type === 'error' ? 'error' : 'success'}`}
-        fontWeight={600}
       >
         {message}
       </Typography>

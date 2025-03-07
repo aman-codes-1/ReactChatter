@@ -100,6 +100,10 @@ export const GetStartedStyled = styled('div')(({ theme }) => ({
   '.get-started-no-friends-icon': {
     fontSize: '2rem',
   },
+  '.get-started-no-friends-heading': {
+    fontSize: '0.9375rem',
+    fontWeight: 600,
+  },
   '.get-started-alert': {
     borderRadius: '6px',
   },

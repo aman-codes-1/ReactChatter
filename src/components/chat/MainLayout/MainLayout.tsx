@@ -43,7 +43,7 @@ const MainLayout = ({
       className={className}
     >
       {(loading && !loadingProps?.disableHeading) || heading ? (
-        <Typography className="main-layout-heading" fontWeight={700}>
+        <Typography className="main-layout-heading">
           {loading ? (
             <Skeleton className="main-layout-heading-skeleton" />
           ) : (
@@ -62,10 +62,7 @@ const MainLayout = ({
       ) : null}
       {(loading && !loadingProps?.disableDescription) ||
       (!loadingData && !isError && description) ? (
-        <Typography
-          className="main-layout-description main-layout-margin-top"
-          fontWeight={600}
-        >
+        <Typography className="main-layout-description main-layout-margin-top">
           {loading ? (
             <Skeleton className="main-layout-description-skeleton" />
           ) : (

@@ -41,11 +41,13 @@ export const SnackbarStyled = styled('div')(({ theme }) => ({
       },
       '.title': {
         fontSize: '1rem',
+        fontWeight: 600,
         marginBottom: '2.5px',
       },
       '.message': {
         marginTop: '2.5px',
         fontSize: '1rem',
+        fontWeight: 400,
         color: theme.palette.text.primary,
       },
       '.submit-btn': {

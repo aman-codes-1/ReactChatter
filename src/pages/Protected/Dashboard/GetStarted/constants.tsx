@@ -290,10 +290,7 @@ export const stepsData = (
       {
         label: 'Finish',
         handler: handleContinue,
-        disabled:
-          !currentChats?.length &&
-          !currentFriends?.length &&
-          !pendingRequestsCount,
+        disabled: !currentChats?.length && !currentFriends?.length,
         variant: 'contained' as ButtonProps['variant'],
         className: 'get-started-btn',
       },

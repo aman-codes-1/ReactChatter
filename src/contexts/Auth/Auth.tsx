@@ -9,7 +9,7 @@ export const AuthContext = createContext<Context>({
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const token = localStorage.getItem('token');
-  const [auth, setAuth] = useState<any>();
+  const [auth, setAuth] = useState<any>(null);
 
   useLayoutEffect(() => {
     if (token) {

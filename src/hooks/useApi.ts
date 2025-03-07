@@ -17,7 +17,7 @@ export const useApi = () => {
       socket?.disconnect();
     }
     localStorage.removeItem('token');
-    setAuth(undefined);
+    setAuth(null);
     navigate('/', {
       replace: true,
       ...(includeFromState ? { state: { from: location } } : {}),

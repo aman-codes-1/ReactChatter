@@ -1,4 +1,4 @@
-import { RefObject, useContext, useLayoutEffect } from 'react';
+import { RefObject, useContext, useEffect, useLayoutEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { InfiniteScroll } from '../../../components';
 import {
@@ -14,6 +14,7 @@ import {
 } from '../../../helpers';
 import ChatMessage from './ChatMessage';
 import { ChatGroupsStyled } from './Chats.styled';
+import { useIntersectionObserver } from '../../../hooks';
 
 const ChatGroups = ({ appBarHeight, textFieldHeight }: any) => {
   const [searchParams] = useSearchParams();
@@ -22,20 +23,30 @@ const ChatGroups = ({ appBarHeight, textFieldHeight }: any) => {
   const fullFriendId =
     searchParams.get('type') === 'friend' ? searchParams.get('id') : null;
   const {
-    cachedMessagesClient,
     messages = [],
     messagesPageInfo,
     messagesScrollPosition,
     fetchMoreMessages,
+    cachedMessagesClient,
     scrollToBottom,
     scrollToPosition,
     isFetchingMessages,
+    setIsChatsVisible,
     getQueuedMessages,
     getChatMessagesWithQueue,
   } = useContext(ChatsAndFriendsContext);
-  const { navbarHeight } = useContext(DrawerContext);
+  const { navBarHeight } = useContext(DrawerContext);
+  const observerTarget = useIntersectionObserver<HTMLDivElement>(
+    () => setIsChatsVisible(true),
+    () => setIsChatsVisible(false),
+    [chatId, fullFriendId],
+  );
 
   useLayoutEffect(() => {
+    return () => setIsChatsVisible(false);
+  }, []);
+
+  useEffect(() => {
     const fetchQueuedMessages = async () => {
       if (fullFriendId) {
         await getChatMessagesWithQueue(fullFriendId, 'friend');
@@ -93,8 +104,8 @@ const ChatGroups = ({ appBarHeight, textFieldHeight }: any) => {
         },
         variables: { chatId },
       });
-    } catch (error) {
-      console.error('Error fetching more messages', error);
+    } catch (err) {
+      console.error('Error fetching more messages', err);
     }
   };
 
@@ -117,7 +128,7 @@ const ChatGroups = ({ appBarHeight, textFieldHeight }: any) => {
 
   return (
     <ChatGroupsStyled
-      navbarHeight={navbarHeight}
+      navBarHeight={navBarHeight}
       appBarHeight={appBarHeight}
       textFieldHeight={textFieldHeight}
     >
@@ -137,20 +148,20 @@ const ChatGroups = ({ appBarHeight, textFieldHeight }: any) => {
           scrollPosition={messagesScrollPosition}
           inverse
         >
-          <div className="chat-viewport">
-            {messages?.map((item: any, i: number) => {
-              const lastItemIndex = messages?.length - 1;
-              const prevItem = messages?.[i - 1];
-              const nextItem = messages?.[i + 1];
+          <div className="chat-viewport" ref={observerTarget}>
+            {messages?.map((msg: any, i: number) => {
+              const lastMsgIndex = messages?.length - 1;
+              const prevMsg = messages?.[i - 1];
+              const nextMsg = messages?.[i + 1];
 
               return (
                 <ChatMessage
-                  key={item?._id || item?.queueId}
+                  key={msg?._id || msg?.queueId}
                   index={i}
-                  item={item}
-                  lastItemIndex={lastItemIndex}
-                  prevItem={prevItem}
-                  nextItem={nextItem}
+                  msg={msg}
+                  lastMsgIndex={lastMsgIndex}
+                  prevMsg={prevMsg}
+                  nextMsg={nextMsg}
                 />
               );
             })}

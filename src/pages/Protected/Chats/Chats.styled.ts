@@ -1,35 +1,37 @@
-import { styled, keyframes } from '@mui/system';
+import { AppBar, styled, keyframes } from '@mui/material';
 
 const fadeIn = keyframes`
   0% {
-    // opacity: 0;
     transform: scale(0.95);
   }
   100% {
-    // opacity: 1;
     transform: scale(1);
   }
 `;
 
 const fadeOut = keyframes`
   0% {
-    // opacity: 1;
     transform: scale(1);
   }
   100% {
-    // opacity: 0;
     transform: scale(1.05);
   }
 `;
 
-export const ChatsStyled = styled('div')<{
-  navbarHeight: number;
-  sideBarWidth: number;
+export const ChatsStyled = styled('div', {
+  shouldForwardProp: (prop) =>
+    prop !== 'navBarHeight' && prop !== 'menuWidth' && prop !== 'message',
+})<{
+  navBarHeight: number;
+  menuWidth: number;
   message: string;
-}>(({ theme, navbarHeight, sideBarWidth, message }) => ({
+}>(({ theme, navBarHeight, menuWidth, message }) => ({
+  '.chats-main-layout-error': {
+    marginTop: '0.6875rem',
+  },
   '.app-bar-wrapper': {
     position: 'fixed',
-    width: `calc(100% - ${sideBarWidth || 0}px)`,
+    width: `calc(100% - ${menuWidth || 0}px)`,
     top: 0,
     zIndex: 1,
     [theme.breakpoints.down('sm')]: {
@@ -37,7 +39,7 @@ export const ChatsStyled = styled('div')<{
     },
   },
   '.app-bar': {
-    minHeight: '4rem',
+    minHeight: '4.3rem',
     justifyContent: 'center',
     backgroundColor: theme.palette.primary.light,
   },
@@ -56,19 +58,17 @@ export const ChatsStyled = styled('div')<{
     },
   },
   '.top-bar-back-btn': {
-    [theme.breakpoints.up('sm')]: {
-      display: 'none',
-    },
+    marginLeft: '0.25rem',
   },
   '.text-field-wrapper': {
     position: 'fixed',
-    width: `calc(100% - ${sideBarWidth || 0}px)`,
+    width: `calc(100% - ${menuWidth || 0}px)`,
     top: 'auto',
     bottom: 0,
     zIndex: 1,
     [theme.breakpoints.down('sm')]: {
       width: '100%',
-      bottom: navbarHeight,
+      bottom: navBarHeight,
     },
   },
   '.text-field-app-bar': {
@@ -87,20 +87,108 @@ export const ChatsStyled = styled('div')<{
     width: '100%',
   },
   '.text-field-input': {
-    borderRadius: '10px',
+    borderRadius: '6px',
     backgroundColor: theme.palette.common.white,
     height: 44,
   },
 }));
 
-export const ChatGroupsStyled = styled('div')<{
-  navbarHeight: number;
+export const ChatDrawerStyled = styled('div')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  '.chat-drawer-heading-wrapper': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1.25rem',
+    padding: '0rem 1rem',
+    backgroundColor: theme.palette.common.white,
+    boxShadow:
+      '0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)',
+    [theme.breakpoints.down('lg')]: {
+      justifyContent: 'center',
+    },
+  },
+  '.chat-drawer-heading': {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '4.3rem',
+    textAlign: 'center',
+  },
+  '.chat-drawer-msg-wrapper': {
+    margin: '-0.25rem 1.125rem 1rem 1.125rem',
+  },
+  '.chat-drawer-details-wrapper': {
+    backgroundColor: theme.palette.primary.light,
+    flex: 'auto',
+    overflow: 'auto',
+  },
+  '.chat-drawer-details-box': {
+    backgroundColor: theme.palette.common.white,
+    margin: '1rem 1.125rem',
+    borderRadius: '12px',
+  },
+  '.chat-drawer-details': {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.875rem',
+    padding: '1.25rem 1.5rem',
+  },
+  '.chat-drawer-details-item': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.875rem',
+  },
+  '.chat-drawer-details-item-2': {
+    '@media(min-width: 0px) and (max-width: 290px)': {
+      flexDirection: 'column',
+      alignItems: 'unset',
+    },
+  },
+  '.chat-drawer-details-heading': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    '@media(min-width: 0px) and (max-width: 290px)': {
+      wordBreak: 'break-word',
+    },
+  },
+  '.chat-drawer-details-content': {
+    display: 'flex',
+    marginLeft: 'auto',
+    alignItems: 'center',
+    gap: '0.375rem',
+    wordBreak: 'break-word',
+    '@media(min-width: 291px) and (max-width: 899px)': {
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: '0.125rem',
+    },
+  },
+  '.chat-drawer-content-date': {
+    fontSize: '13.5px',
+    color: theme.palette.text.secondary,
+    textAlign: 'right',
+  },
+  '.chat-drawer-content-time': {
+    fontSize: '14.5px',
+    textAlign: 'right',
+  },
+}));
+
+export const ChatGroupsStyled = styled('div', {
+  shouldForwardProp: (prop) =>
+    prop !== 'navBarHeight' &&
+    prop !== 'appBarHeight' &&
+    prop !== 'textFieldHeight',
+})<{
+  navBarHeight: number;
   appBarHeight: number;
   textFieldHeight: number;
-}>(({ theme, navbarHeight, appBarHeight, textFieldHeight }) => ({
+}>(({ theme, navBarHeight, appBarHeight, textFieldHeight }) => ({
   '.chat-container': {
     width: '100%',
-    marginTop: `${appBarHeight}px`,
+    marginTop: `${appBarHeight || 0}px`,
     overflow: 'auto',
     padding: '0rem 4rem',
     height: `calc(100dvh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px)`,
@@ -109,7 +197,7 @@ export const ChatGroupsStyled = styled('div')<{
     },
     [theme.breakpoints.down('sm')]: {
       padding: '0rem 1rem',
-      height: `calc(100dvh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navbarHeight || 0}px)`,
+      height: `calc(100dvh - ${appBarHeight || 0}px - ${textFieldHeight || 0}px - ${navBarHeight || 0}px)`,
     },
   },
   '.no-messages-wrapper': {
@@ -124,11 +212,9 @@ export const ChatGroupsStyled = styled('div')<{
       marginBottom: '1.125rem',
     },
   },
-  '.chat-msg': {
-    display: 'flex',
-    alignItems: 'flex-end',
-    gap: '0.625rem',
-  },
+}));
+
+export const ChatMessageStyled = styled('div')(() => ({
   '.chat-wrapper': {
     padding: '0.15rem 0rem',
   },
@@ -142,10 +228,15 @@ export const ChatGroupsStyled = styled('div')<{
     paddingBottom: '0 !important',
   },
   '.chat-margin-top': {
-    paddingTop: '0.625rem !important',
+    paddingTop: '1rem !important',
   },
   '.chat-margin-bottom': {
-    paddingBottom: '0.625rem !important',
+    paddingBottom: '1rem !important',
+  },
+  '.chat-msg': {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '0.625rem',
   },
   '.date-label-wrapper': {
     display: 'flex',
@@ -165,18 +256,23 @@ export const ChatGroupsStyled = styled('div')<{
   },
 }));
 
-export const ChatBubbleStyled = styled('div')<{
+export const ChatBubbleStyled = styled('div', {
+  shouldForwardProp: (prop) => prop !== 'side' && prop !== 'isClickDisabled',
+})<{
   side: string;
-}>(({ theme, side }) => ({
+  isClickDisabled: boolean;
+}>(({ theme, side, isClickDisabled }) => ({
   display: 'flex',
-  flexDirection: side === 'right' ? 'row-reverse' : 'row',
+  gap: '0.4rem',
+  justifyContent: side === 'right' ? 'flex-end' : 'flex-start',
   width: '80%',
   marginLeft: side === 'right' ? 'auto' : '',
+  alignItems: 'center',
   '.msg': {
     display: 'inline-block',
     maxWidth: '100%',
     padding: '8px 14px 10px 14px',
-    borderRadius: 5,
+    borderRadius: '5px',
     textAlign: 'left',
     position: 'relative',
     wordBreak: 'break-all',
@@ -201,6 +297,15 @@ export const ChatBubbleStyled = styled('div')<{
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
     backgroundColor: theme.palette.primary.main,
+    ...(!isClickDisabled
+      ? {
+          '&:hover': {
+            backgroundColor: theme.palette.primary.dark,
+            cursor: 'pointer',
+            userSelect: 'none',
+          },
+        }
+      : {}),
   },
   '.msg-left-first': {
     borderTopLeftRadius: 16,
@@ -247,6 +352,58 @@ export const ChatBubbleStyled = styled('div')<{
     color: theme.palette.text.secondary,
   },
   '.msg-timestamp-text-right': {
-    color: theme.palette.grey[400],
+    color: theme.palette.grey[300],
   },
+}));
+
+export const ChatsMainStyled = styled('main', {
+  shouldForwardProp: (prop) => prop !== 'open' && prop !== 'drawerWidth',
+})<{
+  open: boolean;
+  drawerWidth: number;
+}>(({ theme, drawerWidth }) => ({
+  flexGrow: 1,
+  transition: theme.transitions.create('margin', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  marginRight: `-${drawerWidth || 0}px`,
+  position: 'relative',
+  variants: [
+    {
+      props: ({ open }: { open: boolean }) => open,
+      style: {
+        transition: theme.transitions.create('margin', {
+          easing: theme.transitions.easing.easeOut,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
+        marginRight: 0,
+      },
+    },
+  ],
+}));
+
+export const ChatsAppBarStyled = styled(AppBar, {
+  shouldForwardProp: (prop) => prop !== 'open' && prop !== 'drawerWidth',
+})<{
+  open: boolean;
+  drawerWidth: number;
+}>(({ theme, drawerWidth }) => ({
+  transition: theme.transitions.create(['margin', 'width'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  variants: [
+    {
+      props: ({ open }: { open: boolean }) => open,
+      style: {
+        width: `calc(100% - ${drawerWidth || 0}px)`,
+        transition: theme.transitions.create(['margin', 'width'], {
+          easing: theme.transitions.easing.easeOut,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
+        marginRight: `-${drawerWidth || 0}px`,
+      },
+    },
+  ],
 }));

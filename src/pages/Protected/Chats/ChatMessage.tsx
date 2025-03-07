@@ -1,29 +1,31 @@
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 import { Chip } from '@mui/material';
 import { Avatar } from '../../../components';
 import { useAuth } from '../../../hooks';
 import { calculateSide, getDateLabel } from '../../../helpers';
 import ChatBubble from './ChatBubble';
+import { ChatMessageStyled } from './Chats.styled';
 
 const ChatMessage = ({
-  index: i,
-  item: msg,
-  lastItemIndex,
-  prevItem,
-  nextItem,
+  index,
+  msg,
+  lastMsgIndex,
+  prevMsg,
+  nextMsg,
+  disableDateSeparator = false,
+  isClickDisabled = false,
 }: any) => {
   const { auth: { _id = '' } = {} } = useAuth();
-  const itemRef = useRef<HTMLDivElement | null>(null);
 
   const side = calculateSide(msg, _id);
   const currentTimestamp = msg?.timestamp;
-  const prevTimestamp = prevItem?.timestamp;
-  const nextTimestamp = nextItem?.timestamp;
+  const prevTimestamp = prevMsg?.timestamp;
+  const nextTimestamp = nextMsg?.timestamp;
   const currentDate = getDateLabel(currentTimestamp);
-  const prevDate = i > 0 ? getDateLabel(prevTimestamp) : '';
-  const nextDate = i < lastItemIndex ? getDateLabel(nextTimestamp) : '';
-  const prevSide = i > 0 ? calculateSide(prevItem, _id) : '';
-  const nextSide = i < lastItemIndex ? calculateSide(nextItem, _id) : '';
+  const prevDate = index > 0 ? getDateLabel(prevTimestamp) : '';
+  const nextDate = index < lastMsgIndex ? getDateLabel(nextTimestamp) : '';
+  const prevSide = index > 0 ? calculateSide(prevMsg, _id) : '';
+  const nextSide = index < lastMsgIndex ? calculateSide(nextMsg, _id) : '';
   const isFirstOfGroup = prevSide !== side;
   const isLastOfGroup = nextSide !== side;
   const isFirstOfDateGroup = currentDate !== prevDate;
@@ -70,12 +72,12 @@ const ChatMessage = ({
     return classes?.length ? classes.join(' ') : '';
   };
 
-  const renderAvatar = (msg: any, side: string) => {
+  const renderAvatar = () => {
     if (side === 'left') {
       if (isLastOfGroup) {
         return (
           <Avatar
-            alt={msg?.sender?.name}
+            name={msg?.sender?.name}
             src={msg?.sender?.picture}
             sx={{ width: 32, height: 32 }}
           />
@@ -88,29 +90,31 @@ const ChatMessage = ({
   };
 
   return (
-    <div ref={itemRef} className={`${attachClass()}`}>
-      {dateSeparator ? (
-        <div className="date-label-wrapper">
-          <Chip
-            variant="outlined"
-            label={getDateLabel(currentTimestamp)}
-            className="date-label-chip"
+    <ChatMessageStyled>
+      <div className={`${attachClass()}`}>
+        {dateSeparator && !disableDateSeparator ? (
+          <div className="date-label-wrapper">
+            <Chip
+              variant="outlined"
+              label={getDateLabel(currentTimestamp)}
+              className="date-label-chip"
+            />
+          </div>
+        ) : null}
+        <div className="chat-msg">
+          {renderAvatar()}
+          <ChatBubble
+            msg={msg}
+            side={side}
+            isFirstOfGroup={isFirstOfGroup}
+            isLastOfGroup={isLastOfGroup}
+            isFirstOfDateGroup={isFirstOfDateGroup}
+            isLastOfDateGroup={isLastOfDateGroup}
+            isClickDisabled={isClickDisabled}
           />
         </div>
-      ) : null}
-      <div className="chat-msg">
-        {renderAvatar(msg, side)}
-        <ChatBubble
-          index={i}
-          msg={msg}
-          side={side}
-          isFirstOfGroup={isFirstOfGroup}
-          isLastOfGroup={isLastOfGroup}
-          isFirstOfDateGroup={isFirstOfDateGroup}
-          isLastOfDateGroup={isLastOfDateGroup}
-        />
       </div>
-    </div>
+    </ChatMessageStyled>
   );
 };
 

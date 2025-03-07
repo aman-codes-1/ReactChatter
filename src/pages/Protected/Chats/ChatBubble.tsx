@@ -1,8 +1,16 @@
-import { useContext, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Typography, useTheme } from '@mui/material';
+import {
+  memo,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { IconButton, Typography, useTheme } from '@mui/material';
+import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import { MessageStatus } from '../../../components';
 import { ChatsAndFriendsContext } from '../../../contexts';
-import { checkMessageStatus, getTime } from '../../../helpers';
+import { checkMessageStatus, getTime, toggleDrawer } from '../../../helpers';
 import { ChatBubbleStyled } from './Chats.styled';
 
 const ChatBubble = ({
@@ -12,25 +20,35 @@ const ChatBubble = ({
   isLastOfGroup,
   isFirstOfDateGroup,
   isLastOfDateGroup,
+  isClickDisabled = false,
 }: any) => {
   const theme = useTheme();
   const [isResize, setIsResize] = useState(false);
   const [isOverflow, setIsOverflow] = useState(false);
-  const { selectedChat } = useContext(ChatsAndFriendsContext);
+  const {
+    selectedChat,
+    setIsMessageDrawerOpen,
+    selectedMessage,
+    setSelectedMessage,
+  } = useContext(ChatsAndFriendsContext);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const messageRef = useRef<HTMLSpanElement | null>(null);
 
-  const timestamp = msg?.timestamp;
   const messageStatus = useMemo(
     () => checkMessageStatus(msg, selectedChat),
     [msg, selectedChat],
   );
-  const { isQueued } = messageStatus || {};
+  const { isQueued, isSent, isDelivered, isRead, isRetry } =
+    messageStatus || {};
+  const queued = isQueued && !isSent && !isDelivered && !isRead;
+  const timestamp = msg?.timestamp;
 
   useLayoutEffect(() => {
     const handleResize = () => {
-      setIsResize((prev) => !prev);
-      setIsOverflow(false);
+      setTimeout(() => {
+        setIsResize((prev) => !prev);
+        setIsOverflow(false);
+      }, 200);
     };
 
     window.addEventListener('resize', handleResize);
@@ -59,13 +77,39 @@ const ChatBubble = ({
     checkOverflow();
   }, [msg?._id, msg?.queueId, isResize]);
 
+  useLayoutEffect(() => {
+    if (selectedMessage?._id === msg?._id) {
+      setSelectedMessage(msg);
+    }
+  }, [msg]);
+
+  const handleClickMessage = () => {
+    setSelectedMessage((prev: any) => {
+      if (prev?._id !== msg?._id) {
+        toggleDrawer(setIsMessageDrawerOpen, false, true);
+      } else {
+        toggleDrawer(setIsMessageDrawerOpen, true);
+      }
+      return msg;
+    });
+  };
+
   const attachClass = () => {
     const classes = [];
 
-    if (isFirstOfGroup || isFirstOfDateGroup) {
+    if (
+      isFirstOfGroup ||
+      isFirstOfDateGroup ||
+      (isFirstOfGroup && isLastOfGroup) ||
+      (isFirstOfDateGroup && isLastOfDateGroup)
+    ) {
       classes.push(`msg-first msg-${side}-first`);
     }
-    if (isLastOfGroup || isLastOfDateGroup) {
+
+    if (
+      (!isFirstOfGroup && !isFirstOfDateGroup && isLastOfGroup) ||
+      (!isFirstOfGroup && !isFirstOfDateGroup && isLastOfDateGroup)
+    ) {
       classes.push(`msg-last msg-${side}-last`);
     }
 
@@ -73,10 +117,13 @@ const ChatBubble = ({
   };
 
   return (
-    <ChatBubbleStyled side={side}>
+    <ChatBubbleStyled side={side} isClickDisabled={isClickDisabled}>
       <div
         ref={containerRef}
-        className={`msg msg-${side} ${attachClass()} ${isQueued ? 'msg-animation' : ''} ${isOverflow ? 'msg-overflow' : ''}`}
+        className={`msg msg-${side} ${attachClass()} ${queued ? 'msg-animation' : ''} ${isOverflow ? 'msg-overflow' : ''}`}
+        onClick={
+          side === 'right' && !isClickDisabled ? handleClickMessage : () => {}
+        }
       >
         {msg?.message ? (
           <Typography
@@ -104,14 +151,21 @@ const ChatBubble = ({
           {side === 'right' ? (
             <MessageStatus
               messageStatus={messageStatus}
-              color={theme.palette.grey[400]}
-              readColor={theme.palette.primary.contrastText}
+              defaultColor={theme.palette.grey[300]}
+              readColor={theme.palette.info.contrastText}
             />
           ) : null}
         </span>
       </div>
+      {side === 'right' && isRetry ? (
+        <div>
+          <IconButton size="small" color="error">
+            <ErrorOutlineOutlinedIcon color="error" />
+          </IconButton>
+        </div>
+      ) : null}
     </ChatBubbleStyled>
   );
 };
 
-export default ChatBubble;
+export default memo(ChatBubble);

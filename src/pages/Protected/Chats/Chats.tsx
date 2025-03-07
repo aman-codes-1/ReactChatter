@@ -1,21 +1,39 @@
 import {
   ChangeEvent,
+  Fragment,
   useContext,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { AppBar, IconButton, List, TextField, Toolbar } from '@mui/material';
+import {
+  Divider,
+  IconButton,
+  List,
+  TextField,
+  Toolbar,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import { ListItem, MainLayoutLoader } from '../../../components';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import {
+  Drawer,
+  ListItem,
+  MainLayout,
+  MessageStatus,
+} from '../../../components';
 import { useAuth } from '../../../hooks';
 import { ChatsAndFriendsContext, DrawerContext } from '../../../contexts';
 import {
   addUpdateChat,
+  checkMessageStatus,
   deleteFriend,
   deleteFriendsCachedMessages,
+  getChatType,
   getDateLabel2,
   getFriendId,
   getReceivers,
@@ -24,14 +42,22 @@ import {
   handleKeyPress,
   renderMessage,
   setFocus,
+  toggleDrawer,
   updateHeight,
   validateSearchParams,
 } from '../../../helpers';
 import { MessageQueueService } from '../../../services';
 import ChatGroups from './ChatGroups';
-import { ChatsStyled } from './Chats.styled';
+import ChatMessage from './ChatMessage';
+import {
+  ChatDrawerStyled,
+  ChatsAppBarStyled,
+  ChatsMainStyled,
+  ChatsStyled,
+} from './Chats.styled';
 
-const Chats = () => {
+const Chats = ({ loadingChats }: any) => {
+  const theme = useTheme();
   const MessageQueue = new MessageQueueService();
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -45,17 +71,14 @@ const Chats = () => {
   const [appBarHeight, setAppBarHeight] = useState(0);
   const [textFieldHeight, setTextFieldHeight] = useState(0);
   const [loadingCreateChat, setLoadingCreateChat] = useState(false);
+  const [isError, setIsError] = useState(false);
   const { auth: { _id = '' } = {} } = useAuth();
   const {
-    chatLoading,
-    chatCalled,
-    friendLoading,
-    friendCalled,
     cachedMessagesClient,
     userOnlineStatus,
     userOnlineStatusLoading,
     chatsClient,
-    otherFriendsClient,
+    friendsClient,
     createMessage,
     createChat,
     isListItemClicked,
@@ -63,49 +86,53 @@ const Chats = () => {
     selectedChatDetails,
     setLoadingCreateMessage,
     setScrollToBottom,
+    isFetchingChats,
+    isFetchingFriends,
+    isMessageDrawerOpen,
+    setIsMessageDrawerOpen,
+    selectedMessage,
+    setSelectedMessage,
   } = useContext(ChatsAndFriendsContext);
-  const { navbarHeight, sideBarWidth } = useContext(DrawerContext);
+  const { navBarHeight, menuWidth, getDrawerWidth } = useContext(DrawerContext);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const appBarRef = useRef<HTMLElement | null>(null);
+  const appBarRef = useRef<HTMLDivElement | null>(null);
   const textFieldRef = useRef<HTMLDivElement | null>(null);
+  const isExtraSmallOrBelow = useMediaQuery(theme.breakpoints.down('sm'));
+  const isExtraLargeOrAbove = useMediaQuery(theme.breakpoints.up('lg'));
 
   useLayoutEffect(() => {
     setFocus(inputRef);
   }, [isListItemClicked]);
 
   useLayoutEffect(() => {
-    updateHeight(appBarRef, setAppBarHeight);
-    window.addEventListener('resize', () =>
-      updateHeight(appBarRef, setAppBarHeight),
-    );
+    const update = () => updateHeight(appBarRef, setAppBarHeight);
+    update();
+
+    window.addEventListener('resize', update);
 
     return () => {
-      window.removeEventListener('resize', () =>
-        updateHeight(appBarRef, setAppBarHeight),
-      );
+      window.removeEventListener('resize', update);
     };
   }, []);
 
   useLayoutEffect(() => {
-    updateHeight(textFieldRef, setTextFieldHeight);
-    window.addEventListener('resize', () =>
-      updateHeight(textFieldRef, setTextFieldHeight),
-    );
+    const update = () => updateHeight(textFieldRef, setTextFieldHeight);
+    update();
+
+    window.addEventListener('resize', update);
 
     return () => {
-      window.removeEventListener('resize', () =>
-        updateHeight(textFieldRef, setTextFieldHeight),
-      );
+      window.removeEventListener('resize', update);
     };
   }, []);
 
-  const resetAllStates = () => {
+  const resetStates = () => {
     setMessage('');
   };
 
   useLayoutEffect(() => {
-    resetAllStates();
-  }, [chatId, fullFriendId]);
+    resetStates();
+  }, [chatId, friendId]);
 
   useLayoutEffect(() => {
     try {
@@ -113,8 +140,8 @@ const Chats = () => {
       if (!isValid) {
         navigate('/');
       }
-    } catch (error) {
-      console.error('Error getting url:', error);
+    } catch (err) {
+      console.error('Error getting url:', err);
     }
   }, [search]);
 
@@ -164,11 +191,10 @@ const Chats = () => {
           setScrollToBottom,
         );
 
-        deleteFriend(otherFriendsClient, _id, friendIdToUse);
+        deleteFriend(friendsClient, _id, friendIdToUse);
 
         const friend = {
           ...selectedChat,
-          hasChats: true,
           lastMessage: queuedMessage,
         };
 
@@ -226,9 +252,9 @@ const Chats = () => {
 
         chatIdToUse = createdChatId;
         friendIdToUse = createdChatFriendId;
-
+        const { friends, ...rest } = createdChat || {};
         const chatData = {
-          ...createdChat,
+          ...rest,
           lastMessage: queuedMessage,
         };
 
@@ -330,8 +356,8 @@ const Chats = () => {
 
         const createdMessage = await createMessage({
           variables: {
-            userId: _id,
             chatId: chatIdToUse,
+            userId: _id,
             queueId,
             isQueued: queuedMessageQueuedStatusIsQueued,
             queuedTimestamp: queuedMessageQueuedStatusTimestamp,
@@ -350,15 +376,15 @@ const Chats = () => {
           await MessageQueue.deleteMessageFromQueue(createdMessageQueueId);
         }
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch (err) {
+      console.error('Error sending message:', err);
     } finally {
       setLoadingCreateChat(false);
       setLoadingCreateMessage(false);
     }
   };
 
-  const loading = chatLoading || chatCalled || friendLoading || friendCalled;
+  const loading = isFetchingChats || isFetchingFriends;
 
   const renderSecondary = () => {
     if (userOnlineStatusLoading) return '';
@@ -370,7 +396,11 @@ const Chats = () => {
         return 'online';
       }
       if (!isOnline && lastSeen) {
-        const lastSeenStr = `last seen ${getDateLabel2(lastSeen)} at ${getTime(lastSeen)}`;
+        const lastSeenStr = `last seen ${getDateLabel2(lastSeen, false, {
+          day: 'numeric',
+          month: 'numeric',
+          year: '2-digit',
+        })} at ${getTime(lastSeen)}`;
         return lastSeenStr;
       }
     }
@@ -381,82 +411,232 @@ const Chats = () => {
     navigate(-1);
   };
 
+  const renderMessageReceivers = () => {
+    const { isPrivateChat } = getChatType(selectedChat);
+
+    if (isPrivateChat) {
+      const { isDelivered, isRead, deliveredTimestamp, readTimestamp } =
+        checkMessageStatus(selectedMessage, selectedChat);
+
+      const items = [
+        {
+          title: 'Read',
+          messageStatus: {
+            isRead: true,
+          },
+          isVisible: isRead,
+          timestamp: readTimestamp,
+        },
+        {
+          title: 'Delivered',
+          messageStatus: {
+            isDelivered: true,
+          },
+          isVisible: isDelivered,
+          timestamp: deliveredTimestamp,
+        },
+      ];
+
+      return (
+        <div className="chat-drawer-details-wrapper">
+          <div className="chat-drawer-details-box">
+            <div className="chat-drawer-details">
+              {items?.map((item, idx) => (
+                <Fragment key={item?.title}>
+                  <div
+                    className={`chat-drawer-details-item ${item?.isVisible && item?.timestamp ? 'chat-drawer-details-item-2' : ''}`}
+                  >
+                    <div className="chat-drawer-details-heading">
+                      <MessageStatus messageStatus={item?.messageStatus} />
+                      <Typography fontWeight={500}>{item?.title}</Typography>
+                    </div>
+                    <div className="chat-drawer-details-content">
+                      {item?.isVisible && item?.timestamp ? (
+                        <>
+                          <Typography
+                            fontWeight={450}
+                            className="chat-drawer-content-date"
+                          >
+                            {getDateLabel2(item?.timestamp, true, {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: '2-digit',
+                            })}
+                          </Typography>
+                          <Typography
+                            fontWeight={500}
+                            className="chat-drawer-content-time"
+                          >
+                            {getTime(item?.timestamp)}
+                          </Typography>
+                        </>
+                      ) : (
+                        <Typography fontSize="0.875rem">
+                          &#x26AC;&#x26AC;&#x26AC;
+                        </Typography>
+                      )}
+                    </div>
+                  </div>
+                  {idx === 0 ? <Divider sx={{ ml: 3.125 }} /> : null}
+                </Fragment>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
+
+  const renderMessageDrawer = () => {
+    return (
+      <ChatDrawerStyled>
+        <div className="chat-drawer-heading-wrapper">
+          {isExtraLargeOrAbove ? (
+            <IconButton onClick={handleClickCloseMessage}>
+              <CloseRoundedIcon />
+            </IconButton>
+          ) : null}
+          <Typography fontWeight={600} className="chat-drawer-heading">
+            Message Info
+          </Typography>
+        </div>
+        <Divider />
+        <div className="chat-drawer-msg-wrapper">
+          <ChatMessage msg={selectedMessage} isClickDisabled />
+        </div>
+        <Divider />
+        {renderMessageReceivers()}
+      </ChatDrawerStyled>
+    );
+  };
+
+  const handleClickCloseMessage = () => {
+    toggleDrawer(setIsMessageDrawerOpen);
+    setTimeout(() => {
+      setSelectedMessage(null);
+    }, 200);
+  };
+
   return (
     <ChatsStyled
-      navbarHeight={navbarHeight}
-      sideBarWidth={sideBarWidth}
+      navBarHeight={navBarHeight}
+      menuWidth={menuWidth}
       message={message}
     >
-      <div className="app-bar-wrapper">
-        <AppBar position="static" className="app-bar" ref={appBarRef}>
-          <Toolbar className="tool-bar">
-            <div className="top-app-bar">
-              <IconButton
-                size="small"
-                className="top-bar-back-btn"
-                onClick={handleClickBack}
+      <MainLayout
+        disablePadding={!isError}
+        onError={() => setIsError(true)}
+        className={isError ? 'chats-main-layout-error' : ''}
+      >
+        <div style={{ display: 'flex' }}>
+          <ChatsMainStyled
+            open={isExtraLargeOrAbove ? isMessageDrawerOpen : false}
+            drawerWidth={isExtraLargeOrAbove ? getDrawerWidth() : 0}
+          >
+            <div className="app-bar-wrapper">
+              <ChatsAppBarStyled
+                position="static"
+                className="app-bar"
+                open={isExtraLargeOrAbove ? isMessageDrawerOpen : false}
+                drawerWidth={isExtraLargeOrAbove ? getDrawerWidth() : 0}
+                ref={appBarRef}
               >
-                <ArrowBackIosNewIcon />
-              </IconButton>
-              {loading ? (
-                <MainLayoutLoader dense disablePadding disableGutters />
-              ) : (
-                <List dense disablePadding>
-                  <ListItem
-                    disablePadding
-                    disableGutters
-                    disableHover
-                    btnProps={{
-                      disableGutters: true,
-                      textProps: {
-                        primary: selectedChatDetails?.name,
-                        secondary: renderSecondary(),
-                      },
-                      style: {
-                        WebkitLineClamp: 1,
-                      },
-                      avatarProps: {
-                        src: selectedChatDetails?.picture,
-                      },
-                    }}
-                  />
-                </List>
-              )}
+                <Toolbar className="tool-bar">
+                  <div className="top-app-bar">
+                    {isExtraSmallOrBelow ? (
+                      <IconButton
+                        size="small"
+                        className="top-bar-back-btn"
+                        onClick={handleClickBack}
+                      >
+                        <ArrowBackIosNewIcon />
+                      </IconButton>
+                    ) : null}
+                    <MainLayout
+                      disablePadding
+                      loadingData={loading}
+                      loadingDataProps={{
+                        dense: true,
+                        disablePadding: true,
+                        disableGutters: true,
+                      }}
+                    >
+                      <List dense disablePadding>
+                        <ListItem
+                          disablePadding
+                          disableGutters
+                          disableHover
+                          btnProps={{
+                            disableGutters: true,
+                            textProps: {
+                              primary: selectedChatDetails?.name,
+                              secondary: renderSecondary(),
+                            },
+                            style: {
+                              WebkitLineClamp: 1,
+                            },
+                            avatarProps: {
+                              name: selectedChatDetails?.name,
+                              src: selectedChatDetails?.picture,
+                            },
+                          }}
+                        />
+                      </List>
+                    </MainLayout>
+                  </div>
+                </Toolbar>
+              </ChatsAppBarStyled>
             </div>
-          </Toolbar>
-        </AppBar>
-      </div>
-      <ChatGroups
-        appBarHeight={appBarHeight}
-        textFieldHeight={textFieldHeight}
-      />
-      <div className="text-field-wrapper" ref={textFieldRef}>
-        <AppBar position="static" className="app-bar text-field-app-bar">
-          <Toolbar disableGutters variant="dense">
-            <div className="text-field-input-wrapper">
-              <TextField
-                autoFocus
-                fullWidth
-                value={message}
-                onKeyUp={(_: any) => handleKeyPress(_, handleSendMessage)}
-                onChange={handleChangeMessage}
-                slotProps={{
-                  input: {
-                    className: 'text-field-input',
-                  },
-                }}
-                placeholder=" Type a message"
-                inputRef={inputRef}
+            {loadingChats ? null : (
+              <ChatGroups
+                appBarHeight={appBarHeight}
+                textFieldHeight={textFieldHeight}
               />
-              {message ? (
-                <IconButton onClick={handleSendMessage}>
-                  <SendIcon color="info" />
-                </IconButton>
-              ) : null}
+            )}
+            <div className="text-field-wrapper">
+              <ChatsAppBarStyled
+                position="static"
+                className="app-bar text-field-app-bar"
+                open={isExtraLargeOrAbove ? isMessageDrawerOpen : false}
+                drawerWidth={isExtraLargeOrAbove ? getDrawerWidth() : 0}
+                ref={textFieldRef}
+              >
+                <Toolbar variant="dense" disableGutters>
+                  <div className="text-field-input-wrapper">
+                    <TextField
+                      autoFocus
+                      fullWidth
+                      value={message}
+                      onKeyUp={(_: any) => handleKeyPress(_, handleSendMessage)}
+                      onChange={handleChangeMessage}
+                      slotProps={{
+                        input: {
+                          className: 'text-field-input',
+                        },
+                      }}
+                      placeholder=" Type a message"
+                      inputRef={inputRef}
+                    />
+                    {message ? (
+                      <IconButton onClick={handleSendMessage}>
+                        <SendIcon color="info" />
+                      </IconButton>
+                    ) : null}
+                  </div>
+                </Toolbar>
+              </ChatsAppBarStyled>
             </div>
-          </Toolbar>
-        </AppBar>
-      </div>
+          </ChatsMainStyled>
+          <Drawer
+            open={isMessageDrawerOpen}
+            onClose={handleClickCloseMessage}
+            variant={isExtraLargeOrAbove ? 'persistent' : 'temporary'}
+            anchor="right"
+          >
+            {renderMessageDrawer()}
+          </Drawer>
+        </div>
+      </MainLayout>
     </ChatsStyled>
   );
 };

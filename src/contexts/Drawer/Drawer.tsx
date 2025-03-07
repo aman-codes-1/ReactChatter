@@ -37,8 +37,11 @@ export const DrawerProvider = ({ children }: any) => {
   const isBetweenMediumAndLarge = useMediaQuery(
     theme.breakpoints.between('md', 'lg'),
   );
+  const isBetweenSmallAndMedium = useMediaQuery(
+    theme.breakpoints.between('sm', 'md'),
+  );
   const isBetweenExtraSmallAndMedium = useMediaQuery(
-    theme.breakpoints.between('xs', 'md'),
+    theme.breakpoints.between('xs', 'sm'),
   );
 
   const getDrawerWidth = () => {
@@ -48,6 +51,8 @@ export const DrawerProvider = ({ children }: any) => {
       maxWidth = 400;
     } else if (isBetweenMediumAndLarge) {
       maxWidth = 350;
+    } else if (isBetweenSmallAndMedium) {
+      maxWidth = 300;
     } else if (isBetweenExtraSmallAndMedium) {
       maxWidth = 335;
     }

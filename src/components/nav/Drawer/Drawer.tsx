@@ -24,7 +24,7 @@ const Drawer = forwardRef<HTMLDivElement, DrawerProps>((props, ref) => {
             maxWidth: `${getDrawerWidth() || 300}px`,
             height: `calc(100% - ${navBarHeight || 0}px)`,
             [theme.breakpoints.down('xs')]: {
-              maxWidth: '82vw',
+              maxWidth: '84vw',
             },
           },
         },

@@ -8,10 +8,10 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { Button, MainLayout } from '../../../../../components';
-import { useAuth, useSnackbar, useTimeout } from '../../../../../hooks';
-import { ChatsAndFriendsContext } from '../../../../../contexts';
-import { checkIfNumber } from '../../../../../helpers';
+import { Button, MainLayout } from '../../../../components';
+import { useAuth, useSnackbar, useTimeout } from '../../../../hooks';
+import { ChatsAndFriendsContext } from '../../../../contexts';
+import { checkIfNumber } from '../../../../helpers';
 import { email, stepsData } from './constants';
 import { GetStartedStyled } from './GetStarted.styled';
 
@@ -67,6 +67,7 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
     msgRef,
     openSnackbar,
   );
+
   const stepsLastIndex = steps?.length - 1;
 
   return (

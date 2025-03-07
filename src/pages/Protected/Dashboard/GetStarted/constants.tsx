@@ -3,6 +3,7 @@ import {
   Alert,
   ButtonProps,
   IconButton,
+  Link,
   Theme,
   Tooltip,
   Typography,
@@ -10,8 +11,13 @@ import {
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import CheckBoxRoundedIcon from '@mui/icons-material/CheckBoxRounded';
 import Groups2OutlinedIcon from '@mui/icons-material/Groups2Outlined';
-import { FriendRequestList, ListItem } from '../../../../../components';
-import { AddFriend } from '../../..';
+import {
+  FriendRequestList,
+  NotificationList,
+  SuccessErrorMessage,
+} from '../../../../components';
+import { AddFriend } from '../..';
+import { sortByLastMessageTimestamp } from '../../../../helpers';
 
 export const email = 'aman.codes0@gmail.com';
 
@@ -86,24 +92,36 @@ export const stepsData = (
   isCopyTimeoutRunning: boolean,
   theme: Theme,
   currentChats: any[],
-  currentOtherFriends: any[],
+  currentFriends: any[],
+  pendingRequests: any[],
+  pendingRequestsCount: number,
   sentRequests: any[],
   sentRequestsCount: number,
   updateRequest: any,
   updateRequestLoading: boolean,
   _id: string,
+  msgRef: any,
   openSnackbar: any,
 ) => [
   {
     label: 'Find Friends',
-    description: (
+    component: (
       <>
         <Typography component="div">
           Hey {name}, Welcome to ReactChatter.
           <br />
-          I&rsquo;m Aman Jain, the developer of this application.
+          I&rsquo;m{' '}
+          <Link
+            href="https://bold.pro/my/aman-codes"
+            target="_blank"
+            rel="noreferrer"
+            underline="none"
+          >
+            Aman Jain
+          </Link>
+          , the developer of this application.
           <br />
-          Feel free to add me as a friend.
+          Feel free to add me or other registered user as a friend.
           <br />
           <Typography className="get-started-margin-top" />
           <Typography className="get-started-email-heading">
@@ -156,73 +174,95 @@ export const stepsData = (
         label: 'Continue',
         handler: handleContinue,
         disabled: false,
-        variant: 'contained' as ButtonProps['variant'],
+        variant: 'contained',
         className: 'get-started-btn',
       },
     ],
   },
   {
     label: sentRequestsCount ? 'Sent Requests' : 'Send a Friend Request',
-    description: sentRequestsCount ? (
-      <FriendRequestList
-        maxHeight="144.5px"
-        data={sentRequests}
-        nameKey="name"
-        emailKey="email"
-        pictureKey="picture"
-        deleteBtnProps={{
-          onClick: updateRequestLoading
-            ? () => {}
-            : (_: MouseEventHandler, __: number, ___: any) =>
-                handleClickRequest(
-                  _,
-                  __,
-                  ___,
-                  'cancelled',
-                  updateRequest,
-                  _id,
-                  openSnackbar,
-                ),
-        }}
-      />
-    ) : (
-      <AddFriend
-        disableHeading
-        mainLayoutClassName="get-started-add-friend-main-layout"
-      />
+    component: (
+      <>
+        {sentRequestsCount ? (
+          <FriendRequestList
+            maxHeight="144.5px"
+            data={sentRequests}
+            nameKey="name"
+            emailKey="email"
+            pictureKey="picture"
+            deleteBtnProps={{
+              onClick: updateRequestLoading
+                ? () => {}
+                : (_: MouseEventHandler, __: number, ___: any) =>
+                    handleClickRequest(
+                      _,
+                      __,
+                      ___,
+                      'cancelled',
+                      updateRequest,
+                      _id,
+                      openSnackbar,
+                    ),
+            }}
+          />
+        ) : (
+          <AddFriend disableHeading />
+        )}
+        {currentChats?.length || currentFriends?.length ? (
+          <SuccessErrorMessage
+            ref={msgRef}
+            message={`${currentChats?.length + currentFriends?.length} of your friend requests have been confirmed or accepted.`}
+            type="success"
+            className="get-started-margin-top"
+          />
+        ) : null}
+        {pendingRequestsCount ? (
+          <SuccessErrorMessage
+            ref={msgRef}
+            message={`You have received ${pendingRequestsCount} friend requests.`}
+            type="success"
+            className="get-started-margin-top"
+          />
+        ) : null}
+      </>
     ),
     actions: [
       {
         label: 'Continue',
         handler: handleContinue,
-        disabled: !sentRequestsCount,
+        disabled:
+          !currentChats?.length &&
+          !currentFriends?.length &&
+          !pendingRequestsCount &&
+          !sentRequestsCount,
         variant: 'contained' as ButtonProps['variant'],
         className: 'get-started-btn',
       },
       {
         label: 'Back',
         handler: handleBack,
-        disabled: !!sentRequestsCount,
+        disabled: false,
         variant: 'text' as ButtonProps['variant'],
         className: 'get-started-back-btn',
       },
     ],
   },
   {
-    label: 'Start a New Chat',
-    // to do: make a separate component named NotificationList like DataList
-    // should be unable to select or click the button
-    // use ListItem in it with List
-    description: (
+    label: 'Start a New Conversation',
+    component: (
       <>
-        {currentChats?.length || currentOtherFriends?.length ? (
-          <>
-            {currentOtherFriends?.map((friend) => (
-              <div key={friend?._id}>
-                <ListItem btnProps={{ textProps: { primary: '' } }} />
-              </div>
-            ))}
-          </>
+        {currentChats?.length ||
+        currentFriends?.length ||
+        pendingRequestsCount ? (
+          <NotificationList
+            dense
+            disableGutters
+            data={sortByLastMessageTimestamp([
+              ...currentChats,
+              ...currentFriends,
+              ...pendingRequests,
+            ])}
+          />
         ) : (
           <div className="get-started-no-friends-wrapper">
             <Groups2OutlinedIcon
@@ -235,7 +275,7 @@ export const stepsData = (
             <Alert
               variant="outlined"
               severity="warning"
-              className="get-started-alert"
+              className="get-started-alert get-started-margin-top"
             >
               Please wait until the friend requests have been accepted.
             </Alert>
@@ -247,7 +287,10 @@ export const stepsData = (
       {
         label: 'Finish',
         handler: handleContinue,
-        disabled: !currentChats?.length && !currentOtherFriends?.length,
+        disabled:
+          !currentChats?.length &&
+          !currentFriends?.length &&
+          !pendingRequestsCount,
         variant: 'contained' as ButtonProps['variant'],
         className: 'get-started-btn',
       },

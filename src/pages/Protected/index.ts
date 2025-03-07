@@ -1,6 +1,6 @@
 export { AddFriend } from './AddFriend';
+export { BaseProtected } from './BaseProtected';
 export { Chats } from './Chats';
-export { Dashboard } from './Dashboard';
+export { Dashboard, GetStarted, NewChat, RecentChats } from './Dashboard';
 export { FriendRequests } from './FriendRequests';
-export { RecentChats } from './RecentChats';
 export { SentRequests } from './SentRequests';

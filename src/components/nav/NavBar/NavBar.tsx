@@ -1,24 +1,73 @@
 import { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { useMediaQuery, useTheme } from '@mui/material';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { BaseSvg, Button } from '../..';
-import { ChatsAndFriendsContext, DrawerContext } from '../../../contexts';
+import { useAuth } from '../../../hooks';
+import {
+  ChatsAndFriendsContext,
+  FRIENDS_SORTED_QUERY,
+} from '../../../contexts';
+import { toggleDrawer } from '../../../helpers';
 import { NavBarStyled } from './NavBar.styled';
 
 const NavBar = ({ className }: any) => {
+  const theme = useTheme();
+  const { auth: { _id = '' } = {} } = useAuth();
   const {
-    chats = [],
-    otherFriends = [],
+    friendsSortedQuery,
+    friendsSortedClient,
     setIsHomeButtonClicked,
+    setIsMenuDrawerOpen,
+    isNewChatDrawerOpen,
+    setIsNewChatDrawerOpen,
+    currentFriends = [],
     fetchAll,
+    closeAllDrawers,
   } = useContext(ChatsAndFriendsContext);
-  const { toggleDrawer } = useContext(DrawerContext);
+  const isExtraSmallOrBelow = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleClickLogo = async () => {
     setIsHomeButtonClicked((prev: boolean) => !prev);
-    toggleDrawer();
+    closeAllDrawers();
     await fetchAll();
+  };
+
+  const clearSortedFriendsCache = () => {
+    friendsSortedClient.cache.evict({
+      fieldName: 'friendsSorted',
+      args: { input: { userId: _id } },
+    });
+    friendsSortedClient.cache.gc();
+    friendsSortedClient.writeQuery({
+      query: FRIENDS_SORTED_QUERY,
+      data: {
+        friendsSorted: [],
+      },
+      variables: { userId: _id },
+    });
+  };
+
+  const handleClickNewChat = async () => {
+    try {
+      if (!isNewChatDrawerOpen) {
+        await friendsSortedQuery({
+          variables: {
+            userId: _id,
+          },
+        });
+      } else {
+        clearSortedFriendsCache();
+      }
+      toggleDrawer(setIsNewChatDrawerOpen, true);
+    } catch (err) {
+      console.error('Error fetching friends:', err);
+    }
+  };
+
+  const handleClickMenu = () => {
+    toggleDrawer(setIsMenuDrawerOpen, true);
   };
 
   return (
@@ -26,27 +75,30 @@ const NavBar = ({ className }: any) => {
       <Link to="/" className="nav-logo" onClick={handleClickLogo}>
         <BaseSvg id="logo" className="nav-logo-svg" />
       </Link>
-      {chats?.length || otherFriends?.length ? (
+      {currentFriends?.length ? (
         <Button
           color="secondary"
           variant="outlined"
           startIcon={<CommentOutlinedIcon />}
-          className="text-hidden-xs"
+          xsTextHidden
+          onClick={handleClickNewChat}
         >
-          <div>New Chat</div>
+          New Chat
         </Button>
       ) : null}
-      <Button
-        endIcon={<MenuRoundedIcon />}
-        onClick={() => toggleDrawer(true)}
-        className="nav-menu-btn text-hidden-xs"
-      >
-        <div>Menu</div>
-      </Button>
+      {isExtraSmallOrBelow ? (
+        <Button
+          variant="contained"
+          endIcon={<MenuRoundedIcon />}
+          className="nav-menu-btn"
+          onClick={handleClickMenu}
+          xsTextHidden
+        >
+          Menu
+        </Button>
+      ) : null}
     </NavBarStyled>
   );
 };
-
-NavBar.displayName = 'NavBar';
 
 export default NavBar;

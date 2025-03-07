@@ -4,10 +4,10 @@ import { DrawerContext } from '../../../contexts';
 import { BaseProtectedStyled } from './BaseProtected.styled';
 
 const BaseProtected = () => {
-  const { navbarHeight } = useContext(DrawerContext);
+  const { navBarHeight } = useContext(DrawerContext);
 
   return (
-    <BaseProtectedStyled navbarHeight={navbarHeight}>
+    <BaseProtectedStyled navBarHeight={navBarHeight}>
       <Suspense fallback={null}>
         <Outlet />
       </Suspense>

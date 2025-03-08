@@ -195,6 +195,7 @@ const MenuList = ({ className }: any) => {
                     sx={{
                       left: `-${getBadgeWidth(navLink?.count)}px`,
                     }}
+                    invisible={!navLink?.count}
                   />
                 ),
                 selected:

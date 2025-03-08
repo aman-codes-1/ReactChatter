@@ -78,9 +78,10 @@ const Home = ({ loadingHome }: any) => {
       <div className="home-header">
         <Typography className="home-heading">ReactChatter</Typography>
         <Typography className="home-sub-heading">
-          A simple real-time chat application built using
+          A full-stack real-time messaging chat application built using
           <br />
-          React.js, Material UI, Typescript, Nest.js, and GraphQL Subscriptions.
+          React.js, Material UI, Typescript, Nest.js, GraphQL Subscriptions,
+          BullMQ, and Redis.
         </Typography>
         <div className="home-login-btn-wrapper">
           <GoogleLogin

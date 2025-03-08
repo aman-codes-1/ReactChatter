@@ -166,6 +166,7 @@ const DataList = ({
                   sx={{
                     left: `-${getBadgeWidth(currentMember?.unreadMessagesCount)}px`,
                   }}
+                  invisible={!currentMember?.unreadMessagesCount}
                 />
               ),
               onClick: (_: any) => handleClick(_, item, chatDetails),

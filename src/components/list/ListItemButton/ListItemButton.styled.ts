@@ -1,4 +1,4 @@
-import { ListItemButton, styled } from '@mui/material';
+import { Badge, ListItemButton, styled } from '@mui/material';
 
 export const ListItemButtonStyled = styled(ListItemButton, {
   shouldForwardProp: (prop) =>
@@ -66,3 +66,18 @@ export const ListItemButtonStyled = styled(ListItemButton, {
     },
   }),
 );
+
+export const AvatarStyledBadge = styled(Badge, {
+  shouldForwardProp: (prop) => prop !== 'backgroundColor',
+})<{ backgroundColor: string }>(({ theme, backgroundColor }) => ({
+  '& .MuiBadge-badge': {
+    backgroundColor,
+    color: theme.palette.common.white,
+    boxShadow: `0 0 0 2px ${theme.palette.background.default}`,
+    minWidth: '0',
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    bottom: '6.5px',
+  },
+}));

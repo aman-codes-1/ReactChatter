@@ -1,30 +1,16 @@
 import { forwardRef } from 'react';
 import {
-  Badge,
   ListItemAvatar,
   ListItemIcon,
   ListItemText,
   Skeleton,
-  styled,
 } from '@mui/material';
 import { Avatar } from '../..';
 import { ListItemButtonProps } from './IListItemButton';
-import { ListItemButtonStyled } from './ListItemButton.styled';
-
-const StyledBadge = styled(Badge, {
-  shouldForwardProp: (prop) => prop !== 'backgroundColor',
-})<{ backgroundColor: string }>(({ theme, backgroundColor }) => ({
-  '& .MuiBadge-badge': {
-    backgroundColor,
-    color: theme.palette.common.white,
-    boxShadow: `0 0 0 2px ${theme.palette.background.default}`,
-    minWidth: '0',
-    width: '16px',
-    height: '16px',
-    borderRadius: '50%',
-    bottom: '6.5px',
-  },
-}));
+import {
+  AvatarStyledBadge,
+  ListItemButtonStyled,
+} from './ListItemButton.styled';
 
 const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
   (props, ref) => {
@@ -51,14 +37,14 @@ const ListItemButton = forwardRef<HTMLDivElement, ListItemButtonProps>(
         );
       } else if (avatarProps?.badge) {
         return (
-          <StyledBadge
+          <AvatarStyledBadge
             backgroundColor={avatarProps?.badge?.backgroundColor}
             overlap="circular"
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             badgeContent={avatarProps?.badge?.content}
           >
             <Avatar {...avatarProps} />
-          </StyledBadge>
+          </AvatarStyledBadge>
         );
       } else {
         return <Avatar {...avatarProps} />;

@@ -36,7 +36,7 @@ const handleContinue = (
   setActiveStep((prevActiveStep: number) => {
     const val = prevActiveStep + 1;
     if (idx === 2) {
-      localStorage.removeItem('getStartedProgress');
+      localStorage.removeItem(`${_id}`);
       setIsStepperTimeoutRunning(true);
       setIsStepper(false);
     } else {

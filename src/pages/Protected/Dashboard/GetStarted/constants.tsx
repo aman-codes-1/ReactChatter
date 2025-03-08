@@ -36,13 +36,13 @@ const handleContinue = (
   setActiveStep((prevActiveStep: number) => {
     const val = prevActiveStep + 1;
     if (idx === 2) {
-      localStorage.removeItem(`${_id}`);
+      localStorage.removeItem(`start_progress_${_id}`);
       setIsStepperTimeoutRunning(true);
       setIsStepper(false);
     } else {
       localStorage.setItem(
-        `${_id}`,
-        JSON.stringify({ getStartedProgress: { activeStep: String(val) } }),
+        `start_progress_${_id}`,
+        JSON.stringify({ activeStep: String(val) }),
       );
     }
     return val;
@@ -62,8 +62,8 @@ const handleBack = (
   setActiveStep((prevActiveStep: number) => {
     const val = prevActiveStep - 1;
     localStorage.setItem(
-      `${_id}`,
-      JSON.stringify({ getStartedProgress: { activeStep: String(val) } }),
+      `start_progress_${_id}`,
+      JSON.stringify({ activeStep: String(val) }),
     );
     return val;
   });

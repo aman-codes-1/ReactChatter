@@ -18,9 +18,9 @@ import { GetStartedStyled } from './GetStarted.styled';
 const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
   const theme = useTheme();
   const { auth: { _id = '', given_name = '' } = {} } = useAuth();
-  const storedUser = localStorage.getItem(`${_id}`);
+  const storedUser = localStorage.getItem(`start_progress_${_id}`);
   const storedUserData = storedUser ? JSON.parse(storedUser) : {};
-  const storedActiveStep = storedUserData?.getStartedProgress?.activeStep;
+  const storedActiveStep = storedUserData?.activeStep;
   const numStep = checkIfNumber(storedActiveStep)
     ? Number(storedActiveStep)
     : 0;

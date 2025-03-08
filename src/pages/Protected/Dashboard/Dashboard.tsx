@@ -6,9 +6,9 @@ import { GetStarted, NewChat, RecentChats } from '.';
 
 const Dashboard = () => {
   const { auth: { _id = '' } = {} } = useAuth();
-  const storedUser = localStorage.getItem(`${_id}`);
+  const storedUser = localStorage.getItem(`start_progress_${_id}`);
   const storedUserData = storedUser ? JSON.parse(storedUser) : {};
-  const storedActiveStep = storedUserData?.getStartedProgress?.activeStep;
+  const storedActiveStep = storedUserData?.activeStep;
   const [isStepper, setIsStepper] = useState(!!storedActiveStep);
   const {
     pendingRequestsLoading,

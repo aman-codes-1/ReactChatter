@@ -80,8 +80,7 @@ const Home = ({ loadingHome }: any) => {
         <Typography className="home-sub-heading">
           A simple real-time chat application built using
           <br />
-          React.js v18, Material UI, Typescript, Nest.js, and GraphQL
-          Subscriptions.
+          React.js, Material UI, Typescript, Nest.js, and GraphQL Subscriptions.
         </Typography>
         <div className="home-login-btn-wrapper">
           <GoogleLogin

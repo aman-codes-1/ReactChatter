@@ -6,10 +6,10 @@ import { GetStarted, NewChat, RecentChats } from '.';
 
 const Dashboard = () => {
   const { auth: { _id = '' } = {} } = useAuth();
-  const getStartedProgress = localStorage.getItem('getStartedProgress');
-  const progressData = getStartedProgress ? JSON.parse(getStartedProgress) : {};
-  const activeStep = progressData[_id]?.activeStep;
-  const [isStepper, setIsStepper] = useState(!!activeStep);
+  const storedUser = localStorage.getItem(`${_id}`);
+  const storedUserData = storedUser ? JSON.parse(storedUser) : {};
+  const storedActiveStep = storedUserData?.getStartedProgress?.activeStep;
+  const [isStepper, setIsStepper] = useState(!!storedActiveStep);
   const {
     pendingRequestsLoading,
     sentRequestsLoading,

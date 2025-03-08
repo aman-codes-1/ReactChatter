@@ -17,8 +17,13 @@ import { GetStartedStyled } from './GetStarted.styled';
 
 const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
   const theme = useTheme();
-  const storedStep = localStorage.getItem('activeStep');
-  const numStep = checkIfNumber(storedStep) ? Number(storedStep) : 0;
+  const { auth: { _id = '', given_name = '' } = {} } = useAuth();
+  const storedUser = localStorage.getItem(`${_id}`);
+  const storedUserData = storedUser ? JSON.parse(storedUser) : {};
+  const storedActiveStep = storedUserData?.getStartedProgress?.activeStep;
+  const numStep = checkIfNumber(storedActiveStep)
+    ? Number(storedActiveStep)
+    : 0;
   const [activeStep, setActiveStep] = useState(numStep);
   const {
     pendingRequests = [],
@@ -35,7 +40,6 @@ const GetStarted = ({ setIsStepper, setIsStepperTimeoutRunning }: any) => {
     () => setIsCopyTimeoutRunning(false),
     2000,
   );
-  const { auth: { _id = '', given_name = '' } = {} } = useAuth();
   const { openSnackbar } = useSnackbar();
   const msgRef = useRef<HTMLDivElement | null>(null);
 

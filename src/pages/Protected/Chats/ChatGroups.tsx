@@ -43,7 +43,34 @@ const ChatGroups = ({ appBarHeight, textFieldHeight }: any) => {
   );
 
   useLayoutEffect(() => {
-    return () => setIsChatsVisible(false);
+    const handleVisibility = () => {
+      const isElementVisible = document.hasFocus() && !document.hidden;
+      setIsChatsVisible(isElementVisible);
+    };
+
+    const eventListeners: {
+      target: Window | Document;
+      event: string;
+      handler: (e?: Event) => void;
+    }[] = [
+      { target: window, event: 'focus', handler: handleVisibility },
+      { target: window, event: 'blur', handler: handleVisibility },
+      {
+        target: document,
+        event: 'visibilitychange',
+        handler: handleVisibility,
+      },
+    ];
+
+    eventListeners.forEach(({ target, event, handler }) =>
+      target.addEventListener(event, handler),
+    );
+
+    return () => {
+      eventListeners.forEach(({ target, event, handler }) =>
+        target.removeEventListener(event, handler),
+      );
+    };
   }, []);
 
   useEffect(() => {

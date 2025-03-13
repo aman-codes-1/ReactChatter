@@ -1,6 +1,8 @@
-# ReactChatter - A full-stack real-time messaging chat application built using React.js, Material UI, Typescript, Nest.js, GraphQL Subscriptions, BullMQ, and Redis - [https://reactchatter.in](https://reactchatter.in)
+# ReactChatter - A full-stack real-time messaging chat application built using React.js, Material UI, Typescript, Nest.js, GraphQL Subscriptions, BullMQ, and Redis
 
-## Features
+[https://reactchatter.in](https://reactchatter.in)
+
+## Key Features
 
 ### Frontend
 

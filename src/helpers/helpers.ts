@@ -1,4 +1,4 @@
-import { RefObject } from 'react';
+import { ForwardedRef, RefObject } from 'react';
 import moment from 'moment';
 import 'moment/min/locales';
 import { jwtDecode } from 'jwt-decode';
@@ -126,52 +126,20 @@ export const getFriendId = (str: string | null) => {
   return { friendId, friendUserId };
 };
 
-export const setFocus = (ref: RefObject<HTMLInputElement>) => {
-  const inputElement = ref?.current;
-  if (inputElement) {
-    setTimeout(() => {
-      inputElement?.focus();
-    }, 0);
-  }
-};
-
-export const updateHeight = (ref: any, setHeight: any, delay = false) => {
-  const listElement = ref?.current;
-  if (listElement) {
-    if (delay) {
-      requestAnimationFrame(() => {
-        setHeight(listElement?.clientHeight);
-      });
-    } else {
-      setHeight(listElement?.clientHeight);
-    }
-  }
-};
-
-export const updateWidth = (ref: any, setWidth: any, delay = false) => {
-  const listElement = ref?.current;
-  if (listElement) {
-    if (delay) {
-      requestAnimationFrame(() => {
-        setWidth(listElement?.clientWidth);
-      });
-    } else {
-      setWidth(listElement?.clientWidth);
-    }
-  }
-};
-
 export const scrollTo = (
-  ref: any,
-  itemsRef: any,
+  ref: ForwardedRef<HTMLUListElement>,
+  itemsRef: ForwardedRef<HTMLDivElement[]>,
   listItems: any[],
   id: string,
 ) => {
   const selectedItemIndex = listItems?.findIndex(
     (item) => item?._id && id && item?._id === id,
   );
-  const listElement = ref?.current;
-  const itemElement = itemsRef?.current?.[selectedItemIndex];
+  const listElement = ref && 'current' in ref ? ref?.current : null;
+  const itemElement =
+    itemsRef && 'current' in itemsRef
+      ? itemsRef?.current?.[selectedItemIndex]
+      : null;
   if (selectedItemIndex !== -1 && listElement && itemElement) {
     const itemRect = itemElement?.getBoundingClientRect();
     const listRect = listElement?.getBoundingClientRect();
@@ -181,6 +149,49 @@ export const scrollTo = (
     const listHeight = listRect.height;
     const scrollPos = topPos - listHeight / 2 + itemHeight / 2;
     listElement?.scrollTo({ top: scrollPos, behavior: 'smooth' });
+  }
+};
+
+export const setFocus = (ref: ForwardedRef<HTMLDivElement>) => {
+  const inputElement = ref && 'current' in ref ? ref?.current : null;
+  if (inputElement) {
+    setTimeout(() => {
+      inputElement?.focus();
+    }, 0);
+  }
+};
+
+export const updateHeight = (
+  ref: ForwardedRef<HTMLDivElement>,
+  setHeight: any,
+  delay = false,
+) => {
+  const element = ref && 'current' in ref ? ref?.current : null;
+  if (element) {
+    if (delay) {
+      requestAnimationFrame(() => {
+        setHeight(element?.clientHeight);
+      });
+    } else {
+      setHeight(element?.clientHeight);
+    }
+  }
+};
+
+export const updateWidth = (
+  ref: ForwardedRef<HTMLDivElement>,
+  setWidth: any,
+  delay = false,
+) => {
+  const element = ref && 'current' in ref ? ref?.current : null;
+  if (element) {
+    if (delay) {
+      requestAnimationFrame(() => {
+        setWidth(element?.clientWidth);
+      });
+    } else {
+      setWidth(element?.clientWidth);
+    }
   }
 };
 

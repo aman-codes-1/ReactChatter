@@ -38,7 +38,7 @@ const DataList = ({
   const { auth: { _id = '' } = {} } = useAuth();
   const { isHomeButtonClicked } = useContext(ChatsAndFriendsContext);
   const listRef = useRef<HTMLUListElement | null>(null);
-  const listItemsRef = useRef<HTMLDivElement[] | null[]>([]);
+  const listItemsRef = useRef<HTMLDivElement[]>([]);
 
   useLayoutEffect(() => {
     if (listRef?.current) {

@@ -11,7 +11,6 @@ const SuccessErrorMessage = forwardRef<
   SuccessErrorMessageProps
 >((props, ref) => {
   const { message, type, className } = props;
-
   const [height, setHeight] = useState(0);
 
   useLayoutEffect(() => {

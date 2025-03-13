@@ -1,6 +1,6 @@
 # ReactChatter
 
-## A full-stack real-time messaging chat application built using React.js, Material UI, Typescript, Nest.js, GraphQL Subscriptions, BullMQ, and Redis
+- **A full-stack real-time messaging chat application built using React.js, Material UI, Typescript, Nest.js, GraphQL Subscriptions, BullMQ, and Redis**
 
 Visit the website [https://reactchatter.in](https://reactchatter.in)
 
@@ -20,8 +20,8 @@ Visit the website [https://reactchatter.in](https://reactchatter.in)
 
 ### Backend
 
-- **Optimized Database Queries with MongoDB Aggregation**: Efficient data retrieval and processing using MongoDB’s powerful aggregation framework. 
-- **Session-Based Authentication with Secure Cookies (HttpOnly, SameSite, Secure)**: Enhancing security by using encrypted, HttpOnly cookies to store session tokens, preventing XSS and CSRF attacks. 
+- **Optimized Database Queries with MongoDB Aggregation**: Efficient data retrieval and processing using MongoDB’s powerful aggregation framework, allowing to group, filter, and manipulate data to find and address duplicates effectively.
+- **Session-Based Authentication with Secure Cookies (HttpOnly, SameSite, Secure)**: Enhancing security by using encrypted, HttpOnly cookies to store JWT and session tokens, preventing XSS and CSRF attacks.
 - **Real-time User Presence Tracking**: Display online/offline and last-seen status for improved user engagement.  
 - **Message Scheduling & Processing with BullMQ and Redis**: Reliable message queuing and background job processing for seamless delivery.  
 - **Guaranteed Message Delivery on User Reconnection**: Ensuring messages reach users as soon as they come online.  
@@ -30,11 +30,11 @@ Visit the website [https://reactchatter.in](https://reactchatter.in)
 
 ### Deployment
 
-- **Reverse Proxy with Nginx Proxy Manager**: Efficient traffic management, SSL termination, and load balancing for enhanced security and performance.  
-- **Cloudflare Tunnel for Secure Self-Hosting**: Establishing encrypted tunnels to expose services securely without port forwarding.  
+- **Reverse Proxy with Nginx**: Streamlines traffic routing, secure connections with SSL termination, and load distribution optimization for enhanced security and performance.  
+- **Cloudflare Tunnel for Secure Self-Hosting**: Establishing encrypted tunnels to expose services securely without port forwarding and for accessing services running locally.
 - **Automatic SSL Management**: Seamless SSL certificate provisioning and renewal for secure HTTPS connections.  
 - **Custom Domain & Subdomain Routing**: Flexible domain management for organizing and scaling application services.
 
 ## Feedback
 
-If you have any feedback, please reach out to me at aman.codes0@gmail.com
+If you have any feedback, please reach out to me at <aman.codes0@gmail.com>

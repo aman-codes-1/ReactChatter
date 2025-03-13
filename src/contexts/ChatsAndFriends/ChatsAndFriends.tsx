@@ -46,7 +46,10 @@ import {
   REQUEST_ADDED_SUBSCRIPTION,
   REQUEST_UPDATED_SUBSCRIPTION,
   SENT_REQUESTS_QUERY,
+  SHOULD_NOTIFY_USER_MUTATION,
   UPDATE_REQUEST_MUTATION,
+  USER_CLIENT_QUERY,
+  USER_CLIENT_UPDATED_SUBSCRIPTION,
   USER_ONLINE_STATUS_SUBSCRIPTION,
   USER_ONLINE_STATUS_QUERY,
 } from '..';
@@ -91,6 +94,14 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
   const { isWsConnected, isNetworkError } = useClient();
   const { socket } = useSocket();
   const prevPathname = `${location?.pathname}${location?.search}`;
+
+  const {
+    data: { userClient = {} } = {},
+    loading: userClientLoading,
+    error: userClientError,
+    client: userClientClient,
+    refetch: refetchUserClient,
+  } = useQuery(USER_CLIENT_QUERY, { variables: { userId: _id } });
 
   const {
     data: {
@@ -518,7 +529,8 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
           if (
             OnMessageUpdatedChatId &&
             chatId &&
-            OnMessageUpdatedChatId === chatId
+            OnMessageUpdatedChatId === chatId &&
+            isChatsVisible
           ) {
             markAllMessagesAsRead(OnMessageUpdatedChatId);
           }
@@ -782,6 +794,27 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     },
   });
 
+  const {
+    data: OnUserClientUpdated,
+    loading: OnUserClientUpdatedLoading,
+    error: OnUserClientUpdatedError,
+  } = useSubscription(USER_CLIENT_UPDATED_SUBSCRIPTION, {
+    onData: async (res) => {
+      const OnUserClientUpdatedData = res?.data?.data?.OnUserClientUpdated;
+      const OnUserClientUpdatedClient = OnUserClientUpdatedData?.userClient;
+      const OnUserClientUpdatedUserId = OnUserClientUpdatedClient?.userId;
+      if (OnUserClientUpdatedUserId && OnUserClientUpdatedUserId === _id) {
+        userClientClient.writeQuery({
+          query: USER_CLIENT_QUERY,
+          data: {
+            userClient: OnUserClientUpdatedClient,
+          },
+          variables: { userId: OnUserClientUpdatedUserId },
+        });
+      }
+    },
+  });
+
   const [
     createMessage,
     {
@@ -817,6 +850,15 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
       error: updateRequestError,
     },
   ] = useMutation(UPDATE_REQUEST_MUTATION);
+
+  const [
+    shouldNotifyUser,
+    {
+      data: shouldNotifyUserData,
+      loading: shouldNotifyUserLoading,
+      error: shouldNotifyUserError,
+    },
+  ] = useMutation(SHOULD_NOTIFY_USER_MUTATION);
 
   useLayoutEffect(() => {
     if (isNetworkError || isFetchingChats2 || isFetchingFriends2) return;
@@ -1115,6 +1157,7 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     setIsFetchingFriends2(true);
     try {
       await client.clearStore();
+      await refetchUserClient();
       await refetchChats();
       await refetchFriends();
       await Promise.allSettled([
@@ -1193,6 +1236,12 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
     <ChatsAndFriendsContext.Provider
       value={{
         // query
+        // userClient
+        userClient,
+        userClientLoading,
+        userClientError,
+        userClientClient,
+        refetchUserClient,
         // messages
         messages,
         messagesPageInfo,
@@ -1283,6 +1332,10 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         OnUserOnlineStatus,
         OnUserOnlineStatusLoading,
         OnUserOnlineStatusError,
+        // OnUserClientUpdated
+        OnUserClientUpdated,
+        OnUserClientUpdatedLoading,
+        OnUserClientUpdatedError,
 
         // mutation
         // createMessage
@@ -1305,6 +1358,11 @@ export const ChatsAndFriendsProvider = ({ children }: any) => {
         updateRequestData,
         updateRequestLoading,
         updateRequestError,
+        // shouldNotifyUser
+        shouldNotifyUser,
+        shouldNotifyUserData,
+        shouldNotifyUserLoading,
+        shouldNotifyUserError,
 
         // state
         // isHomeButtonClicked

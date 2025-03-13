@@ -1,4 +1,4 @@
-import { styled } from '@mui/material';
+import { Badge, styled } from '@mui/material';
 
 export const NavBarStyled = styled('div')(({ theme }) => ({
   width: '100%',
@@ -50,5 +50,13 @@ export const NavBarStyled = styled('div')(({ theme }) => ({
   },
   '.nav-menu-btn:hover': {
     backgroundColor: `${theme.palette.action.hover} !important`,
+  },
+}));
+
+export const MenuStyledBadge = styled(Badge)(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    border: `2px solid ${theme.palette.background.paper}`,
+    borderRadius: '50%',
+    padding: '0.3125rem',
   },
 }));

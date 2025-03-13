@@ -36,6 +36,9 @@ type Documents = {
     "\n  subscription OnSessionUpdated($sessionID: String!) {\n    OnSessionUpdated(input: { sessionID: $sessionID }) {\n      session {\n        _id\n        userId\n        lastActive\n        deviceDetails\n        expires\n        lastActive\n      }\n    }\n  }\n": typeof types.OnSessionUpdatedDocument,
     "\n  query userOnlineStatus($userId: String!) {\n    userOnlineStatus(input: { userId: $userId }) {\n      userId\n      onlineStatus {\n        isOnline\n        lastSeen\n      }\n    }\n  }\n": typeof types.UserOnlineStatusDocument,
     "\n  subscription OnUserOnlineStatus {\n    OnUserOnlineStatus {\n      userId\n      onlineStatus {\n        isOnline\n        lastSeen\n      }\n    }\n  }\n": typeof types.OnUserOnlineStatusDocument,
+    "\n  query userClient($userId: String!) {\n    userClient(input: { userId: $userId }) {\n      userId\n      hasNotifications\n    }\n  }\n": typeof types.UserClientDocument,
+    "\n  subscription OnUserClientUpdated {\n    OnUserClientUpdated {\n      userClient {\n        userId\n        hasNotifications\n      }\n    }\n  }\n": typeof types.OnUserClientUpdatedDocument,
+    "\n  mutation shouldNotifyUser($userId: String!, $value: Boolean!) {\n    shouldNotifyUser(input: { userId: $userId, value: $value }) {\n      _id\n    }\n  }\n": typeof types.ShouldNotifyUserDocument,
 };
 const documents: Documents = {
     "\n  query cachedMessages($chatId: String!) {\n    cachedMessages(input: { chatId: $chatId }) {\n      edges {\n        _id\n        chatId\n        queueId\n        message\n        sender {\n          _id\n          name\n          picture\n          email\n          email_verified\n          given_name\n          family_name\n          retryStatus {\n            isRetry\n            timestamp\n          }\n          queuedStatus {\n            isQueued\n            timestamp\n          }\n          sentStatus {\n            isSent\n            timestamp\n          }\n        }\n        receivers {\n          _id\n          name\n          picture\n          email\n          email_verified\n          given_name\n          family_name\n          deliveredStatus {\n            isDelivered\n            timestamp\n          }\n          readStatus {\n            isRead\n            timestamp\n          }\n        }\n        timestamp\n      }\n      pageInfo {\n        endCursor\n        hasPreviousPage\n        hasNextPage\n      }\n      scrollPosition\n      isFetched\n    }\n  }\n": types.CachedMessagesDocument,
@@ -60,6 +63,9 @@ const documents: Documents = {
     "\n  subscription OnSessionUpdated($sessionID: String!) {\n    OnSessionUpdated(input: { sessionID: $sessionID }) {\n      session {\n        _id\n        userId\n        lastActive\n        deviceDetails\n        expires\n        lastActive\n      }\n    }\n  }\n": types.OnSessionUpdatedDocument,
     "\n  query userOnlineStatus($userId: String!) {\n    userOnlineStatus(input: { userId: $userId }) {\n      userId\n      onlineStatus {\n        isOnline\n        lastSeen\n      }\n    }\n  }\n": types.UserOnlineStatusDocument,
     "\n  subscription OnUserOnlineStatus {\n    OnUserOnlineStatus {\n      userId\n      onlineStatus {\n        isOnline\n        lastSeen\n      }\n    }\n  }\n": types.OnUserOnlineStatusDocument,
+    "\n  query userClient($userId: String!) {\n    userClient(input: { userId: $userId }) {\n      userId\n      hasNotifications\n    }\n  }\n": types.UserClientDocument,
+    "\n  subscription OnUserClientUpdated {\n    OnUserClientUpdated {\n      userClient {\n        userId\n        hasNotifications\n      }\n    }\n  }\n": types.OnUserClientUpdatedDocument,
+    "\n  mutation shouldNotifyUser($userId: String!, $value: Boolean!) {\n    shouldNotifyUser(input: { userId: $userId, value: $value }) {\n      _id\n    }\n  }\n": types.ShouldNotifyUserDocument,
 };
 
 /**
@@ -164,6 +170,18 @@ export function gql(source: "\n  query userOnlineStatus($userId: String!) {\n   
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  subscription OnUserOnlineStatus {\n    OnUserOnlineStatus {\n      userId\n      onlineStatus {\n        isOnline\n        lastSeen\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnUserOnlineStatus {\n    OnUserOnlineStatus {\n      userId\n      onlineStatus {\n        isOnline\n        lastSeen\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query userClient($userId: String!) {\n    userClient(input: { userId: $userId }) {\n      userId\n      hasNotifications\n    }\n  }\n"): (typeof documents)["\n  query userClient($userId: String!) {\n    userClient(input: { userId: $userId }) {\n      userId\n      hasNotifications\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  subscription OnUserClientUpdated {\n    OnUserClientUpdated {\n      userClient {\n        userId\n        hasNotifications\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnUserClientUpdated {\n    OnUserClientUpdated {\n      userClient {\n        userId\n        hasNotifications\n      }\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation shouldNotifyUser($userId: String!, $value: Boolean!) {\n    shouldNotifyUser(input: { userId: $userId, value: $value }) {\n      _id\n    }\n  }\n"): (typeof documents)["\n  mutation shouldNotifyUser($userId: String!, $value: Boolean!) {\n    shouldNotifyUser(input: { userId: $userId, value: $value }) {\n      _id\n    }\n  }\n"];
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};

@@ -767,6 +767,34 @@ const USER_ONLINE_STATUS_SUBSCRIPTION = gql(/* GraphQL */ `
   }
 `) as DocumentNode;
 
+const USER_CLIENT_QUERY = gql(/* GraphQL */ `
+  query userClient($userId: String!) {
+    userClient(input: { userId: $userId }) {
+      userId
+      hasNotifications
+    }
+  }
+`) as DocumentNode;
+
+const USER_CLIENT_UPDATED_SUBSCRIPTION = gql(/* GraphQL */ `
+  subscription OnUserClientUpdated {
+    OnUserClientUpdated {
+      userClient {
+        userId
+        hasNotifications
+      }
+    }
+  }
+`) as DocumentNode;
+
+const SHOULD_NOTIFY_USER_MUTATION = gql(/* GraphQL */ `
+  mutation shouldNotifyUser($userId: String!, $value: Boolean!) {
+    shouldNotifyUser(input: { userId: $userId, value: $value }) {
+      _id
+    }
+  }
+`) as DocumentNode;
+
 export {
   // messages
   CACHED_MESSAGES_QUERY,
@@ -801,4 +829,9 @@ export {
   // userOnlineStatus
   USER_ONLINE_STATUS_QUERY,
   USER_ONLINE_STATUS_SUBSCRIPTION,
+
+  // userClient
+  USER_CLIENT_QUERY,
+  USER_CLIENT_UPDATED_SUBSCRIPTION,
+  SHOULD_NOTIFY_USER_MUTATION,
 };

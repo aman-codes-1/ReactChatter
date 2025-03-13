@@ -9,19 +9,24 @@ import {
   ChatsAndFriendsContext,
   FRIENDS_SORTED_QUERY,
 } from '../../../contexts';
-import { toggleDrawer } from '../../../helpers';
-import { NavBarStyled } from './NavBar.styled';
+import { getMember, toggleDrawer } from '../../../helpers';
+import { MenuStyledBadge, NavBarStyled } from './NavBar.styled';
 
 const NavBar = ({ className }: any) => {
   const theme = useTheme();
   const { auth: { _id = '' } = {} } = useAuth();
   const {
+    userClient,
     friendsSortedQuery,
     friendsSortedClient,
+    pendingRequestsCount = 0,
+    sentRequestsCount = 0,
+    shouldNotifyUser,
     setIsHomeButtonClicked,
     setIsMenuDrawerOpen,
     isNewChatDrawerOpen,
     setIsNewChatDrawerOpen,
+    currentChats = [],
     currentFriends = [],
     fetchAll,
     closeAllDrawers,
@@ -68,7 +73,19 @@ const NavBar = ({ className }: any) => {
 
   const handleClickMenu = () => {
     toggleDrawer(setIsMenuDrawerOpen, true);
+    shouldNotifyUser({ variables: { userId: _id, value: false } });
   };
+
+  const unreadMessagesCount = currentChats?.length
+    ? currentChats?.some((currentChat: any) => {
+        const { currentMember } = getMember(currentChat?.members, _id);
+        return currentMember?.unreadMessagesCount;
+      })
+    : 0;
+
+  const hasNotifications =
+    userClient?.hasNotifications &&
+    !!(sentRequestsCount || pendingRequestsCount || unreadMessagesCount);
 
   return (
     <NavBarStyled className={className}>
@@ -87,15 +104,21 @@ const NavBar = ({ className }: any) => {
         </Button>
       ) : null}
       {isExtraSmallOrBelow ? (
-        <Button
-          variant="contained"
-          endIcon={<MenuRoundedIcon />}
-          className="nav-menu-btn"
-          onClick={handleClickMenu}
-          xsTextHidden
+        <MenuStyledBadge
+          color="primary"
+          variant="dot"
+          invisible={!hasNotifications}
         >
-          Menu
-        </Button>
+          <Button
+            variant="contained"
+            endIcon={<MenuRoundedIcon />}
+            className="nav-menu-btn"
+            onClick={handleClickMenu}
+            xsTextHidden
+          >
+            Menu
+          </Button>
+        </MenuStyledBadge>
       ) : null}
     </NavBarStyled>
   );

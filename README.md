@@ -37,4 +37,4 @@ Visit the website [https://reactchatter.in](https://reactchatter.in)
 
 ## Feedback
 
-If you have any feedback, please reach out to me at <aman.codes0@gmail.com>
+If you have any feedback, please reach out to me at <aman.codes0@gmail.com>.

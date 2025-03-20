@@ -9,7 +9,8 @@ Visit the website <https://reactchatter.in>
 ### Frontend
 
 - **Real-time Messaging**: Instant, seamless communication with real-time updates.  
-- **Friend Requests via Email**: Users can connect by sending and accepting friend requests through email invitations.  
+- **Friend Requests via Email**: Users can connect by sending and accepting friend requests through email invitations.
+- **Real-time User Presence Tracking**: Online/Offline status and last-seen timestamps using Socket.IO, enhancing user engagement.
 - **Responsive UI with Material UI & Styled Components**: A visually appealing, adaptive interface built with industry-standard design libraries.  
 - **Secure Google Authentication (Redirect UX Mode)**: Safe and seamless user authentication using Google's OAuth with a redirect-based user experience.  
 - **Protected Routes for Enhanced Security**: Ensuring only authorized users can access sensitive areas of the application.  
@@ -22,7 +23,7 @@ Visit the website <https://reactchatter.in>
 
 - **Optimized Database Queries with MongoDB Aggregation**: Efficient data retrieval and processing using MongoDB’s powerful aggregation framework, allowing to group, filter, and manipulate data to find and address duplicates effectively.
 - **Session-Based Authentication with Secure Cookies (HttpOnly, SameSite, Secure)**: Enhancing security by using encrypted, HttpOnly cookies to store JWT and session tokens, preventing XSS and CSRF attacks.
-- **Real-time User Presence Tracking**: Display online/offline and last-seen status for improved user engagement.  
+- **User online/offline status**: Real-time tracking of users using WebSocket Gateways, leveraging Socket.IO to detect user connections and disconnections instantly.
 - **Message Scheduling & Processing with BullMQ and Redis**: Reliable message queuing and background job processing for seamless delivery.  
 - **Guaranteed Message Delivery on User Reconnection**: Ensuring messages reach users as soon as they come online.  
 - **Read/Unread Message Tracking**: Enhancing message reliability and user experience with proper delivery status indicators.  

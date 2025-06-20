@@ -1,9 +1,31 @@
-FROM node:18-alpine
+FROM node:18-alpine AS builder
 WORKDIR /app
+
+ARG REACT_APP_PROXY_URI
+ARG REACT_APP_SERVER_URI
+ARG REACT_APP_GOOGLE_CLIENT_ID
+ARG REACT_APP_ENCRYPTION_SECRET
+ENV REACT_APP_PROXY_URI=$REACT_APP_PROXY_URI
+ENV REACT_APP_SERVER_URI=$REACT_APP_SERVER_URI
+ENV REACT_APP_GOOGLE_CLIENT_ID=$REACT_APP_GOOGLE_CLIENT_ID
+ENV REACT_APP_ENCRYPTION_SECRET=$REACT_APP_ENCRYPTION_SECRET
+
 COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run build
-RUN npm install -g serve
-EXPOSE 3000
-CMD ["serve", "-s", "build", "-l", "3000"]
+
+FROM node:18-alpine
+WORKDIR /app
+
+ARG PORT
+ENV NODE_ENV=production
+ENV PORT=$PORT
+
+COPY --from=builder /app/build build
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package*.json ./
+RUN npm install --omit=dev
+
+EXPOSE ${PORT}
+CMD ["sh", "-c", "serve -s build -l $PORT"]

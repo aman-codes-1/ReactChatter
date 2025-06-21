@@ -22,10 +22,9 @@ ARG PORT
 ENV NODE_ENV=production
 ENV PORT=$PORT
 
-COPY --from=builder /app/build build
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-RUN npm install --omit=dev
+RUN npm install -g serve
+
+COPY --from=builder /app/build ./build
 
 EXPOSE ${PORT}
-CMD ["sh", "-c", "serve -s build -l $PORT"]
+CMD ["serve", "-s", "build"]

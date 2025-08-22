@@ -1,0 +1,68 @@
+x-server-env: &server-env
+  CLIENT_PORT: "3000"
+  CLIENT_URI: "https://reactchatter.top"
+  SERVER_URI: "https://reactchatter.top"
+  DOMAIN: ".reactchatter.top"
+  SAME_SITE: "strict"
+  ALLOWED_ORIGINS: ""
+  MONGO_URI: "mongodb://host.docker.internal:27017/"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  COOKIE_SECRET: "TEn1T8KrwTZFI7h0dvN7Lr5dYShu0KJU"
+  COOKIE_MAX_UNITS: "7,24,60,60"
+  GOOGLE_CLIENT_ID: "85543159228-7k2867hh2627e4skfdt2092m3qvvvkda.apps.googleusercontent.com"
+  GOOGLE_CLIENT_SECRET: "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"
+  SESSION_SECRET: "dT189vEbhH40Ozxn6DWKHRAWawYSuiPa"
+  JWT_SECRET: "SBjrlhxz3WhxPnsx6aAy4RWr7TC7A4Tc"
+  JWT_EXPIRATION_TIME: "3599"
+  RATE_LIMIT_MS: "60000"
+  RATE_LIMIT_MAX: "100"
+  ENCRYPTION_SECRET: "U1Z0suzGLJ4a3U4oDhGrMjlWQJw364SM"
+
+services:  
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  server:
+    build:
+      context: ./reactchatter-server
+      dockerfile: Dockerfile
+      args:
+        PORT: 8000
+    environment:
+      <<: *server-env
+      PORT: 8000
+    container_name: reactchatter-server
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+
+  client:
+    build:
+      context: ./reactchatter
+      dockerfile: Dockerfile
+      args:
+        PORT: 3000
+        REACT_APP_PROXY_URI: "https://reactchatter.top"
+        REACT_APP_SERVER_URI: "https://reactchatter.top"
+        REACT_APP_GOOGLE_CLIENT_ID: "85543159228-7k2867hh2627e4skfdt2092m3qvvvkda.apps.googleusercontent.com"
+        REACT_APP_ENCRYPTION_SECRET: "U1Z0suzGLJ4a3U4oDhGrMjlWQJw364SM"
+    container_name: reactchatter
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -7,7 +7,7 @@ x-server-env: &server-env
   ALLOWED_ORIGINS: ""
   MONGO_URI: "mongodb://host.docker.internal:27017/"
   REDIS_HOST: "redis"
-  REDIS_PORT: "6379"
+  REDIS_PORT: "6380"
   COOKIE_SECRET: "TEn1T8KrwTZFI7h0dvN7Lr5dYShu0KJU"
   COOKIE_MAX_UNITS: "7,24,60,60"
   GOOGLE_CLIENT_ID: "85543159228-7k2867hh2627e4skfdt2092m3qvvvkda.apps.googleusercontent.com"
@@ -23,7 +23,7 @@ services:
   redis:
     image: redis:latest
     ports:
-      - "6379:6379"
+      - "6380:6380"
     networks:
       - app-network
 
